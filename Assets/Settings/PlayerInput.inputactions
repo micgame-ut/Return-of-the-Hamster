@@ -1,0 +1,57 @@
+{
+    "version": 1,
+    "name": "PlayerInput",
+    "maps": [
+        {
+            "name": "Player 1",
+            "id": "14da0915-1c8b-4154-b772-1bc092ab9260",
+            "actions": [
+                {
+                    "name": "Move",
+                    "type": "Value",
+                    "id": "89b77e89-f577-40ef-b115-92a18a50b83d",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true,
+                    "priority": 0
+                },
+                {
+                    "name": "Button",
+                    "type": "Button",
+                    "id": "1a053aac-ae50-4c5a-aaea-54c936a51292",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "9fe7edf0-59e7-484c-b2d1-0517a4103443",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4cae8f08-41bb-43fa-82a2-592d6838f993",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Button",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
