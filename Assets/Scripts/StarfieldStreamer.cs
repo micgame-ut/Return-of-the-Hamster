@@ -93,6 +93,7 @@ public class StarfieldStreamer : MonoBehaviour
         var velocityOverLifetime = ps.velocityOverLifetime;
         velocityOverLifetime.enabled = true;
         velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
+
         // All three axes must share the same MinMaxCurve mode (Unity throws
         // "Particle curves must all be in the same mode" otherwise), so Z
         // uses the same two-constant form as X/Y even though both are equal.
