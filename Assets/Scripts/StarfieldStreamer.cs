@@ -2,7 +2,7 @@ using UnityEngine;
 
 // Spawns a wall of star particles ahead of the
 // viewer and streams them past at a rate driven by PlayerMovement.Speed,
-// giving the illusion of flying through the field even though the player
+// giving the illusion of flying through the field
 
 [DisallowMultipleComponent]
 public class StarfieldStreamer : MonoBehaviour
@@ -29,8 +29,14 @@ public class StarfieldStreamer : MonoBehaviour
     [SerializeField] private float streakLengthScale = 2f;
     [SerializeField] private Material starMaterial;
 
+    [Header("Occluder")]
+    [SerializeField] private float earthPadding = 1f; // extra margin so streak tails don't poke through
+
+    private Renderer earth; // stars are killed on entering this, supplied by the GameManager
+
     private ParticleSystem stars;
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
+    private ParticleSystem.Particle[] particleBuffer;
 
     private void Awake()
     {
@@ -39,6 +45,12 @@ public class StarfieldStreamer : MonoBehaviour
         // per-frame allocation or lookup.
         stars = BuildParticleSystem();
         velocityModule = stars.velocityOverLifetime;
+        particleBuffer = new ParticleSystem.Particle[stars.main.maxParticles];
+    }
+
+    private void Start()
+    {
+        earth = GameManager.Instance != null ? GameManager.Instance.Earth : null;
     }
 
     private void Update()
@@ -47,6 +59,42 @@ public class StarfieldStreamer : MonoBehaviour
         // and push it into the cached velocity module.
         float speed = baseSpeed + PlayerMovement.Speed * speedMultiplier;
         velocityModule.z = new ParticleSystem.MinMaxCurve(-speed, -speed);
+    }
+
+    private void LateUpdate()
+    {
+        // Kill any star that has streamed past despawnDistance behind the
+        // camera, or that has flown into the earth so it never emerges out
+        // the near side. Simulation space is local, so positions are relative
+        // to the camera; the earth is converted into that same space.
+        // Lifetime still applies as well, so whichever comes first wins.
+        bool checkEarth = earth != null;
+        Vector3 earthCenter = Vector3.zero;
+        float earthRadiusSqr = 0f;
+
+        if (checkEarth)
+        {
+            earthCenter = stars.transform.InverseTransformPoint(earth.bounds.center);
+            float radius = earth.bounds.extents.x + earthPadding;
+            earthRadiusSqr = radius * radius;
+        }
+
+        int count = stars.GetParticles(particleBuffer);
+        bool changed = false;
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 pos = particleBuffer[i].position;
+
+            if (pos.z < despawnDistance ||
+                (checkEarth && (pos - earthCenter).sqrMagnitude < earthRadiusSqr))
+            {
+                particleBuffer[i].remainingLifetime = 0f;
+                changed = true;
+            }
+        }
+
+        if (changed) stars.SetParticles(particleBuffer, count);
     }
 
     private ParticleSystem BuildParticleSystem()
@@ -124,8 +172,8 @@ public class StarfieldStreamer : MonoBehaviour
         renderer.lengthScale = streakLengthScale;
         renderer.material = starMaterial != null ? starMaterial : CreateFallbackStarMaterial();
 
-        // Despawn distance only informs the field's effective travel range for tuning
-        // (spawnDistance - despawnDistance); the actual cutoff is lifetime + fade above.
+        // Stars die at the end of their lifetime, or earlier in LateUpdate
+        // if they pass despawnDistance behind the camera.
         return ps;
     }
 
