@@ -30,8 +30,9 @@ public class StarfieldStreamer : MonoBehaviour
     [SerializeField] private Material starMaterial;
 
     [Header("Occluder")]
-    [SerializeField] private Renderer earth;          // stars are killed on entering this
     [SerializeField] private float earthPadding = 1f; // extra margin so streak tails don't poke through
+
+    private Renderer earth; // stars are killed on entering this, supplied by the GameManager
 
     private ParticleSystem stars;
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
@@ -45,6 +46,11 @@ public class StarfieldStreamer : MonoBehaviour
         stars = BuildParticleSystem();
         velocityModule = stars.velocityOverLifetime;
         particleBuffer = new ParticleSystem.Particle[stars.main.maxParticles];
+    }
+
+    private void Start()
+    {
+        earth = GameManager.Instance != null ? GameManager.Instance.Earth : null;
     }
 
     private void Update()

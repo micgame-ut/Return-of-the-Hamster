@@ -28,6 +28,18 @@ public class AsteroidTemplate : ScriptableObject
     [ColorUsage(false, true)] public Color outlineTooSlow = Color.red;
     [ColorUsage(false, true)] public Color outlineCanBreak = Color.green;
 
+    [Header("Despawn")]
+    public float despawnBehindCamera = 5f; // world units past the camera before removal
+
+    [Header("Player Hit")]
+    public float knockbackForce = 4f;      // sideways push when the player can't break it
+    public float speedLoss = 3f;           // how much Speed drops on a hit
+    public float hitShakeDuration = 0.15f; // seconds
+    public float hitShakeMagnitude = 0.2f; // max camera offset in units
+
+    [Header("Player Speed")]
+    public float speedMultiplier = 15f; // extra units/sec of approach per point of player Speed
+
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {
         AsteroidBehavior.MovementType.Wave => waveGlow,

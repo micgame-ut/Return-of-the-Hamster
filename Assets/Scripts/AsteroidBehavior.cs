@@ -18,7 +18,7 @@ public class AsteroidBehavior : MonoBehaviour
 
     [Header("Destruction")]
     [SerializeField] private bool destructible = false;
-    [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0–10)
+    [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
 
     [Header("Template")]
     [SerializeField] private AsteroidTemplate template;
@@ -31,11 +31,13 @@ public class AsteroidBehavior : MonoBehaviour
     private MaterialPropertyBlock block;
     private MaterialPropertyBlock outlineBlock;
     private Transform mesh;
+    private Transform cam;
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
     private Vector3 origin;
     private float elapsed;
+    private float distance; // how far it has travelled toward the camera
     private bool isMoving;
     private Vector3 spinAxis;
 
@@ -47,6 +49,8 @@ public class AsteroidBehavior : MonoBehaviour
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
+        Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
+        cam = gameCam != null ? gameCam.transform : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -69,6 +73,7 @@ public class AsteroidBehavior : MonoBehaviour
         // movement is measured from wherever it was revealed.
         origin = transform.position;
         elapsed = 0f;
+        distance = 0f;
         isMoving = false;
         outlineState = -1; // force the outline color to refresh
 
@@ -148,9 +153,15 @@ public class AsteroidBehavior : MonoBehaviour
 
         elapsed += Time.deltaTime;
 
+        // Approach speed rises with the player's speed, like the starfield, so
+        // flying faster brings asteroids in faster. Distance is accumulated per
+        // frame so a change in speed doesn't make the asteroid jump.
+        float multiplier = template != null ? template.speedMultiplier : 0f;
+        distance += (speed + PlayerMovement.Speed * multiplier) * Time.deltaTime;
+
         // Every type travels toward the camera (-Z); the types differ only
         // in the sideways offset added on top of that forward motion.
-        Vector3 forward = Vector3.back * (speed * elapsed);
+        Vector3 forward = Vector3.back * distance;
         float angle = elapsed * frequency * Mathf.PI * 2f;
 
         Vector3 offset = movementType switch
@@ -162,19 +173,36 @@ public class AsteroidBehavior : MonoBehaviour
         };
 
         transform.position = origin + forward + offset;
+
+        // Asteroids fly toward -Z, so once one is far enough behind the camera it
+        // can never come back into view.
+        if (cam != null && template != null &&
+            transform.position.z < cam.position.z - template.despawnBehindCamera)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         // Only react to the player. GetComponentInParent covers the collider
         // being on a child of the object that has PlayerMovement.
-        if (other.GetComponentInParent<PlayerMovement>() == null) return;
+        PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
+        if (player == null) return;
 
         if (destructible && PlayerMovement.Speed >= destroySpeed)
         {
             Explode();
         }
-        // Otherwise the hit isn't handled yet, e.g. damage the player later.
+        else if (template != null)
+        {
+            // Push the player away from the asteroid, toward the far side of the
+            // screen. A dead-center hit picks a side at random.
+            float side = player.transform.position.x - transform.position.x;
+            float dir = side != 0f ? Mathf.Sign(side) : (Random.value < 0.5f ? -1f : 1f);
+            if (player.TakeHit(dir * template.knockbackForce, template.speedLoss))
+                CameraShake.Shake(template.hitShakeDuration, template.hitShakeMagnitude);
+        }
     }
 
     private void Explode()

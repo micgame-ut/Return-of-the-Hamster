@@ -25,3 +25,9 @@ MonoBehaviour:
   outlineMaterial: {fileID: 2100000, guid: 4934b75270d22af4288831a4e76b43e3, type: 2}
   outlineTooSlow: {r: 1, g: 0, b: 0, a: 1}
   outlineCanBreak: {r: 0, g: 1, b: 0, a: 1}
+  despawnBehindCamera: 5
+  knockbackForce: 4
+  speedLoss: 3
+  hitShakeDuration: 0.15
+  hitShakeMagnitude: 0.2
+  speedMultiplier: 0.5

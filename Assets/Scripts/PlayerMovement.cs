@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private Camera mainCamera;
     [SerializeField] private Transform meshTransform;
 
     [Header("Movement")]
@@ -25,8 +24,19 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float boostDecay = 3f;
     [SerializeField] private float speedBoost = 3f;
 
+    [Header("Hit")]
+    [SerializeField] private float invulnerableTime = 1.5f; // seconds of no hits after being hit
+    [SerializeField] private float hitBlinkInterval = 0.1f; // time between visibility flips
+
     // Speed
-    public static float Speed;
+    // Readable anywhere, but only PlayerMovement changes it; other scripts go
+    // through methods like TakeHit so clamping stays in one place.
+    public static float Speed { get; private set; }
+    public static float MaxSpeed { get; private set; }
+    public static float Speed01 => MaxSpeed > 0f ? Speed / MaxSpeed : 0f;
+
+    // Camera used for screen bounds, supplied by the GameManager
+    private Camera mainCamera;
 
     // Movement
     private Vector2 moveInput;
@@ -37,15 +47,37 @@ public class PlayerMovement : MonoBehaviour
     // Boost
     private float boostVelocity;
 
+    // Hit
+    public bool IsInvulnerable => invulnerableTimer > 0f;
+    private float invulnerableTimer;
+    private Renderer[] meshRenderers;
+
+    // Level
+    private LevelTimer levelTimer;
+
+    // Once the earth has arrived the player can only lose speed, not gain it.
+    private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
+
+    void Awake()
+    {
+        // Statics survive scene reloads, so reset them for a fresh run.
+        Speed = 0f;
+        MaxSpeed = maxSpeed;
+
+        // Blink only the visual mesh; the collider stays active.
+        meshRenderers = meshTransform != null
+            ? meshTransform.GetComponentsInChildren<Renderer>()
+            : GetComponentsInChildren<Renderer>();
+    }
+
     void Start()
     {
         // Lock the cursor to the center of the screen and make it invisible
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // If the mainCamera is not assigned in the inspector, try to find it in the scene
-        if (mainCamera == null)
-            mainCamera = Camera.main;
+        mainCamera = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
+        levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
     }
 
     void Update()
@@ -54,6 +86,7 @@ public class PlayerMovement : MonoBehaviour
 
         Roll(mouseDelta);
         UpdateSpeed(mouseDelta);
+        UpdateInvulnerability();
     }
 
     void FixedUpdate()
@@ -87,7 +120,11 @@ public class PlayerMovement : MonoBehaviour
     {
         bool nearMaxSpeed = Speed >= maxSpeed * 0.9f;
 
-        if (mouseDelta.y != 0f)
+        // Forward input after the level ends counts as no input, so the normal
+        // decay still applies instead of speed being held in place.
+        bool hasInput = mouseDelta.y < 0f || (mouseDelta.y > 0f && CanAccelerate);
+
+        if (hasInput)
         {
             // Speeds up on positive mouseDelta.y, slows down on negative
             Speed += mouseDelta.y * acceleration;
@@ -105,8 +142,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
         Speed = Mathf.Clamp(Speed, 0f, maxSpeed);
-
-        Debug.Log($"Current Speed: {Speed}");
     }
 
     private void ClampToCameraBounds()
@@ -128,6 +163,34 @@ public class PlayerMovement : MonoBehaviour
         moveInput = value.Get<Vector2>();
     }
 
+    public bool TakeHit(float knockbackVelocity, float speedLoss)
+    {
+        // Hits during the invulnerability window are ignored entirely.
+        if (IsInvulnerable) return false;
+
+        // Reuses the boost velocity so the push decays the same way a boost does
+        // and ClampToCameraBounds keeps the player on screen.
+        boostVelocity = knockbackVelocity;
+        Speed = Mathf.Clamp(Speed - speedLoss, 0f, maxSpeed);
+
+        invulnerableTimer = invulnerableTime;
+        return true;
+    }
+
+    private void UpdateInvulnerability()
+    {
+        if (invulnerableTimer <= 0f) return;
+
+        invulnerableTimer -= Time.deltaTime;
+
+        // Flip visibility every hitBlinkInterval, and always end visible.
+        bool visible = invulnerableTimer <= 0f ||
+                       Mathf.FloorToInt(invulnerableTimer / hitBlinkInterval) % 2 == 0;
+
+        foreach (Renderer r in meshRenderers)
+            r.enabled = visible;
+    }
+
     private void OnButton(InputValue value)
     {
         if (!value.isPressed)
@@ -138,7 +201,7 @@ public class PlayerMovement : MonoBehaviour
             // Boost sideways in whichever direction the mouse was last moving horizontally
             boostVelocity = Mathf.Sign(moveInput.x) * boostForce;
         }
-        else
+        else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
