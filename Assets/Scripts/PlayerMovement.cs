@@ -53,6 +53,10 @@ public class PlayerMovement : MonoBehaviour
     // Direction a positive boost/knockback pushes the player (counter-clockwise tangent)
     public Vector2 OrbitTangent => new Vector2(-Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle));
 
+    // Orbit shape, for anything that needs to draw or reason about the circle
+    public Vector2 OrbitCenter => orbitCenter;
+    public float CircleRadius => circleRadius;
+
     // Roll
     private Vector2 rollInput;
 

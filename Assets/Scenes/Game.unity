@@ -209,7 +209,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2490}
+  m_LocalPosition: {x: 0, y: 0, z: 2489}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -348,6 +348,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   waves:
   - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
+    delayAfter: 2
+  - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
     delayAfter: 2
   order: 0
   loop: 1
@@ -724,6 +726,7 @@ GameObject:
   - component: {fileID: 1402038715}
   - component: {fileID: 1402038714}
   - component: {fileID: 1402038716}
+  - component: {fileID: 1402038717}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -778,6 +781,28 @@ MonoBehaviour:
   levelTime: 120
   speedTimeFactor: 0.1
   stopDistance: 76
+--- !u!114 &1402038717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402038713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25d64db727dd45141b788313883c4f2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OrbitRing
+  lineMaterial: {fileID: 0}
+  ringColor: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 0.047058824}
+  ringWidth: 0.05
+  ringSegments: 96
+  dangerColor: {r: 1, g: 0.2, b: 0.2, a: 1}
+  breakableColor: {r: 0.2, g: 1, b: 0.3, a: 1}
+  arcWidth: 0.1
+  arcOffset: 0.5
+  warnTime: 1.5
+  playerRadius: 0.1
 --- !u!1 &1441542810
 GameObject:
   m_ObjectHideFlags: 0
@@ -934,8 +959,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      propertyPath: maxSpeed
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: circleRadius
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      propertyPath: mouseSensitivity
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: m_Name

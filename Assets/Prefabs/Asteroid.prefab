@@ -161,6 +161,6 @@ MonoBehaviour:
   speed: 5
   amplitude: 5
   frequency: 1
-  destructible: 1
+  destructible: 0
   destroySpeed: 5
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}

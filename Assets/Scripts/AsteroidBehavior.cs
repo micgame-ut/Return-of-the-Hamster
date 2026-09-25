@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 // Moves an asteroid toward the camera using one of several selectable
@@ -44,6 +45,15 @@ public class AsteroidBehavior : MonoBehaviour
     // How fast this asteroid closes on the camera right now; rises with player speed.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
 
+    // Every revealed asteroid, so other scripts can react without searching the scene.
+    public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
+
+    public bool IsMoving => isMoving;
+    public bool CanBreak => destructible && PlayerMovement.Speed >= destroySpeed;
+
+    // XY footprint of the collider; its bounds are only valid while it's enabled.
+    public float HitRadius => col != null && col.enabled ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.y) : 0f;
+
     private void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
@@ -74,6 +84,7 @@ public class AsteroidBehavior : MonoBehaviour
     {
         // Runs when the spawner activates this object, so each asteroid's
         // movement is measured from wherever it was revealed.
+        Active.Add(this);
         origin = transform.position;
         elapsed = 0f;
         distance = 0f;
@@ -84,6 +95,11 @@ public class AsteroidBehavior : MonoBehaviour
         spinAxis = Random.onUnitSphere;
 
         StartCoroutine(WarnThenMove());
+    }
+
+    private void OnDisable()
+    {
+        Active.Remove(this);
     }
 
     private IEnumerator WarnThenMove()
