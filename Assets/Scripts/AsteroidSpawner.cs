@@ -15,7 +15,6 @@ public class AsteroidSpawner : MonoBehaviour
     public class Wave
     {
         public GameObject pattern;
-        public float spawnInterval = 0.5f; // seconds between each Z step in this pattern
         public float delayAfter = 2f;      // seconds to wait before the next wave starts
     }
 
@@ -51,7 +50,7 @@ public class AsteroidSpawner : MonoBehaviour
                 if (wave.pattern == null) continue;
 
                 // Wait for the whole pattern to finish revealing, then pause.
-                yield return SpawnPattern(wave.pattern, wave.spawnInterval);
+                yield return SpawnPattern(wave.pattern);
                 yield return new WaitForSeconds(wave.delayAfter);
             }
         }
@@ -76,7 +75,7 @@ public class AsteroidSpawner : MonoBehaviour
         return ordered;
     }
 
-    private IEnumerator SpawnPattern(GameObject prefab, float spawnInterval)
+    private IEnumerator SpawnPattern(GameObject prefab)
     {
         // Parenting to the spawner keeps the pattern's own offset from it.
         GameObject pattern = Instantiate(prefab, transform);
@@ -94,14 +93,24 @@ public class AsteroidSpawner : MonoBehaviour
         children.Sort((a, b) =>
             Mathf.Abs(a.position.z - camZ).CompareTo(Mathf.Abs(b.position.z - camZ)));
 
+        // Every asteroid appears at the first step's Z (the spawn plane). The wait
+        // before each later step is how long it takes to fly that step's Z gap, so
+        // in flight each step trails the one before by exactly its authored gap.
+        float spawnZ = children.Count > 0 ? children[0].position.z : 0f;
+
         float previousDistance = 0f;
         for (int i = 0; i < children.Count; i++)
         {
             float distance = Mathf.Abs(children[i].position.z - camZ);
+            float gap = distance - previousDistance;
 
-            // Wait only when stepping to a further Z; equal Zs spawn together.
-            if (i > 0 && distance - previousDistance > SameZTolerance)
-                yield return new WaitForSeconds(spawnInterval);
+            // Equal Zs spawn together; a further Z waits for its gap.
+            if (i > 0 && gap > SameZTolerance)
+            {
+                AsteroidBehavior asteroid = children[i].GetComponent<AsteroidBehavior>();
+                if (asteroid != null && asteroid.ApproachSpeed > 0f)
+                    yield return new WaitForSeconds(gap / asteroid.ApproachSpeed);
+            }
             previousDistance = distance;
 
             // Earth arrived mid-pattern: stop revealing. The hidden children
@@ -110,7 +119,9 @@ public class AsteroidSpawner : MonoBehaviour
 
             // Detach so each asteroid moves on its own, then reveal it. Its
             // OnEnable starts the warning blink and records its start point.
+            Vector3 p = children[i].position;
             children[i].SetParent(null, true);
+            children[i].position = new Vector3(p.x, p.y, spawnZ);
             children[i].gameObject.SetActive(true);
         }
 

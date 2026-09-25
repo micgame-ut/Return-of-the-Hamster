@@ -274,7 +274,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   cam: {fileID: 0}
   baseFOV: 60
-  maxFOV: 120
+  maxFOV: 80
   fovLerpSpeed: 10
 --- !u!114 &330585550
 MonoBehaviour:
@@ -328,7 +328,7 @@ Transform:
   m_GameObject: {fileID: 359426624}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.4, z: 15}
+  m_LocalPosition: {x: 0, y: 0, z: 15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -347,15 +347,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   waves:
-  - pattern: {fileID: 6920617832288609397, guid: 2a569c06aece9ac47b05e5645a80e0da, type: 3}
-    spawnInterval: 0.5
-    delayAfter: 1
-  - pattern: {fileID: 7058707109939559361, guid: 6783e6bf4e14876429b3f6dfe239235d, type: 3}
-    spawnInterval: 0.5
-    delayAfter: 1
+  - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
+    delayAfter: 2
   order: 0
   loop: 1
-  startDelay: 1
+  startDelay: 2
 --- !u!114 &377146147 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
@@ -927,7 +923,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCamera
   cam: {fileID: 1441542813}
   baseFOV: 60
-  maxFOV: 120
+  maxFOV: 80
   fovLerpSpeed: 10
 --- !u!1001 &1499651218
 PrefabInstance:
@@ -937,6 +933,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      propertyPath: circleRadius
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: m_Name
       value: hamter
@@ -947,11 +947,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.4
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -7
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: m_LocalRotation.w

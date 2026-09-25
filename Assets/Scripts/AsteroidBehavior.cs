@@ -41,6 +41,9 @@ public class AsteroidBehavior : MonoBehaviour
     private bool isMoving;
     private Vector3 spinAxis;
 
+    // How fast this asteroid closes on the camera right now; rises with player speed.
+    public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
+
     private void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
@@ -156,8 +159,7 @@ public class AsteroidBehavior : MonoBehaviour
         // Approach speed rises with the player's speed, like the starfield, so
         // flying faster brings asteroids in faster. Distance is accumulated per
         // frame so a change in speed doesn't make the asteroid jump.
-        float multiplier = template != null ? template.speedMultiplier : 0f;
-        distance += (speed + PlayerMovement.Speed * multiplier) * Time.deltaTime;
+        distance += ApproachSpeed * Time.deltaTime;
 
         // Every type travels toward the camera (-Z); the types differ only
         // in the sideways offset added on top of that forward motion.
@@ -196,9 +198,9 @@ public class AsteroidBehavior : MonoBehaviour
         }
         else if (template != null)
         {
-            // Push the player away from the asteroid, toward the far side of the
-            // screen. A dead-center hit picks a side at random.
-            float side = player.transform.position.x - transform.position.x;
+            // Push the player along their circle, away from the asteroid.
+            // A dead-center hit picks a direction at random.
+            float side = Vector2.Dot(player.transform.position - transform.position, player.OrbitTangent);
             float dir = side != 0f ? Mathf.Sign(side) : (Random.value < 0.5f ? -1f : 1f);
             if (player.TakeHit(dir * template.knockbackForce, template.speedLoss))
                 CameraShake.Shake(template.hitShakeDuration, template.hitShakeMagnitude);

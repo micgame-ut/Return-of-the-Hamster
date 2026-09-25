@@ -9,6 +9,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float mouseSensitivity = 0.1f;
 
+    [Header("Orbit")]
+    [SerializeField] private float circleRadius = 3f; // world units; read every physics tick, so it can be tuned live in Play mode
+    [SerializeField] private float startAngle = -90f; // degrees; -90 = bottom of the circle, like Gyruss
+    [SerializeField] private bool faceCenter = true; // rotate so the ship's top points at the center
+
     [Header("Roll")]
     [SerializeField] private float rotationSpeed = 100f;
     [SerializeField] private float rollDamping = 5f;
@@ -35,11 +40,18 @@ public class PlayerMovement : MonoBehaviour
     public static float MaxSpeed { get; private set; }
     public static float Speed01 => MaxSpeed > 0f ? Speed / MaxSpeed : 0f;
 
-    // Camera used for screen bounds, supplied by the GameManager
+    // Camera whose position sets the orbit center, supplied by the GameManager
     private Camera mainCamera;
 
     // Movement
     private Vector2 moveInput;
+
+    // Orbit
+    private Vector2 orbitCenter; // screen center (camera x/y), captured in Start
+    private float orbitAngle; // radians, increasing = counter-clockwise on screen
+
+    // Direction a positive boost/knockback pushes the player (counter-clockwise tangent)
+    public Vector2 OrbitTangent => new Vector2(-Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle));
 
     // Roll
     private Vector2 rollInput;
@@ -78,6 +90,9 @@ public class PlayerMovement : MonoBehaviour
 
         mainCamera = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
+
+        orbitCenter = mainCamera != null ? (Vector2)mainCamera.transform.position : Vector2.zero;
+        orbitAngle = startAngle * Mathf.Deg2Rad;
     }
 
     void Update()
@@ -94,7 +109,6 @@ public class PlayerMovement : MonoBehaviour
         Vector2 mouseDelta = moveInput * Time.fixedDeltaTime;
 
         Movement(mouseDelta);
-        ClampToCameraBounds();
     }
 
     private void Roll(Vector2 mouseDelta)
@@ -105,12 +119,24 @@ public class PlayerMovement : MonoBehaviour
             : Vector2.Lerp(rollInput, Vector2.zero, rollDamping * Time.deltaTime);
 
         // Rotate only the visual mesh, not the collider/root
-        meshTransform.Rotate(rollInput.y * rotationSpeed, 0f, -rollInput.x * rotationSpeed, Space.World);
+        // Pitch around the orbit tangent (root's local x) so forward input always tilts the nose toward the center
+        meshTransform.Rotate(transform.right, rollInput.y * rotationSpeed, Space.World);
+
+        // Roll around the mesh's own axis as the player moves around the circle
+        meshTransform.Rotate(0f, 0f, -rollInput.x * rotationSpeed, Space.Self);
     }
 
     private void Movement(Vector2 mouseDelta)
     {
-        transform.Translate((mouseDelta.x * mouseSensitivity) + (boostVelocity * Time.fixedDeltaTime), 0f, 0f);
+        // Distance travelled along the circle this tick; positive = counter-clockwise
+        float arc = (mouseDelta.x * mouseSensitivity) + (boostVelocity * Time.fixedDeltaTime);
+        orbitAngle += arc / circleRadius;
+
+        Vector2 offset = new Vector2(Mathf.Cos(orbitAngle), Mathf.Sin(orbitAngle)) * circleRadius;
+        transform.position = new Vector3(orbitCenter.x + offset.x, orbitCenter.y + offset.y, transform.position.z);
+
+        if (faceCenter)
+            transform.rotation = Quaternion.Euler(0f, 0f, orbitAngle * Mathf.Rad2Deg + 90f);
 
         // Boost fades out over time instead of cutting off instantly
         boostVelocity = Mathf.Lerp(boostVelocity, 0f, boostDecay * Time.fixedDeltaTime);
@@ -144,20 +170,6 @@ public class PlayerMovement : MonoBehaviour
         Speed = Mathf.Clamp(Speed, 0f, maxSpeed);
     }
 
-    private void ClampToCameraBounds()
-    {
-        // Calculate the distance from the camera to the player
-        float distance = transform.position.z - mainCamera.transform.position.z;
-
-        // Get the world position of the left and right edges of the camera's viewport at the player's distance
-        Vector3 leftEdge = mainCamera.ViewportToWorldPoint(new Vector3(0f, 0.5f, distance));
-        Vector3 rightEdge = mainCamera.ViewportToWorldPoint(new Vector3(1f, 0.5f, distance));
-
-        // Clamp the player's x position to stay within the camera's bounds
-        float clampX = Mathf.Clamp(transform.position.x, leftEdge.x, rightEdge.x);
-        transform.position = new Vector3(clampX, transform.position.y, transform.position.z);
-    }
-
     private void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
@@ -168,8 +180,8 @@ public class PlayerMovement : MonoBehaviour
         // Hits during the invulnerability window are ignored entirely.
         if (IsInvulnerable) return false;
 
-        // Reuses the boost velocity so the push decays the same way a boost does
-        // and ClampToCameraBounds keeps the player on screen.
+        // Reuses the boost velocity so the push travels along the circle and
+        // decays the same way a boost does.
         boostVelocity = knockbackVelocity;
         Speed = Mathf.Clamp(Speed - speedLoss, 0f, maxSpeed);
 
@@ -198,7 +210,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (moveInput.x != 0f)
         {
-            // Boost sideways in whichever direction the mouse was last moving horizontally
+            // Boost around the circle in whichever direction the mouse was last moving horizontally
             boostVelocity = Mathf.Sign(moveInput.x) * boostForce;
         }
         else if (CanAccelerate)
