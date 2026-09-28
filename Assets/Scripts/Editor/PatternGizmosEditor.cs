@@ -38,7 +38,7 @@ public class PatternGizmosEditor : Editor
     // project). We use it to remember which asteroid prefab you picked, so you
     // don't have to re-pick it every time Unity restarts.
     private const string PrefabPrefKey = "PatternBuilder.AsteroidPrefab";
-    private const string DefaultPrefabPath = "Assets/Prefabs/Asteroid.prefab";
+    private const string DefaultPrefabPath = "Assets/Prefabs/Asteroid Types/Asteroid.prefab";
 
     // Preview colors: translucent green reads as "not placed yet".
     private static readonly Color PreviewColor = new Color(0.3f, 1f, 0.4f, 0.5f);
@@ -56,11 +56,10 @@ public class PatternGizmosEditor : Editor
     private static Shape shape = Shape.Ring;
     private static GameObject asteroidPrefab;
 
-    // Shared by every shape.
-    private static float radius = PatternGizmos.OrbitRadius; // distance from the orbit center
-    private static float z;                                   // depth; lower Z spawns first
-    private static int count = 8;                             // how many asteroids to place
-    private static float previewSize = 1f;                    // diameter of the preview spheres
+    // Shared by every shape. The radius is always the orbit's, from OrbitSettings.
+    private static float z;                // depth; lower Z spawns first
+    private static int count = 8;          // how many asteroids to place
+    private static float previewSize = 1f; // diameter of the preview spheres
 
     // Ring: count asteroids evenly spaced all the way around.
     private static float ringStartAngle = -90f;
@@ -69,9 +68,10 @@ public class PatternGizmosEditor : Editor
     private static float arcFrom = -135f;
     private static float arcTo = -45f;
 
-    // Row: a straight horizontal line centered on the circle. Starts at the
-    // bottom of the circle, right where the player sits.
-    private static float rowY = PatternGizmos.OrbitCenter.y - PatternGizmos.OrbitRadius;
+    // Row: a straight horizontal line centered on the circle. Its height is
+    // measured up from the bottom of the circle (where the player sits), so it
+    // follows the orbit if OrbitSettings changes.
+    private static float rowYOffset;
     private static float rowSpacing = 1f;
 
     // Spiral: each asteroid steps around by an angle AND back by a Z amount,
@@ -125,7 +125,6 @@ public class PatternGizmosEditor : Editor
         EditorGUILayout.Space();
         shape = (Shape)GUILayout.Toolbar((int)shape, ShapeNames); // the tab bar
 
-        radius = EditorGUILayout.FloatField("Radius", radius);
         z = EditorGUILayout.FloatField("Z", z);
         count = Mathf.Max(1, EditorGUILayout.IntField("Count", count)); // never fewer than 1
         previewSize = Mathf.Max(0.05f, EditorGUILayout.FloatField("Preview Size", previewSize));
@@ -141,7 +140,7 @@ public class PatternGizmosEditor : Editor
                 arcTo = EditorGUILayout.FloatField("To Angle", arcTo);
                 break;
             case Shape.Row:
-                rowY = EditorGUILayout.FloatField("Y", rowY);
+                rowYOffset = EditorGUILayout.FloatField("Height Above Bottom", rowYOffset);
                 rowSpacing = EditorGUILayout.FloatField("Spacing", rowSpacing);
                 break;
             case Shape.Spiral:
@@ -242,34 +241,36 @@ public class PatternGizmosEditor : Editor
         {
             case Shape.Ring:
                 // 360 / count degrees apart, so the last one doesn't land on the first.
-                return OnCircle(ringStartAngle + 360f * i / count, radius, z);
+                return OnCircle(ringStartAngle + 360f * i / count, z);
 
             case Shape.Arc:
                 // Lerp spreads them from arcFrom to arcTo, landing exactly on both
                 // ends. A single asteroid just goes at arcFrom.
                 float t = count > 1 ? i / (float)(count - 1) : 0f;
-                return OnCircle(Mathf.Lerp(arcFrom, arcTo, t), radius, z);
+                return OnCircle(Mathf.Lerp(arcFrom, arcTo, t), z);
 
             case Shape.Row:
                 // (i - (count - 1) / 2) runs from -half to +half, centering the
                 // row on the circle's x.
                 float x = PatternGizmos.OrbitCenter.x + (i - (count - 1) * 0.5f) * rowSpacing;
-                return new Vector3(x, rowY, z);
+                float y = PatternGizmos.OrbitCenter.y - PatternGizmos.OrbitRadius + rowYOffset;
+                return new Vector3(x, y, z);
 
             case Shape.Spiral:
-                return OnCircle(spiralStartAngle + spiralAngleStep * i, radius, z + spiralZStep * i);
+                return OnCircle(spiralStartAngle + spiralAngleStep * i, z + spiralZStep * i);
 
             default:
                 return Vector3.zero;
         }
     }
 
-    // A point on a circle around the orbit center. Cos gives the x part and
-    // Sin the y part of a direction at that angle; multiplying by r pushes it
-    // out to the circle's edge.
-    private static Vector3 OnCircle(float angleDeg, float r, float z)
+    // A point on the orbit circle. Cos gives the x part and Sin the y part of a
+    // direction at that angle; multiplying by the radius pushes it out to the
+    // circle's edge.
+    private static Vector3 OnCircle(float angleDeg, float z)
     {
         float a = angleDeg * Mathf.Deg2Rad; // Mathf's trig functions work in radians
+        float r = PatternGizmos.OrbitRadius;
         return new Vector3(
             PatternGizmos.OrbitCenter.x + Mathf.Cos(a) * r,
             PatternGizmos.OrbitCenter.y + Mathf.Sin(a) * r,
@@ -377,7 +378,7 @@ public class PatternGizmosEditor : Editor
 
             // RecordObject snapshots the transform so the move can be undone.
             Undo.RecordObject(t, undoName);
-            t.localPosition = OnCircle(angle, radius, p.z) - rootOffset;
+            t.localPosition = OnCircle(angle, p.z) - rootOffset;
         }
     }
 }

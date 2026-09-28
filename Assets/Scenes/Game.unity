@@ -133,7 +133,6 @@ GameObject:
   - component: {fileID: 330585547}
   - component: {fileID: 330585548}
   - component: {fileID: 330585550}
-  - component: {fileID: 330585551}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -290,18 +289,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkyboxSpeedController
   baseTimeSpeed: 0.3
   speedInfluence: 0.01
---- !u!114 &330585551
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330585543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81e9b29dacfe12d4d868b2d7788dac13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -350,6 +337,8 @@ MonoBehaviour:
   - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
     delayAfter: 2
   - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
+    delayAfter: 2
+  - pattern: {fileID: 1426364939829335137, guid: 1d587c318660bf94294e131c43e20313, type: 3}
     delayAfter: 2
   order: 0
   loop: 1

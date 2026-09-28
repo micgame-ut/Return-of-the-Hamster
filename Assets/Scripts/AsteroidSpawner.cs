@@ -23,12 +23,19 @@ public class AsteroidSpawner : MonoBehaviour
     [SerializeField] private bool loop = true;
     [SerializeField] private float startDelay = 1f; // seconds before the first wave
 
-    private const float SameZTolerance = 0.01f;
+    // Asteroids this close in Z spawn together. Public so PatternGizmos groups them the same way.
+    public const float SameZTolerance = 0.01f;
 
     private LevelTimer levelTimer;
 
     // Once the earth has arrived, no more waves or asteroids are spawned.
     private bool LevelComplete => levelTimer != null && levelTimer.IsComplete;
+
+    private void Awake()
+    {
+        // Position comes from OrbitSettings so it always matches the pattern builder.
+        transform.position = OrbitSettings.Instance.SpawnerPosition;
+    }
 
     private void Start()
     {

@@ -1,17 +1,18 @@
 using UnityEngine;
 
-// Drives the skybox shader's Time Speed from gameplay state: scales with
-// PlayerMovement.Speed so the sky drifts faster as the player speeds up,
-// and freezes entirely while the game is paused (Time.timeScale == 0).
+// Scrolls the skybox shader's clouds, faster as PlayerMovement.Speed goes up.
+// The scroll is a running total sent to the shader as _ScrollOffset, so a change
+// in speed only changes how fast it grows and the sky never jumps.
 [DisallowMultipleComponent]
 public class SkyboxSpeedController : MonoBehaviour
 {
-    private static readonly int TimeSpeedId = Shader.PropertyToID("_TimeSpeed");
+    private static readonly int ScrollOffsetId = Shader.PropertyToID("_ScrollOffset");
 
     [SerializeField] private float baseTimeSpeed = 0.3f;
     [SerializeField] private float speedInfluence = 0.05f;
 
     private Material skyboxInstance;
+    private float scrollOffset;
 
     private void Awake()
     {
@@ -32,13 +33,11 @@ public class SkyboxSpeedController : MonoBehaviour
         if (skyboxInstance == null)
             return;
 
-        // Paused (or timeScale otherwise zeroed): hold the sky perfectly
-        // still instead of just slowing it, since some drift would still
-        // read as "frozen but wrong" during a pause.
-        float timeSpeed = Time.timeScale <= 0f
-            ? 0f
-            : baseTimeSpeed + PlayerMovement.Speed * speedInfluence;
+        // Accumulated per frame so a change in speed alters the pace without making
+        // the sky jump. deltaTime is 0 while paused, so the sky freezes where it is.
+        float timeSpeed = baseTimeSpeed + PlayerMovement.Speed * speedInfluence;
+        scrollOffset += timeSpeed * Time.deltaTime;
 
-        skyboxInstance.SetFloat(TimeSpeedId, timeSpeed);
+        skyboxInstance.SetFloat(ScrollOffsetId, scrollOffset);
     }
 }

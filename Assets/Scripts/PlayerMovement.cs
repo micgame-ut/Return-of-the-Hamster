@@ -10,7 +10,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float mouseSensitivity = 0.1f;
 
     [Header("Orbit")]
-    [SerializeField] private float circleRadius = 3f; // world units; read every physics tick, so it can be tuned live in Play mode
+    // Radius, center, and depth come from OrbitSettings, shared with the pattern builder
     [SerializeField] private float startAngle = -90f; // degrees; -90 = bottom of the circle, like Gyruss
     [SerializeField] private bool faceCenter = true; // rotate so the ship's top points at the center
 
@@ -40,22 +40,20 @@ public class PlayerMovement : MonoBehaviour
     public static float MaxSpeed { get; private set; }
     public static float Speed01 => MaxSpeed > 0f ? Speed / MaxSpeed : 0f;
 
-    // Camera whose position sets the orbit center, supplied by the GameManager
-    private Camera mainCamera;
-
     // Movement
     private Vector2 moveInput;
 
     // Orbit
-    private Vector2 orbitCenter; // screen center (camera x/y), captured in Start
+    private OrbitSettings orbit;
     private float orbitAngle; // radians, increasing = counter-clockwise on screen
 
     // Direction a positive boost/knockback pushes the player (counter-clockwise tangent)
     public Vector2 OrbitTangent => new Vector2(-Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle));
 
-    // Orbit shape, for anything that needs to draw or reason about the circle
-    public Vector2 OrbitCenter => orbitCenter;
-    public float CircleRadius => circleRadius;
+    // Orbit shape, for anything that needs to draw or reason about the circle.
+    // Read live from the asset, so tuning it in Play mode takes effect straight away.
+    public Vector2 OrbitCenter => orbit.OrbitCenter;
+    public float CircleRadius => orbit.OrbitRadius;
 
     // Roll
     private Vector2 rollInput;
@@ -80,6 +78,12 @@ public class PlayerMovement : MonoBehaviour
         Speed = 0f;
         MaxSpeed = maxSpeed;
 
+        // Depth comes from OrbitSettings so it always matches the pattern builder.
+        // Done in Awake so other scripts' Start already sees the right z.
+        orbit = OrbitSettings.Instance;
+        Vector3 p = transform.position;
+        transform.position = new Vector3(p.x, p.y, orbit.PlayerZ);
+
         // Blink only the visual mesh; the collider stays active.
         meshRenderers = meshTransform != null
             ? meshTransform.GetComponentsInChildren<Renderer>()
@@ -92,10 +96,8 @@ public class PlayerMovement : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        mainCamera = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
 
-        orbitCenter = mainCamera != null ? (Vector2)mainCamera.transform.position : Vector2.zero;
         orbitAngle = startAngle * Mathf.Deg2Rad;
     }
 
@@ -133,11 +135,14 @@ public class PlayerMovement : MonoBehaviour
     private void Movement(Vector2 mouseDelta)
     {
         // Distance travelled along the circle this tick; positive = counter-clockwise
+        // Distance divided by radius = angle in radians, so we can add it to the orbitAngle directly.
         float arc = (mouseDelta.x * mouseSensitivity) + (boostVelocity * Time.fixedDeltaTime);
-        orbitAngle += arc / circleRadius;
+        orbitAngle += arc / CircleRadius;
 
-        Vector2 offset = new Vector2(Mathf.Cos(orbitAngle), Mathf.Sin(orbitAngle)) * circleRadius;
-        transform.position = new Vector3(orbitCenter.x + offset.x, orbitCenter.y + offset.y, transform.position.z);
+        // Offset is defined by the cosine (left/right) and sine (up/down) of the angle, multiplied by the radius to get world units
+        Vector2 offset = new Vector2(Mathf.Cos(orbitAngle), Mathf.Sin(orbitAngle)) * CircleRadius;
+        Vector2 center = OrbitCenter;
+        transform.position = new Vector3(center.x + offset.x, center.y + offset.y, transform.position.z);
 
         if (faceCenter)
             transform.rotation = Quaternion.Euler(0f, 0f, orbitAngle * Mathf.Rad2Deg + 90f);

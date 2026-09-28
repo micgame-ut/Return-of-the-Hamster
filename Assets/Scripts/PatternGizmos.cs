@@ -9,12 +9,11 @@ using UnityEditor;
 // each step in the order AsteroidSpawner reveals them. Does nothing at runtime.
 public class PatternGizmos : MonoBehaviour
 {
-    // Mirrors the Game scene, in spawner space: the orbit center is the camera's
-    // x/y and the radius is PlayerMovement.circleRadius. Update if those change.
-    public const float OrbitRadius = 3f;
-    public static readonly Vector2 OrbitCenter = new Vector2(0f, 1f);
-    private const float PlayerZ = -19f;         // player z (-4) minus spawner z (15)
-    private const float SameZTolerance = 0.01f; // matches AsteroidSpawner
+    // The Game scene's layout in spawner space, read from OrbitSettings so the
+    // preview always matches play.
+    public static float OrbitRadius => OrbitSettings.Instance.OrbitRadius;
+    public static Vector2 OrbitCenter => OrbitSettings.Instance.OrbitCenterFromSpawner;
+    private static float PlayerZ => OrbitSettings.Instance.PlayerZFromSpawner;
 
     [SerializeField] private Color ringColor = new Color(0.3f, 0.8f, 1f, 0.6f);
     [SerializeField] private Color playerRingColor = new Color(1f, 0.8f, 0.2f, 0.8f);
@@ -40,7 +39,7 @@ public class PatternGizmos : MonoBehaviour
         var stepCount = new List<int>();
         for (int i = 0; i < zs.Count; i++)
         {
-            if (i > 0 && zs[i] - zs[i - 1] <= SameZTolerance)
+            if (i > 0 && zs[i] - zs[i - 1] <= AsteroidSpawner.SameZTolerance)
             {
                 stepCount[stepCount.Count - 1]++;
             }

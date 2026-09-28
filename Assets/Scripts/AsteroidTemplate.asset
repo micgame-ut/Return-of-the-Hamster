@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AsteroidTemplate
   linearGlow: {r: 1, g: 0, b: 0, a: 1}
   waveGlow: {r: 0, g: 1, b: 1, a: 1}
-  spiralGlow: {r: 1, g: 0, b: 1, a: 1}
   glowIntensity: 3
   warningTime: 1
   blinkInterval: 0.1

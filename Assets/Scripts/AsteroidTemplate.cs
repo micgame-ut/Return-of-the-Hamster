@@ -8,7 +8,6 @@ public class AsteroidTemplate : ScriptableObject
     [Header("Warning Glow")]
     [ColorUsage(false, true)] public Color linearGlow = Color.red;
     [ColorUsage(false, true)] public Color waveGlow = Color.cyan;
-    [ColorUsage(false, true)] public Color spiralGlow = Color.magenta;
     public float glowIntensity = 3f;
 
     [Header("Warning Timing")]
@@ -43,7 +42,6 @@ public class AsteroidTemplate : ScriptableObject
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {
         AsteroidBehavior.MovementType.Wave => waveGlow,
-        AsteroidBehavior.MovementType.Spiral => spiralGlow,
         // Linear and any other unhandled types use the linear color.
         _ => linearGlow,
     } * glowIntensity;

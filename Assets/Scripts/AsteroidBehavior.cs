@@ -7,14 +7,14 @@ using UnityEngine;
 // starts moving, it blinks a warning glow so the player can see it coming.
 public class AsteroidBehavior : MonoBehaviour
 {
-    public enum MovementType { Linear, Wave, Spiral }
+    public enum MovementType { Linear, Wave }
 
     [Header("Movement")]
     [SerializeField] private MovementType movementType = MovementType.Linear;
     [SerializeField] private float speed = 20f;
 
-    [Header("Wave / Spiral")]
-    [SerializeField] private float amplitude = 5f;   // wave height or spiral radius
+    [Header("Wave")]
+    [SerializeField] private float amplitude = 30f;  // degrees swung each way around the orbit
     [SerializeField] private float frequency = 1f;   // cycles per second
 
     [Header("Destruction")]
@@ -41,6 +41,9 @@ public class AsteroidBehavior : MonoBehaviour
     private float distance; // how far it has travelled toward the camera
     private bool isMoving;
     private Vector3 spinAxis;
+
+    // Wave swings around the player's orbit, on the player's own circle
+    private float baseAngle; // radians, where on the circle it was revealed
 
     // How fast this asteroid closes on the camera right now; rises with player speed.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
@@ -93,6 +96,11 @@ public class AsteroidBehavior : MonoBehaviour
 
         // Each asteroid spins around its own random axis.
         spinAxis = Random.onUnitSphere;
+
+        // The angle the asteroid sits at around the orbit center. Atan2 is the
+        // reverse of cos/sin, turning an x/y back into an angle.
+        Vector2 fromCenter = (Vector2)origin - OrbitSettings.Instance.OrbitCenter;
+        baseAngle = Mathf.Atan2(fromCenter.y, fromCenter.x);
 
         StartCoroutine(WarnThenMove());
     }
@@ -177,20 +185,21 @@ public class AsteroidBehavior : MonoBehaviour
         // frame so a change in speed doesn't make the asteroid jump.
         distance += ApproachSpeed * Time.deltaTime;
 
-        // Every type travels toward the camera (-Z); the types differ only
-        // in the sideways offset added on top of that forward motion.
-        Vector3 forward = Vector3.back * distance;
-        float angle = elapsed * frequency * Mathf.PI * 2f;
+        // Every type travels toward the camera (-Z).
+        Vector3 position = origin + Vector3.back * distance;
 
-        Vector3 offset = movementType switch
+        // Wave snaps onto the player's circle and swings back and forth along it.
+        if (movementType == MovementType.Wave)
         {
-            MovementType.Wave => new Vector3(Mathf.Sin(angle) * amplitude, 0f, 0f),
-            MovementType.Spiral => new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * amplitude,
-            // Linear and any other unhandled types have no offset.
-            _ => Vector3.zero,
-        };
+            // Read every frame so it follows the orbit being tuned live
+            OrbitSettings orbit = OrbitSettings.Instance;
+            float swing = Mathf.Sin(elapsed * frequency * Mathf.PI * 2f) * amplitude * Mathf.Deg2Rad;
+            float angle = baseAngle + swing;
+            position.x = orbit.OrbitCenter.x + Mathf.Cos(angle) * orbit.OrbitRadius;
+            position.y = orbit.OrbitCenter.y + Mathf.Sin(angle) * orbit.OrbitRadius;
+        }
 
-        transform.position = origin + forward + offset;
+        transform.position = position;
 
         // Asteroids fly toward -Z, so once one is far enough behind the camera it
         // can never come back into view.
