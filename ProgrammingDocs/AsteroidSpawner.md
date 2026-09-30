@@ -5,7 +5,7 @@
 Sends asteroids at the player. It plays through a list of **waves**, where each wave is a pattern prefab
 (a group of asteroids laid out in the pattern builder). It reveals each pattern's asteroids a few at a
 time so they arrive in the shape they were laid out in, then moves on to the next wave. It stops once
-the earth has arrived.
+the earth has arrived or the game is over.
 
 ## Where it lives
 
@@ -14,8 +14,9 @@ the earth has arrived.
   `OrbitSettings` asset (see `Awake`).
 - **Requires:**
   - Pattern prefabs whose **direct children** are asteroids (with AsteroidBehavior).
-  - `GameManager.Instance` for the LevelTimer (to know when to stop) and the gameplay camera (to sort
-    asteroids by distance). It still runs without one, but it never stops and sorts from z = 0.
+  - `GameManager.Instance` for the LevelTimer and `IsGameOver` (to know when to stop) and the gameplay
+    camera (to sort asteroids by distance). It still runs without one, but it never stops and sorts from
+    z = 0.
 
 ## Inspector settings
 
@@ -33,6 +34,13 @@ It's built from two coroutines (methods that can pause and continue later, see A
 `RunWaves` handles the list of waves, and `SpawnPattern` handles revealing the asteroids inside one
 pattern.
 
+### `StopSpawning`: when to stop
+
+A private property that's true once the earth has arrived (LevelTimer's `IsComplete`) **or** the game is
+over (GameManager's `IsGameOver`). `RunWaves` and `SpawnPattern` both check it, so one property covers
+both reasons to stop. Each part checks for `null` first, so a missing LevelTimer or GameManager just
+counts as "not stopped".
+
 ### `Awake`
 
 Moves the spawner to `SpawnerPosition` from `OrbitSettings`. The pattern builder reads the same value, so
@@ -46,12 +54,12 @@ Gets the LevelTimer from GameManager, then starts `RunWaves`, as long as there's
 
 1. Wait `startDelay` seconds.
 2. For each wave, in the order `GetWaveOrder` gives:
-   - If the earth has arrived, stop for good.
+   - If `StopSpawning` is true, stop for good.
    - If the wave has no pattern assigned, skip it.
    - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
      coroutine inside this one and continues only when that one is done.
    - Wait `delayAfter` seconds.
-3. If `loop` is on and the earth hasn't arrived, go back to step 2.
+3. If `loop` is on and `StopSpawning` is still false, go back to step 2.
 
 `delayAfter` starts once the pattern's **last asteroid has appeared**, not once it has flown past. So
 with a short delay, the next pattern can start while the previous one is still coming at the player.
@@ -101,7 +109,7 @@ Asteroids at the **same depth** (within `SameZTolerance`, 0.01 units) have no ga
 together. `SameZTolerance` is `public const`, so PatternGizmos can group asteroids the same way. That's how a ring or row laid out at one depth appears all at once.
 
 For each asteroid, once its wait is over:
-- If the earth has arrived, stop revealing.
+- If `StopSpawning` is true (the earth arrived or the game ended mid-pattern), stop revealing.
 - **Detach it** from the pattern (`SetParent(null, true)`, where `true` means keep its position in the
   world). It then moves on its own instead of with the pattern.
 - Move it to the spawn plane, keeping its x/y.
@@ -109,14 +117,15 @@ For each asteroid, once its wait is over:
   the warning blink.
 
 **5. Clean up.** Once the loop finishes, it destroys the pattern root. The revealed asteroids were
-detached, so they're unaffected. Only the empty root and any asteroids that never got revealed (if the
-earth arrived) are removed.
+detached, so they're unaffected. Only the empty root and any asteroids that never got revealed (if
+spawning stopped partway) are removed.
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer (in `Start`) and the gameplay camera (each pattern).
+- **GameManager**: gets the LevelTimer (in `Start`) and the gameplay camera (each pattern), and reads
+  `IsGameOver` through `StopSpawning`.
 - **OrbitSettings**: reads `SpawnerPosition` in `Awake`.
-- **LevelTimer**: checks `IsComplete` to stop spawning once the earth has arrived.
+- **LevelTimer**: checks `IsComplete`, through `StopSpawning`, to stop spawning once the earth has arrived.
 - **AsteroidBehavior**: reads `ApproachSpeed` to time the gaps, and switches asteroids on, which starts
   their `OnEnable`.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
@@ -139,6 +148,8 @@ earth arrived) are removed.
   with the group, and there's no wait for them (the group has no AsteroidBehavior, so no speed).
 - **Everything appears at the closest asteroid's depth.** Moving a whole pattern closer to or further from
   the camera changes where its asteroids appear.
+- **Stopping doesn't clear the screen.** At game over or when the earth arrives, asteroids already
+  revealed keep flying until they pass the camera. Only unrevealed ones are removed.
 - **Random can repeat a wave back to back.** The last wave of one shuffle and the first of the next can be
   the same.
 - **Asteroids' `OnEnable` runs once when the pattern spawns,** before they're switched off. See

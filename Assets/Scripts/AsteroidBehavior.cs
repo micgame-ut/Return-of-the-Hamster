@@ -228,7 +228,12 @@ public class AsteroidBehavior : MonoBehaviour
             float side = Vector2.Dot(player.transform.position - transform.position, player.OrbitTangent);
             float dir = side != 0f ? Mathf.Sign(side) : (Random.value < 0.5f ? -1f : 1f);
             if (player.TakeHit(dir * template.knockbackForce, template.speedLoss))
+            {
                 CameraShake.Shake(template.hitShakeDuration, template.hitShakeMagnitude);
+
+                PlayerHealth health = player.GetComponent<PlayerHealth>();
+                if (health != null) health.LoseLife();
+            }
         }
     }
 

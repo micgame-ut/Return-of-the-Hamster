@@ -15,7 +15,8 @@ the same way you would handle a mouse.
 - **Requires:**
   - `meshTransform`: the visual mesh (a child), which is rotated and blinked separately from the root/collider
   - A `PlayerInput` component sending `OnMove` and `OnButton` messages
-  - `GameManager.Instance`, which provides the `LevelTimer`
+  - `GameManager.Instance`, which provides the `LevelTimer` and `IsGameOver`
+  - A `PlayerHealth` on the same GameObject, for lives (read by AsteroidBehavior, not this script)
   - The `OrbitSettings` asset, for the orbit's radius and center and the player's depth
 
 ## Inspector settings
@@ -50,6 +51,19 @@ asset, shared with the pattern builder so the two always match. The orbit's radi
   the physics step, which is when asteroid trigger collisions are checked.
 - **Update** runs every frame and handles everything else: the mesh roll (visual only), `Speed`, and the
   invulnerability blink.
+
+### Game over (`InputLocked`)
+
+`InputLocked` is a private property that's true once GameManager's `IsGameOver` is set. While it's true:
+
+- The first line of `Update` sets `moveInput` to zero every frame. It's done there rather than in `OnMove`
+  because `OnMove` only runs when input changes, so a value held at the moment of game over would stick.
+  With no input, the existing code does the rest: steering stops, `Roll` eases back to level, and
+  `UpdateSpeed` lets `Speed` decay to 0.
+- `OnButton` returns straight away, so no boosts.
+
+Knockback isn't input, so a push from the final hit still plays out and fades. This is a placeholder for
+a fuller death sequence (speed to zero, shake, explode, then a game-over screen).
 
 ### The orbit (`Movement`)
 
@@ -141,6 +155,8 @@ Pressing the button boosts, depending on the current input:
 - **No sideways input:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). This one
   does stack with each press. It does nothing once the level is complete.
 
+After game over, the button does nothing at all (see `InputLocked`).
+
 There is currently no cooldown, so the player can spam boost endlessly.
 
 ### Getting hit (`TakeHit`)
@@ -152,8 +168,8 @@ Called by `AsteroidBehavior` when the player hits an asteroid they are too slow 
    circle, out of the way, and it fades the same way a boost does. AsteroidBehavior picks the direction
    based on which side of the asteroid the player was on.
 3. `Speed` drops by `speedLoss`.
-4. The invulnerability timer starts, and `TakeHit` returns `true` (AsteroidBehavior uses this to decide
-   whether to shake the camera).
+4. The invulnerability timer starts, and `TakeHit` returns `true`. AsteroidBehavior uses this to decide
+   whether to shake the camera and take a life (`PlayerHealth.LoseLife`).
 
 ### Invulnerability blink (`UpdateInvulnerability`)
 
@@ -164,8 +180,8 @@ visible.
 
 Only the renderers are hidden. The collider stays active, so collisions still happen: the asteroid's
 `OnTriggerEnter` fires and it calls `TakeHit` like normal. `TakeHit` checks `IsInvulnerable` first and
-returns `false` straight away, so none of the knockback, speed loss, or camera shake happens. The
-collision is detected, then ignored.
+returns `false` straight away, so none of the knockback, speed loss, camera shake, or life loss
+happens. The collision is detected, then ignored.
 
 Side effects of doing it this way:
 
@@ -176,7 +192,8 @@ Side effects of doing it this way:
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer from it
+- **GameManager**: gets the LevelTimer from it, and reads `IsGameOver` (through `InputLocked`) every
+  frame and on the boost button
 - **OrbitSettings**: reads the orbit's radius and center every tick, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
@@ -190,5 +207,7 @@ Side effects of doing it this way:
   itself back to the asset's `playerZ` when the game starts.
 - `meshTransform` must be assigned. `Roll` uses it without a null check.
 - Boost has no cooldown yet.
+- Game over only locks input. Knockback, the invulnerability blink, and the collider all keep working,
+  so asteroids can still push the player after the game ends.
 - Invulnerability ignores hits in code, it doesn't disable the collider. Anything else that reacts to
   touching the player (not through `TakeHit`) will still react during invulnerability.

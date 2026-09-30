@@ -104,11 +104,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.4
+      value: -2
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -7
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -163,6 +163,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2625096408153486186}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4482773579460537118}
   m_SourcePrefab: {fileID: 100100000, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
 --- !u!1 &3493068378728214698 stripped
 GameObject:
@@ -259,18 +262,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95d7a07d8b7866147850aec3d0cb23fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  mainCamera: {fileID: 0}
   meshTransform: {fileID: 8124262161344390682}
-  mouseSensitivity: 0.5
+  mouseSensitivity: 0.3
+  startAngle: -90
+  faceCenter: 1
   rotationSpeed: 75
   rollDamping: 5
   acceleration: 2
   speedDecay: 20
-  maxSpeed: 100
+  maxSpeed: 60
   topSpeedDegrade: 20
   boostForce: 3
   boostDecay: 3
   speedBoost: 20
+  invulnerableTime: 1.5
+  hitBlinkInterval: 0.1
+--- !u!114 &4482773579460537118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3493068378728214698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3906db24ed1eb40a05a875c98a64f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  maxLives: 3
 --- !u!4 &4265488849847642640 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}

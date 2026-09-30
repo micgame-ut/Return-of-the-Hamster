@@ -34,7 +34,7 @@ public class LevelTimer : MonoBehaviour
 
     void Update()
     {
-        if (IsComplete) return;
+        if (IsComplete || GameManager.Instance.IsGameOver) return;
 
         // Player speed divides the level time: at Speed 10 with factor 0.1,
         // the level takes half as long. Progress is accumulated per frame
@@ -43,5 +43,7 @@ public class LevelTimer : MonoBehaviour
         Progress = Mathf.Min(Progress + Time.deltaTime / effectiveTime, 1f);
 
         earth.position = Vector3.Lerp(origin, stopPoint, Progress);
+
+        if (IsComplete) GameManager.Instance.Win();
     }
 }
