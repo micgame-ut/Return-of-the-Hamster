@@ -106,7 +106,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (InputLocked) moveInput = Vector2.zero;
+        if (InputLocked) return;
 
         Vector2 mouseDelta = moveInput * Time.deltaTime;
 
@@ -117,6 +117,9 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Once the game is over, PlayerDeath moves the ship instead.
+        if (InputLocked) return;
+
         Vector2 mouseDelta = moveInput * Time.fixedDeltaTime;
 
         Movement(mouseDelta);

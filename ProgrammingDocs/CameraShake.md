@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Makes the camera jitter briefly for impact: when the player smashes an asteroid, or gets hit by one.
+Makes the camera jitter briefly for impact: when the player smashes an asteroid, gets hit by one, or
+explodes at game over.
 Any script can trigger it with one line: `CameraShake.Shake(duration, magnitude)`.
 
 ## Where it lives
@@ -21,6 +22,7 @@ in the AsteroidTemplate asset:
 | --- | --- | --- |
 | Smashing an asteroid | `shakeDuration` (0.2s) | `shakeMagnitude` (0.3) |
 | Getting hit by an asteroid | `hitShakeDuration` (0.15s) | `hitShakeMagnitude` (0.2) |
+| The player exploding (PlayerDeath) | `explodeShakeDuration` (0.4s) | `explodeShakeMagnitude` (0.5) |
 
 ## How it works
 
@@ -51,7 +53,9 @@ Every frame:
 1. **Undo last frame's shake.** `localPosition -= lastOffset`. The camera is back where it would be
    with no shake.
 2. **If no shake is running, stop here.**
-3. **Count down.** `timeLeft -= Time.deltaTime`.
+3. **Count down.** `timeLeft -= Time.unscaledDeltaTime`. That's real time, which ignores
+   `Time.timeScale`. GameManager freezes time at game over, and the shake still has to play and end
+   then. During normal play, time scale is 1, so this is the same as `Time.deltaTime`.
 4. **Work out how strong it is now.** `strength = magnitude × (timeLeft / duration)`. `timeLeft / duration`
    goes from 1 down to 0 as the shake runs out, so the shake starts at full strength and fades to
    nothing instead of stopping suddenly.
@@ -75,6 +79,7 @@ so it still works if the parent moves.
 ## Talks to
 
 - **AsteroidBehavior**: calls `Shake` when the player smashes an asteroid, and when `TakeHit` accepts a hit.
+- **PlayerDeath**: calls `Shake` when the ship explodes.
 
 CameraShake doesn't read from or call anything itself.
 
@@ -90,5 +95,7 @@ CameraShake doesn't read from or call anything itself.
   landing just after a 0.2s smash ends the whole shake 0.15s from then.
 - **It shakes forward and back too.** `insideUnitSphere` includes z, so the camera also moves toward and
   away from the scene. Use `Random.insideUnitCircle` for a flat, screen-only shake.
+- **It ignores pauses.** Because it counts real time, a shake keeps playing if time is frozen, including
+  any future pause menu that uses `Time.timeScale`.
 - **The shake rate depends on frame rate.** A new random offset is picked every frame, so at a higher
   frame rate the shake looks faster and more frantic.

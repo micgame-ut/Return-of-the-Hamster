@@ -36,6 +36,9 @@ public class GameManager : MonoBehaviour
         }
         Instance = this;
 
+        // Time scale is global and survives scene reloads, so start each scene unfrozen.
+        Time.timeScale = 1f;
+
         // Level-wide scripts normally sit on this same object, so fill them in if unassigned.
         if (levelTimer == null) levelTimer = GetComponent<LevelTimer>();
 
@@ -48,6 +51,7 @@ public class GameManager : MonoBehaviour
         if (IsGameOver || HasWon) return;
 
         IsGameOver = true;
+        Time.timeScale = 0f;
         Debug.Log("Game over");
     }
 
@@ -57,6 +61,13 @@ public class GameManager : MonoBehaviour
 
         HasWon = true;
         Debug.Log("Level complete");
+    }
+
+    public void DeathSequenceFinished()
+    {
+        if (!IsGameOver) return;
+
+        Debug.Log("Death sequence finished");
     }
 
     private void OnDestroy()

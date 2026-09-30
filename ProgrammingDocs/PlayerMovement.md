@@ -17,6 +17,7 @@ the same way you would handle a mouse.
   - A `PlayerInput` component sending `OnMove` and `OnButton` messages
   - `GameManager.Instance`, which provides the `LevelTimer` and `IsGameOver`
   - A `PlayerHealth` on the same GameObject, for lives (read by AsteroidBehavior, not this script)
+  - A `PlayerDeath` on the same GameObject, which moves the ship after game over (no direct link either)
   - The `OrbitSettings` asset, for the orbit's radius and center and the player's depth
 
 ## Inspector settings
@@ -54,16 +55,21 @@ asset, shared with the pattern builder so the two always match. The orbit's radi
 
 ### Game over (`InputLocked`)
 
-`InputLocked` is a private property that's true once GameManager's `IsGameOver` is set. While it's true:
+`InputLocked` is a private property that's true once GameManager's `IsGameOver` is set. At that point
+GameManager also freezes time (`Time.timeScale = 0`), and PlayerDeath takes over the ship. While it's
+true, PlayerMovement gets out of the way:
 
-- The first line of `Update` sets `moveInput` to zero every frame. It's done there rather than in `OnMove`
-  because `OnMove` only runs when input changes, so a value held at the moment of game over would stick.
-  With no input, the existing code does the rest: steering stops, `Roll` eases back to level, and
-  `UpdateSpeed` lets `Speed` decay to 0.
-- `OnButton` returns straight away, so no boosts.
+- **`Update` returns straight away.** Roll, speed and the invulnerability blink all stop where they are.
+  This matters under the freeze: `Roll` eases back to level using `Time.deltaTime`, which is now 0, but
+  applies its rotation without it, so without the early return a ship that was mid-turn would spin
+  forever. The blink could also freeze with the ship hidden, which is why PlayerDeath switches the
+  renderers back on.
+- **`FixedUpdate` returns straight away,** so `Movement` stops putting the ship back on the ring while
+  PlayerDeath moves it. (Unity doesn't call `FixedUpdate` at all while time scale is 0. The check
+  documents the intent and covers any future non-zero freeze.)
+- **`OnButton` returns straight away,** so no boosts.
 
-Knockback isn't input, so a push from the final hit still plays out and fades. This is a placeholder for
-a fuller death sequence (speed to zero, shake, explode, then a game-over screen).
+The name stayed `InputLocked`, although it now stops movement as well as input.
 
 ### The orbit (`Movement`)
 
@@ -198,6 +204,8 @@ Side effects of doing it this way:
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
+- **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
+  PlayerDeath can take over
 - **Anything reading `Speed`**: see the table above
 
 ## Gotchas
@@ -207,7 +215,7 @@ Side effects of doing it this way:
   itself back to the asset's `playerZ` when the game starts.
 - `meshTransform` must be assigned. `Roll` uses it without a null check.
 - Boost has no cooldown yet.
-- Game over only locks input. Knockback, the invulnerability blink, and the collider all keep working,
-  so asteroids can still push the player after the game ends.
+- After game over, PlayerMovement does nothing. Anything that should happen to the ship then belongs in
+  PlayerDeath. The collider stays on, but physics is frozen, so no hits can happen.
 - Invulnerability ignores hits in code, it doesn't disable the collider. Anything else that reacts to
   touching the player (not through `TakeHit`) will still react during invulnerability.
