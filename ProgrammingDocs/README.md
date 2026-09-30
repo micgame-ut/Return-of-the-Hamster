@@ -23,6 +23,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
+| PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |

@@ -144,7 +144,9 @@ every frame.
      gets pushed that way, away from the asteroid. A perfect dead-center hit (exactly 0) picks a side at
      random.
    - It calls `player.TakeHit(knockback, speedLoss)`. If the player wasn't invulnerable, `TakeHit`
-     returns `true` and the camera shakes.
+     returns `true`, meaning the hit counted. Only then does the camera shake and the player lose a life:
+     it finds PlayerHealth on the player's object (`player.GetComponent<PlayerHealth>()`) and calls
+     `LoseLife()`. Both are inside braces under the `if`, so neither happens during invulnerability.
 
 The asteroid isn't destroyed when it hits the player. It keeps flying past.
 
@@ -170,6 +172,7 @@ scene for asteroids every frame. The public properties exist for it:
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).
 - **AsteroidTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
+- **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
 - **GameManager**: gets the gameplay camera in `Awake`.
 - **AsteroidSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
@@ -191,6 +194,10 @@ scene for asteroids every frame. The public properties exist for it:
   `Awake` and `OnEnable`), then the spawner immediately switches them off again. Because of that,
   `OnEnable` has to reset everything, which it does. Any new state added to the script should be reset there too.
 - **Smashing works while invulnerable.** The smash check happens before `TakeHit`, so it ignores the
-  player's invulnerability window.
+  player's invulnerability window. Smashing never costs a life.
+- **PlayerHealth must be on the player object.** It's looked up on the object that has PlayerMovement. If
+  it's missing, hits still push and shake but never cost a life, with no error.
+- **No template means no lost lives either.** The hit branch is skipped entirely without a template, so
+  `TakeHit` and `LoseLife` are never called.
 - **An overlapping asteroid won't hit twice.** `OnTriggerEnter` only fires on first contact, so an asteroid
   the player is still inside won't hit again when invulnerability ends.

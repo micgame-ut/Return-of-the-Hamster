@@ -3,14 +3,17 @@
 ## Purpose
 
 One central place for the scene's important objects: the player, the gameplay camera, the earth, the
-earth camera, and the LevelTimer. Instead of every script having its own Inspector fields for these (and
-each one needing to be dragged in by hand), scripts ask the GameManager with `GameManager.Instance`.
+earth camera, the LevelTimer, and the player's PlayerHealth. Instead of every script having its own
+Inspector fields for these (and each one needing to be dragged in by hand), scripts ask the GameManager
+with `GameManager.Instance`.
 
-It holds references only. It doesn't run any game logic itself.
+It also holds the level's end state: whether the game is over or the level is won. It doesn't stop other
+scripts itself. It announces the state, and each script checks it and stops itself.
 
 ## Where it lives
 
 - **Attached to:** the `Game Manager` GameObject in `Game.unity`. `LevelTimer` sits on the same object.
+  `PlayerHealth` sits on the player object instead, since it belongs to the player.
 - **Requires:** its Inspector fields filled in (see below). There must be exactly one in the scene.
 - **Not in:** `PatternEnvironment.unity`. Scripts that use it check for `null`, so they still run there
   without it (see Gotchas).
@@ -24,9 +27,10 @@ It holds references only. It doesn't run any game logic itself.
 | `earth` | Renderer | The earth model that approaches as the level goes on |
 | `earthCamera` | Camera | The camera that renders the earth |
 | `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
+| `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
-`LevelTimer`). Other scripts can read the references but can't swap them out.
+`LevelTimer`, `PlayerHealth`). Other scripts can read the references but can't swap them out.
 
 ## How it works
 
@@ -56,9 +60,35 @@ or `Start` runs, `Instance` is ready.
 2. **Register.** `Instance = this`.
 3. **Fill in the LevelTimer.** If `levelTimer` was left empty, it looks for a LevelTimer on the same
    GameObject with `GetComponent`.
+4. **Fill in the PlayerHealth.** If `playerHealth` was left empty and `player` is assigned, it looks for a
+   PlayerHealth on the player object with `player.GetComponent`. Calling `GetComponent` on another
+   component searches that component's GameObject. The `&& player != null` check stops before
+   `player.GetComponent` could throw.
 
 `[DisallowMultipleComponent]` also stops two GameManagers from being added to the same GameObject in the
 editor. The duplicate check in `Awake` covers two on *different* GameObjects.
+
+### End state: `IsGameOver` and `HasWon`
+
+Two `bool` properties, both `private set`, so other scripts can read them but only GameManager can assign
+them. Both start as `false`, the default for a `bool`. They're instance properties, so a reloaded scene
+starts with a new GameManager and both are `false` again.
+
+Other scripts **pull** this state: each one checks it and stops itself, instead of GameManager reaching
+into them. If something new needs to stop at game over, the check goes in that script and GameManager
+doesn't change.
+
+### `GameOver`
+
+Called by PlayerHealth when the player runs out of lives. If the game is already over or the level is
+already won, it exits immediately. Otherwise it sets `IsGameOver` and logs "Game over". So it only ever
+runs once, and losing a life after winning can't turn a win into a loss.
+
+### `Win`
+
+Called by LevelTimer on the frame the earth arrives. It mirrors `GameOver`: it exits if either state is
+already set, otherwise it sets `HasWon` and logs "Level complete". It's a placeholder for now, for things
+like a victory screen.
 
 ### `OnDestroy`
 
@@ -73,14 +103,16 @@ its own.
 
 ## Talks to
 
-GameManager doesn't read from or call anything. Other scripts read from it:
+GameManager reads `player` once in `Awake` to find the PlayerHealth. Otherwise it doesn't read from or call
+anything. Other scripts read from it or call it:
 
-| Script | What it gets | When |
+| Script | What it gets or calls | When |
 | --- | --- | --- |
-| **PlayerMovement** | `LevelTimer` | `Start` |
+| **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
+| **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
 | **AsteroidBehavior** | `GameplayCamera` | `Awake` |
-| **AsteroidSpawner** | `LevelTimer`, `GameplayCamera` | `Start`, and when spawning |
-| **LevelTimer** | `Earth`, `EarthCamera` | `Start` |
+| **AsteroidSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
+| **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`, calls `Win()` | `Start`; every frame |
 | **OrbitRing** | `Player` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
 
@@ -89,12 +121,16 @@ GameManager doesn't read from or call anything. Other scripts read from it:
 - **Unfilled fields fail somewhere else.** GameManager doesn't check its fields. If one is left empty, the
   error shows up in whichever script uses it, not in GameManager.
 - **LevelTimer doesn't check for `null`.** Every other script uses `GameManager.Instance != null ? ... : null`,
-  so it keeps running in a scene without a GameManager. LevelTimer reads `GameManager.Instance.Earth`
-  directly, so it throws an error if there's no GameManager or `earth` / `earthCamera` is empty. It's fine
-  today because LevelTimer is only in `Game.unity`.
+  so it keeps running in a scene without a GameManager. LevelTimer reads `GameManager.Instance` directly
+  (for `Earth`, `EarthCamera`, `IsGameOver` and `Win()`), so it throws an error if there's no GameManager or
+  `earth` / `earthCamera` is empty. It's fine today because LevelTimer is only in `Game.unity`.
 - **Only safe from `Awake` onward.** `Instance` is set in `Awake`. Reading it from a field initializer or a
   constructor gets `null`.
 - **Most lookups happen once.** Almost every script grabs its reference in `Awake` or `Start` and keeps it.
   Changing a GameManager field during Play mode won't reach those scripts.
-- **The player is only used by OrbitRing.** Other scripts that need the player (like AsteroidBehavior)
-  find it through the collision instead.
+- **The PlayerHealth fallback needs `player`.** If `player` is empty, `playerHealth` stays empty too.
+  AsteroidBehavior doesn't depend on this, since it finds PlayerHealth through the player it hit.
+- **Nothing resets the end state during play.** Once `IsGameOver` or `HasWon` is set, it stays set until
+  the scene reloads.
+- **The player is only used by OrbitRing and GameManager's own `Awake`.** Other scripts that need the
+  player (like AsteroidBehavior) find it through the collision instead.

@@ -28,8 +28,9 @@ public class AsteroidSpawner : MonoBehaviour
 
     private LevelTimer levelTimer;
 
-    // Once the earth has arrived, no more waves or asteroids are spawned.
-    private bool LevelComplete => levelTimer != null && levelTimer.IsComplete;
+    // Once the earth has arrived or the game is over, no more waves or asteroids are spawned.
+    private bool StopSpawning => (levelTimer != null && levelTimer.IsComplete) ||
+                                 (GameManager.Instance != null && GameManager.Instance.IsGameOver);
 
     private void Awake()
     {
@@ -53,7 +54,7 @@ public class AsteroidSpawner : MonoBehaviour
         {
             foreach (Wave wave in GetWaveOrder())
             {
-                if (LevelComplete) yield break;
+                if (StopSpawning) yield break;
                 if (wave.pattern == null) continue;
 
                 // Wait for the whole pattern to finish revealing, then pause.
@@ -61,7 +62,7 @@ public class AsteroidSpawner : MonoBehaviour
                 yield return new WaitForSeconds(wave.delayAfter);
             }
         }
-        while (loop && !LevelComplete);
+        while (loop && !StopSpawning);
     }
 
     private List<Wave> GetWaveOrder()
@@ -120,9 +121,9 @@ public class AsteroidSpawner : MonoBehaviour
             }
             previousDistance = distance;
 
-            // Earth arrived mid-pattern: stop revealing. The hidden children
+            // Earth arrived or game over mid-pattern: stop revealing. The hidden children
             // are still under the pattern root and are removed with it below.
-            if (LevelComplete) break;
+            if (StopSpawning) break;
 
             // Detach so each asteroid moves on its own, then reveal it. Its
             // OnEnable starts the warning blink and records its start point.

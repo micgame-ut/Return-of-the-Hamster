@@ -72,6 +72,9 @@ public class PlayerMovement : MonoBehaviour
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
 
+    // Once the game is over, all input is ignored.
+    private bool InputLocked => GameManager.Instance != null && GameManager.Instance.IsGameOver;
+
     void Awake()
     {
         // Statics survive scene reloads, so reset them for a fresh run.
@@ -103,6 +106,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (InputLocked) moveInput = Vector2.zero;
+
         Vector2 mouseDelta = moveInput * Time.deltaTime;
 
         Roll(mouseDelta);
@@ -214,7 +219,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        if (!value.isPressed)
+        if (!value.isPressed || InputLocked)
             return;
 
         if (moveInput.x != 0f)

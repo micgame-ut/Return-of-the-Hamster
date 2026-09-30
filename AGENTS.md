@@ -4,8 +4,9 @@ This is a Unity (C#) project. Gameplay scripts live in `Assets/Scripts`, and eac
 in `ProgrammingDocs/` (see [ProgrammingDocs/README.md](ProgrammingDocs/README.md)).
 
 **The main goal:** the user should understand every line that goes into this project. Explaining comes
-before code, and short snippets are better than large blocks. If the user doesn't understand a snippet
-yet, it isn't ready to go into the project.
+before code, and short snippets are better than large blocks. A snippet of new-script logic isn't
+ready to go into the project until the user has answered a check on it, and had any misunderstanding
+explained. Changes to existing scripts only need approval (section 6).
 
 **"The user" means whoever is prompting the agent**, not only the project owner. Every rule here,
 including the understanding checks, applies to that person.
@@ -112,10 +113,15 @@ When a new feature comes up, do this first, before explaining the logic (section
 
 - After a snippet, ask a short question that checks understanding, not just "does this look good?".
   For example: *"What would happen to the earth if `Speed` doubled halfway through the level?"*
+- **Checks are only for the new feature's own logic in a new script.** When changing a script that
+  existed before the current task (for example, to reference the new script or call its methods),
+  don't ask a check. Show what's changing with a short explanation, and ask for approval. This
+  replaces the understanding check here, the "explain what it does now" step in section 1, and the
+  "check that the user follows it" step for bug fixes in section 2.
 - Don't move on until the user answers the question in their own words. A plain "yes", "looks good", or
   "keep going" doesn't count as an answer.
-- If the answer shows a misunderstanding, explain again in a different way before continuing. Don't
-  just correct them and move on.
+- If the answer shows a misunderstanding, explain it thoroughly, in a different way than before. Then
+  move on: don't ask the question again or ask the user to try again, unless they ask for another check.
 ### Techniques and refreshers
 
 Whenever code uses a coding technique or Unity feature, name it and explain:
@@ -156,8 +162,8 @@ Use the correct terms, and make sure the user does too.
 - **Correct every wrong use in the user's explanations.** When the user explains their understanding
   (understanding checks, recaps, doc descriptions), point out any term used wrongly. Say which term
   fits and why the difference matters. Do this even when their understanding of the logic is right.
-- **Ask the user to try again** with the right term when the mix-up hides a real misunderstanding
-  (for example, treating a class and an object as the same thing).
+- **Explain further** when the mix-up hides a real misunderstanding (for example, treating a class
+  and an object as the same thing), then move on.
 - **Keep corrections short.** One or two sentences and an example from the code being discussed.
 
 Terms to watch for (not a complete list, so correct any term that matters for understanding code):
@@ -195,8 +201,8 @@ Once a script's code is finished and the user has confirmed it works in Play mod
 6. Add or update the script's row in the table in
    [ProgrammingDocs/README.md](ProgrammingDocs/README.md).
 
-When an existing script changes, update its doc the same way: ask the user to describe the change, then
-update the relevant sections.
+When an existing script changes, update its doc yourself, without asking the user to describe the
+change. Then tell the user which sections changed.
 
 ## 8. Testing
 

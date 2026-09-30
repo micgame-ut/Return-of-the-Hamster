@@ -29,7 +29,7 @@ With the scene's values, the level takes 120 seconds at speed 0 and 60 seconds a
 `Progress` is a number from 0 (level just started) to 1 (earth has arrived). It's `private set`, so
 only LevelTimer can change it, but any script can read it.
 
-`IsComplete` is just `Progress >= 1`. Other scripts check it to know when the level is over.
+`IsComplete` is just `Progress >= 1`. Other scripts check it to know when the earth has arrived.
 
 ### `Start`: working out the earth's path
 
@@ -48,7 +48,8 @@ doesn't move, so this is only worked out once.
 
 ### `Update`: moving the earth
 
-Once the level is complete, it does nothing. Otherwise, every frame:
+Once the level is complete, or once GameManager's `IsGameOver` is set, it does nothing, so at game over
+the earth stays where it is. Otherwise, every frame:
 
 **1. How long the level should take right now.**
 
@@ -81,20 +82,31 @@ changes how fast progress grows from then on.
 **Lerp** (linear interpolation) finds the point a certain fraction of the way between two positions.
 `Progress = 0` gives `origin`, `1` gives `stopPoint`, and `0.5` gives the point exactly halfway.
 
+**4. Tell GameManager if the level was just won.**
+
+`if (IsComplete) GameManager.Instance.Win();`
+
+This only runs once. On the frame `Progress` reaches 1, `IsComplete` becomes true and `Win()` is called.
+Every frame after that, the early return at the top of `Update` exits first, so this line is never
+reached again. `Win()` also ignores repeat calls itself.
+
 ## Talks to
 
-- **GameManager**: gets the earth and earth camera in `Start`.
+- **GameManager**: gets the earth and earth camera in `Start`. Reads `IsGameOver` every frame, and calls
+  `Win()` once when the earth arrives.
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`
   to stop the player accelerating.
 - **AsteroidSpawner**: reads `IsComplete` to stop spawning.
 
 ## Gotchas
 
-- **Nothing happens when the level ends.** `IsComplete` only stops asteroids spawning and stops the player
-  speeding up. There's no win screen or next level yet. Anything that should happen at the end needs to
-  check `IsComplete` itself (there's no event to listen for).
+- **Winning is only a placeholder so far.** `IsComplete` stops asteroids spawning and stops the player
+  speeding up, and `Win()` sets GameManager's `HasWon` and logs, but there's no win screen or next level
+  yet. Anything that should happen at the end needs to check `IsComplete` or `HasWon` itself (there's no
+  event to listen for).
 - **No null checks.** A scene with LevelTimer but no GameManager, or with `earth` / `earthCamera` left
-  empty, throws an error in `Start`. With no earth, `Update` also throws every frame. With no earth
+  empty, throws an error in `Start`. With no GameManager, `Update` also throws every frame when it reads
+  `IsGameOver`. With no earth, `Update` also throws every frame. With no earth
   camera, the stop point is never set, so the earth drifts toward the world origin (0, 0, 0) instead.
 - **`stopDistance` must be less than the earth's starting distance from the camera.** If it's larger, the
   stop point ends up behind where the earth starts, and the earth moves away from the camera instead.
