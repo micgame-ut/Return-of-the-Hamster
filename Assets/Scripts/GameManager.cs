@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Camera earthCamera;
     [SerializeField] private LevelTimer levelTimer;
     [SerializeField] private PlayerHealth playerHealth;
+    [SerializeField] private RunStats runStats;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -23,6 +24,7 @@ public class GameManager : MonoBehaviour
     public Camera EarthCamera => earthCamera;
     public LevelTimer LevelTimer => levelTimer;
     public PlayerHealth PlayerHealth => playerHealth;
+    public RunStats RunStats => runStats;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
 
@@ -41,6 +43,7 @@ public class GameManager : MonoBehaviour
 
         // Level-wide scripts normally sit on this same object, so fill them in if unassigned.
         if (levelTimer == null) levelTimer = GetComponent<LevelTimer>();
+        if (runStats == null) runStats = GetComponent<RunStats>();
 
         // Player scripts sit on the player object, so look there instead.
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
@@ -52,6 +55,7 @@ public class GameManager : MonoBehaviour
 
         IsGameOver = true;
         Time.timeScale = 0f;
+        if (runStats != null) runStats.RecordDeath();
         Debug.Log("Game over");
     }
 

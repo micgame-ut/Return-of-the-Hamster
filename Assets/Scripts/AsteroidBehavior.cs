@@ -247,6 +247,9 @@ public class AsteroidBehavior : MonoBehaviour
             CameraShake.Shake(template.shakeDuration, template.shakeMagnitude);
         }
 
+        RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
+        if (stats != null) stats.AddAsteroidDestroyed();
+
         Destroy(gameObject);
     }
 }
