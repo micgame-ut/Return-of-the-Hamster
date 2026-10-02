@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-// Editor-only guides for authoring asteroid patterns. Draws the player's orbit
+// Editor-only guides for authoring wave patterns. Draws the player's orbit
 // circle at every Z step so you can see what the player can reach, and labels
-// each step in the order AsteroidSpawner reveals them. Does nothing at runtime.
+// each step in the order ObjectSpawner reveals them. Does nothing at runtime.
 public class PatternGizmos : MonoBehaviour
 {
     // The Game scene's layout in spawner space, read from OrbitSettings so the
@@ -28,25 +28,29 @@ public class PatternGizmos : MonoBehaviour
         using var scope = new Handles.DrawingScope(space);
         Vector3 rootOffset = transform.localPosition;
 
-        // Nearest the camera (lowest Z) first, same order as AsteroidSpawner.
-        var zs = new List<float>();
+        // Nearest the camera (lowest Z) first, same order as ObjectSpawner.
+        var items = new List<(float z, bool powerUp)>();
         foreach (Transform child in transform)
-            zs.Add(rootOffset.z + child.localPosition.z);
-        zs.Sort();
+            items.Add((rootOffset.z + child.localPosition.z, child.GetComponent<PowerUp>() != null));
+        items.Sort((a, b) => a.z.CompareTo(b.z));
 
         // Group equal Zs into one step, since they spawn together.
         var stepZ = new List<float>();
         var stepCount = new List<int>();
-        for (int i = 0; i < zs.Count; i++)
+        var stepPowerUps = new List<int>();
+        for (int i = 0; i < items.Count; i++)
         {
-            if (i > 0 && zs[i] - zs[i - 1] <= AsteroidSpawner.SameZTolerance)
+            int powerUp = items[i].powerUp ? 1 : 0;
+            if (i > 0 && items[i].z - items[i - 1].z <= ObjectSpawner.SameZTolerance)
             {
                 stepCount[stepCount.Count - 1]++;
+                stepPowerUps[stepPowerUps.Count - 1] += powerUp;
             }
             else
             {
-                stepZ.Add(zs[i]);
+                stepZ.Add(items[i].z);
                 stepCount.Add(1);
+                stepPowerUps.Add(powerUp);
             }
         }
 
@@ -55,7 +59,11 @@ public class PatternGizmos : MonoBehaviour
 
         Handles.color = ringColor;
         for (int i = 0; i < stepZ.Count; i++)
-            DrawRing(stepZ[i], $"Step {i + 1} ({stepCount[i]})");
+        {
+            int pu = stepPowerUps[i];
+            string extra = pu == 0 ? "" : pu == 1 ? ", 1 power-up" : $", {pu} power-ups";
+            DrawRing(stepZ[i], $"Step {i + 1} ({stepCount[i]}{extra})");
+        }
 
         // Spine through the ring centers shows the pattern's depth at a glance.
         if (stepZ.Count > 1)

@@ -28,7 +28,7 @@ With the scene's values, the drift speed goes from 0.3 (stopped) to 0.4 (max spe
 project.
 
 Changing a material asset while the game runs changes the **asset file itself**, and those changes stay
-after you stop Play mode (the same as with ScriptableObjects, see AsteroidTemplate). If the script changed
+after you stop Play mode (the same as with ScriptableObjects, see SpawnableTemplate). If the script changed
 the asset directly, the material would be left with whatever value it had when you stopped playing.
 
 To avoid that, `Awake` makes a copy of the material with `Instantiate`, and tells the scene to use the copy

@@ -10,12 +10,12 @@ either breaks (if the player is fast enough) or knocks the player back.
 ## Where it lives
 
 - **Attached to:** the root of each asteroid prefab (in `Assets/Prefabs/Asteroid Types/`).
-  Asteroids are placed as children of pattern prefabs, which AsteroidSpawner reveals one at a time.
+  Asteroids are placed as children of pattern prefabs, which ObjectSpawner reveals one at a time.
 - **Requires:**
   - A **Renderer on a child object** (the mesh). That child is what spins and glows.
   - A **Collider set to Is Trigger** on the root. The player has the Rigidbody, which Unity needs on at
     least one side for trigger events to fire.
-  - An **AsteroidTemplate** asset assigned to `template`. Most of the tuning lives there (see Gotchas
+  - An **SpawnableTemplate** asset assigned to `template`. Most of the tuning lives there (see Gotchas
     for what breaks without it).
   - `GameManager.Instance` for the gameplay camera, used to despawn asteroids once they're behind it.
   - The `OrbitSettings` asset, for the orbit that Wave asteroids swing along.
@@ -23,7 +23,7 @@ either breaks (if the player is fast enough) or knocks the player back.
 ## Inspector settings
 
 These are per-asteroid. Settings shared by every asteroid (glow colors, warning time, spin, knockback,
-explosion, etc.) are on the AsteroidTemplate asset instead.
+explosion, etc.) are on the SpawnableTemplate asset instead.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ explosion, etc.) are on the AsteroidTemplate asset instead.
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
 | `destructible` | false | Whether the player can smash it by being fast enough. Also gives it the outline |
 | `destroySpeed` | 5 | The player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
-| `template` | none | The shared AsteroidTemplate asset |
+| `template` | none | The shared SpawnableTemplate asset |
 
 Note that `speed` here is the asteroid's own speed. It's unrelated to the player's `PlayerMovement.Speed`,
 though both feed into how fast the asteroid approaches.
@@ -62,7 +62,7 @@ though both feed into how fast the asteroid approaches.
 
 ### `OnEnable`: reset when revealed
 
-AsteroidSpawner hides every asteroid in a pattern, moves each one to the spawn point, then switches it on
+ObjectSpawner hides every asteroid in a pattern, moves each one to the spawn point, then switches it on
 with `SetActive(true)`. That fires `OnEnable`, which:
 
 - Adds this asteroid to the static `Active` list (see below).
@@ -135,7 +135,8 @@ every frame.
 1. **Is it the player?** It looks for PlayerMovement on the object it touched or any of its parents
    (`GetComponentInParent`), so it still works if the player's collider is on a child. Anything else is
    ignored.
-2. **Smash.** If it's `destructible` and the player's `Speed` is at least `destroySpeed`, it explodes:
+2. **Smash.** If it's `destructible` and the player's `Speed` is at least `destroySpeed`, it explodes
+   (and `Explode` adds one to `RunStats.AsteroidsDestroyed` through GameManager, null-safe):
    it spawns the template's `explosionPrefab`, shakes the camera, and destroys itself.
 3. **Otherwise, hit the player.**
    - **Which way to push.** `OrbitTangent` is the counter-clockwise direction along the player's circle.
@@ -170,11 +171,12 @@ scene for asteroids every frame. The public properties exist for it:
 
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`.
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).
-- **AsteroidTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
+- **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
-- **GameManager**: gets the gameplay camera in `Awake`.
-- **AsteroidSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
+- **GameManager**: gets the gameplay camera in `Awake`, and `RunStats` when an asteroid is smashed.
+- **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
+- **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
 - **OrbitRing**: reads the `Active` list and the properties above.
 

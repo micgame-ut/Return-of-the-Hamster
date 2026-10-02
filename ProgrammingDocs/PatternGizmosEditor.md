@@ -2,10 +2,11 @@
 
 ## Purpose
 
-The **Pattern Builder**: a panel in the Inspector for laying out asteroid patterns quickly. Pick a shape
-(Ring, Arc, Row, or Spiral), set how many asteroids and how deep, see a green preview in the Scene view,
-and click **Add** to place real asteroids exactly on the player's orbit. It also has buttons to snap
-existing asteroids onto the orbit and to clear a pattern.
+The **Pattern Builder**: a panel in the Inspector for laying out wave patterns quickly. Choose whether to
+place asteroids or power-ups, pick a shape (Ring, Arc, Row, or Spiral), set how many and how deep, see a
+preview in the Scene view (green for asteroids, yellow for power-ups), and click **Add** to place them
+exactly on the player's orbit. It also has buttons to snap existing children onto the orbit and to clear
+a pattern.
 
 It's an editor tool only. It isn't part of the game and isn't included in builds.
 
@@ -17,7 +18,8 @@ It's an editor tool only. It isn't part of the game and isn't included in builds
 - **Menu item:** Tools → Pattern Builder → Snap Selected to Circle.
 - **Requires:**
   - A pattern root with PatternGizmos on it.
-  - An asteroid prefab to place (defaults to `Assets/Prefabs/Asteroid Types/Asteroid.prefab`).
+  - An asteroid prefab to place (defaults to `Assets/Prefabs/Asteroid Types/Asteroid.prefab`) and a
+    power-up prefab (defaults to `Assets/Prefabs/Health PowerUp.prefab`).
   - The `OrbitSettings` asset (through PatternGizmos) for the orbit's size and center.
 
 ### Custom inspectors and the `Editor` folder
@@ -39,13 +41,15 @@ These are in the builder panel, not saved on the component.
 | Setting | Default | What it changes |
 | --- | --- | --- |
 | Asteroid Prefab | `Asteroid.prefab` | Which asteroid gets placed |
+| Power-Up Prefab | `Health PowerUp.prefab` | Which power-up gets placed |
+| Asteroid / Power-Up tabs | Asteroid | Which of the two prefabs **Add** places. Also sets the preview color |
 | Shape tabs | Ring | Which shape to build |
 | Z | 0 | Depth, in spawner space. Lower Z spawns first |
-| Count | 8 | How many asteroids to place (at least 1) |
-| Preview Size | 1 | Size of the green preview spheres. Only affects the preview |
+| Count | 8 | How many objects to place (at least 1) |
+| Preview Size | 1 | Size of the preview spheres. Only affects the preview |
 
 There's no radius setting. Every shape that sits on a circle uses the orbit radius from `OrbitSettings`,
-so asteroids always land exactly on the player's orbit.
+so everything always lands exactly on the player's orbit.
 
 ### Per shape
 
@@ -68,9 +72,13 @@ you clicked away. So all the builder settings are **static**, which means they b
 one Editor object. They last for the whole editor session and carry over when you switch between pattern
 prefabs. They reset when Unity restarts or recompiles scripts.
 
-The chosen asteroid prefab is remembered longer, with **EditorPrefs**, a small key/value store saved on
-your computer (not in the project). In `OnEnable`, if no prefab is picked yet, it loads the saved path, or
-the default one. Because it's saved on your computer, each person on the team has their own choice.
+The chosen asteroid and power-up prefabs are remembered longer, with **EditorPrefs**, a small key/value
+store saved on your computer (not in the project). Each slot has its own key. In `OnEnable`, if a slot is
+empty, it loads that slot's saved path, or its default. Because it's saved on your computer, each person
+on the team has their own choice.
+
+`SelectedPrefab` is a property that returns whichever slot the Asteroid / Power-Up tabs point at. The Add
+button, its greyed-out check, and `Build` all use it.
 
 ### The Inspector panel (`OnInspectorGUI`)
 
@@ -85,12 +93,14 @@ value = EditorGUILayout.SomeField("Label", value);
 The panel, top to bottom:
 
 1. **`DrawDefaultInspector()`** draws PatternGizmos' own fields (the ring colors) as normal.
-2. A short help box explaining angles and Z.
-3. **Asteroid Prefab.** When it changes, the new path is saved to EditorPrefs.
-4. **The shape tabs and settings.** Only the selected shape's settings are shown. If anything changes,
-   `SceneView.RepaintAll()` redraws the preview straight away, instead of waiting for the mouse to move.
-5. **Add [Shape].** Greyed out until a prefab is picked (`DisabledScope`).
-6. **Snap All to Circle** and **Delete All Asteroids.**
+2. A short help box explaining angles, Z, and the preview colors.
+3. **Asteroid Prefab** and **Power-Up Prefab.** When either changes, its new path is saved to EditorPrefs.
+4. **The Asteroid / Power-Up tabs, then the shape tabs and settings.** Only the selected shape's settings
+   are shown. If anything changes, `SceneView.RepaintAll()` redraws the preview straight away, instead of
+   waiting for the mouse to move.
+5. **Add [Asteroid/Power-Up] [Shape]**, e.g. "Add Power-Up Arc". Greyed out while the selected slot is
+   empty (`DisabledScope`). The same text is used as the Undo name.
+6. **Snap All to Circle** and **Delete All Children.**
 
 `BeginChangeCheck` / `EndChangeCheck` wrap a group of fields and report whether any of them changed.
 That's how it knows when to save the prefab or redraw the preview.
@@ -100,8 +110,12 @@ That's how it knows when to save the prefab or redraw the preview.
 Unity calls `OnSceneGUI` whenever the Scene view redraws while the pattern is selected. It only draws on
 the **Repaint** event (Scene GUI also runs for mouse moves and layout, which don't need drawing).
 
-For each asteroid about to be added, it draws a translucent green sphere and a number showing the order
-they're generated in. It draws in spawner space (see PatternGizmos), the same way the rings are drawn.
+For each object about to be added, it draws a translucent sphere and a number showing the order they're
+generated in: **green** when placing asteroids, **yellow** when placing power-ups. It draws in spawner
+space (see PatternGizmos), the same way the rings are drawn.
+
+The number labels use one `GUIStyle`, created the first time it's needed (GUI styles can't be built before
+the editor's GUI is ready). Its color is set every time the style is read, so it follows the tabs.
 
 ### Where each asteroid goes (`ShapePosition` and `OnCircle`)
 
@@ -118,13 +132,13 @@ they're generated in. It draws in spawner space (see PatternGizmos), the same wa
 | Row | x = center + `(i − (count − 1) / 2) × spacing`. That runs from `-half` to `+half`, so the row is centered. y = bottom of the orbit + height |
 | Spiral | Angle `startAngle + angleStep × i`, at depth `z + zStep × i` |
 
-### Adding asteroids (`Build`)
+### Adding objects (`Build`)
 
 For each position:
 
-1. **`PrefabUtility.InstantiatePrefab`** creates the asteroid as a child of the pattern. Unlike plain
-   `Instantiate`, this keeps the link to the asteroid prefab, so later changes to the prefab still reach
-   these copies.
+1. **`PrefabUtility.InstantiatePrefab`** creates a copy of `SelectedPrefab` as a child of the pattern.
+   Unlike plain `Instantiate`, this keeps the link to the prefab, so later changes to the prefab still
+   reach these copies.
 2. **Set its position.** Shape positions are in spawner space, but a child's position is relative to the
    pattern root, so the root's own offset is subtracted.
 
@@ -165,17 +179,20 @@ down by one, and the loop would skip every second asteroid.
 
 - **PatternGizmos**: the component this panel is for. Reads its `OrbitRadius` and `OrbitCenter` (which
   come from `OrbitSettings`).
-- **The asteroid prefab**: places copies of it, linked to the prefab.
+- **The asteroid and power-up prefabs**: places copies of the selected one, linked to the prefab.
 
 Nothing in the game talks to it. It only runs in the editor.
 
 ## Gotchas
 
 - **Builder settings reset when scripts recompile.** Static fields are cleared whenever Unity reloads
-  scripts, which happens every time you save a code change. Only the prefab choice survives.
-- **The default prefab path is hard-coded.** If `Asteroid.prefab` is moved or renamed again, the builder
-  starts with an empty prefab field until one is picked. Once picked, it's remembered.
-- **Snap and Delete act on every direct child.** Anything else placed under a pattern root (not an asteroid)
-  would be snapped or deleted too. Keep only asteroids directly under the root.
+  scripts, which happens every time you save a code change. Only the two prefab choices survive (the
+  Asteroid / Power-Up tab goes back to Asteroid).
+- **The default prefab paths are hard-coded.** If `Asteroid.prefab` or `Health PowerUp.prefab` is moved or
+  renamed, the builder starts with that slot empty until one is picked. Once picked, it's remembered.
+- **Snap and Delete act on every direct child,** asteroids and power-ups alike. Anything else placed under
+  a pattern root would be snapped or deleted too. Keep only spawnable objects directly under the root.
+- **Either slot accepts any prefab.** Nothing checks that the Power-Up slot holds a power-up. A wrong
+  prefab is placed (and spawned) as-is.
 - **Row isn't on the orbit.** It's a straight line, so at best it touches the circle in the middle. That's
   intended, but Snap All would bend a row onto the orbit.

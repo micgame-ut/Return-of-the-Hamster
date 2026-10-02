@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Tracks how many lives the player has. Each counted asteroid hit takes one away, and when none are left
+Tracks how many lives the player has. Health power-ups give one back, up to the max. Each counted asteroid hit takes one away, and when none are left
 it tells GameManager the game is over. It only handles lives; what "game over" means is up to
 GameManager and the scripts that check it.
 
@@ -59,12 +59,25 @@ broken at speed, never call it.
 | 3rd | 0 | yes |
 | 4th | 0 (the method exits early) | no |
 
+### `GainLife`
+
+Called by a Health power-up when it's picked up. It has the same guard as `LoseLife` (no GameManager, game
+over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(CurrentLives + 1, maxLives)`.
+`Mathf.Min` returns the smaller of the two, so lives never go past the max, and logs the result.
+
+| Lives before | After |
+| --- | --- |
+| 1 | 2 |
+| 2 | 3 |
+| 3 | 3 (already at max; the pickup is still used up) |
+
 ## Talks to
 
 - **GameManager**: reads `IsGameOver` and `HasWon`, and calls `GameOver()` when lives run out.
   GameManager also keeps a `PlayerHealth` reference, filled in from the player object if unassigned.
 - **AsteroidBehavior**: calls `LoseLife()` on a counted hit, finding this component with
   `player.GetComponent<PlayerHealth>()`.
+- **PowerUp**: calls `GainLife()` from its Health effect, found the same way.
 
 ## Gotchas
 

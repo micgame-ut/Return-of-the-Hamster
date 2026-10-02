@@ -11,7 +11,7 @@ matches what happens in play.
 
 ## Where it lives
 
-- **Attached to:** nothing. It's a ScriptableObject (see AsteroidTemplate), saved as an asset.
+- **Attached to:** nothing. It's a ScriptableObject (see SpawnableTemplate), saved as an asset.
 - **The asset:** `Assets/Resources/OrbitSettings.asset`. It must keep that exact name and folder (see
   "Finding the asset" below).
 - **Making a new one:** right-click in the Project window → Create → Return of the Hamster → Orbit
@@ -24,10 +24,10 @@ matches what happens in play.
 | `orbitRadius` | 3 | Size of the player's orbit, in world units. Can't go below 0.01 |
 | `orbitCenter` | (0, 1) | The x/y the orbit circles around, in world space |
 | `playerZ` | -4 | The player's depth. PlayerMovement moves itself here when the game starts |
-| `spawnerPosition` | (0, 0, 15) | Where the Asteroid Spawner sits. AsteroidSpawner moves itself here when the game starts |
+| `spawnerPosition` | (0, 0, 15) | Where the Asteroid Spawner sits. ObjectSpawner moves itself here when the game starts |
 
 All of these can be changed in Play mode, and the change is kept when you stop (it's an asset, see
-AsteroidTemplate's gotchas). `orbitRadius` and `orbitCenter` take effect immediately. `playerZ` and
+SpawnableTemplate's gotchas). `orbitRadius` and `orbitCenter` take effect immediately. `playerZ` and
 `spawnerPosition` are only applied when the game starts.
 
 ## How it works
@@ -39,9 +39,9 @@ AsteroidTemplate's gotchas). `orbitRadius` and `orbitCenter` take effect immedia
 | `OrbitRadius` | PlayerMovement (the orbit), AsteroidBehavior (Wave movement), PatternGizmos and the builder (rings and placement). OrbitRing gets it through PlayerMovement |
 | `OrbitCenter` | The same scripts as `OrbitRadius` |
 | `PlayerZ` | PlayerMovement (moves itself there), PatternGizmos (the "Player" ring) |
-| `SpawnerPosition` | AsteroidSpawner (moves itself there), PatternGizmos (to work out spawner space) |
+| `SpawnerPosition` | ObjectSpawner (moves itself there), PatternGizmos (to work out spawner space) |
 
-`SameZTolerance` isn't here. It's a plain number, not something you'd tune, so it lives in AsteroidSpawner
+`SameZTolerance` isn't here. It's a plain number, not something you'd tune, so it lives in ObjectSpawner
 as `public const`, and PatternGizmos reads it from there.
 
 ### Spawner space
@@ -84,7 +84,7 @@ OrbitSettings doesn't read from or call anything. These scripts read from it:
 
 - **PlayerMovement**: radius, center, and player z.
 - **AsteroidBehavior**: radius and center, for Wave movement.
-- **AsteroidSpawner**: spawner position.
+- **ObjectSpawner**: spawner position.
 - **PatternGizmos / PatternGizmosEditor**: all of it, measured from the spawner.
 
 ## Gotchas
@@ -95,5 +95,5 @@ OrbitSettings doesn't read from or call anything. These scripts read from it:
   won't sit in the middle of the screen. Nothing enforces that.
 - **The asset must stay at `Resources/OrbitSettings.asset`.** Renaming or moving it means `Instance` can't
   find it. The game falls back to the script's defaults and logs an error.
-- **Script defaults vs the asset.** As with AsteroidTemplate, the values in the script are only used for a
+- **Script defaults vs the asset.** As with SpawnableTemplate, the values in the script are only used for a
   new asset, or the fallback. The asset's values are what count.

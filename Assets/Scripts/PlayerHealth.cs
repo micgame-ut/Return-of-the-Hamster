@@ -25,4 +25,13 @@ public class PlayerHealth : MonoBehaviour
         if (CurrentLives <= 0)
             gm.GameOver();
     }
+
+    public void GainLife()
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm == null || gm.IsGameOver || gm.HasWon) return;
+
+        CurrentLives = Mathf.Min(CurrentLives + 1, maxLives);
+        Debug.Log($"Lives left: {CurrentLives}");
+    }
 }

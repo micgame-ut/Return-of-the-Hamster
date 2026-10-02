@@ -38,7 +38,7 @@ public class CameraShake : MonoBehaviour
 
         if (timeLeft <= 0f) return;
 
-        timeLeft -= Time.deltaTime;
+        timeLeft -= Time.unscaledDeltaTime;
 
         // Fade the shake out over its duration instead of stopping abruptly.
         float strength = magnitude * Mathf.Clamp01(timeLeft / duration);

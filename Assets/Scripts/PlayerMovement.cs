@@ -75,6 +75,9 @@ public class PlayerMovement : MonoBehaviour
     // Once the game is over, all input is ignored.
     private bool InputLocked => GameManager.Instance != null && GameManager.Instance.IsGameOver;
 
+    // Top 10% of max speed, where the extra drain applies. RunStats times how long it's held.
+    public bool InOverdrive => Speed >= maxSpeed * 0.9f;
+
     void Awake()
     {
         // Statics survive scene reloads, so reset them for a fresh run.
@@ -106,7 +109,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (InputLocked) moveInput = Vector2.zero;
+        if (InputLocked) return;
 
         Vector2 mouseDelta = moveInput * Time.deltaTime;
 
@@ -117,6 +120,9 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Once the game is over, PlayerDeath moves the ship instead.
+        if (InputLocked) return;
+
         Vector2 mouseDelta = moveInput * Time.fixedDeltaTime;
 
         Movement(mouseDelta);
@@ -158,7 +164,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void UpdateSpeed(Vector2 mouseDelta)
     {
-        bool nearMaxSpeed = Speed >= maxSpeed * 0.9f;
+        bool nearMaxSpeed = InOverdrive;
 
         // Forward input after the level ends counts as no input, so the normal
         // decay still applies instead of speed being held in place.

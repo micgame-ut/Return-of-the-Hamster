@@ -28,6 +28,7 @@ scripts itself. It announces the state, and each script checks it and stops itse
 | `earthCamera` | Camera | The camera that renders the earth |
 | `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
+| `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
 `LevelTimer`, `PlayerHealth`). Other scripts can read the references but can't swap them out.
@@ -58,9 +59,12 @@ or `Start` runs, `Instance` is ready.
    warning and removes itself. `Destroy(this)` removes only the GameManager component, not the whole
    GameObject. The `return` stops it from going on to overwrite `Instance`.
 2. **Register.** `Instance = this`.
-3. **Fill in the LevelTimer.** If `levelTimer` was left empty, it looks for a LevelTimer on the same
+3. **Unfreeze time.** `Time.timeScale = 1f`. Time scale is global and, like static values, survives a
+   scene reload. Without this, restarting after a game over would start the new scene frozen. GameManager
+   runs first (`-100`), so time is normal before any other script runs.
+4. **Fill in the LevelTimer and RunStats.** If either was left empty, it looks for one on the same
    GameObject with `GetComponent`.
-4. **Fill in the PlayerHealth.** If `playerHealth` was left empty and `player` is assigned, it looks for a
+5. **Fill in the PlayerHealth.** If `playerHealth` was left empty and `player` is assigned, it looks for a
    PlayerHealth on the player object with `player.GetComponent`. Calling `GetComponent` on another
    component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
@@ -81,8 +85,20 @@ doesn't change.
 ### `GameOver`
 
 Called by PlayerHealth when the player runs out of lives. If the game is already over or the level is
-already won, it exits immediately. Otherwise it sets `IsGameOver` and logs "Game over". So it only ever
-runs once, and losing a life after winning can't turn a win into a loss.
+already won, it exits immediately. Otherwise it sets `IsGameOver`, freezes the level, records the death
+in RunStats (`RecordDeath()`, which saves the next Apollo number), and logs "Game over". So it only ever runs once, and losing a life after winning can't turn a win into a loss.
+
+**The freeze** is `Time.timeScale = 0f`. `Time.deltaTime` becomes 0, so everything that moves by it
+stops: asteroids, the starfield, the skybox, the spawner's timers, physics, and particles. Unity still
+calls `Update` and `LateUpdate`, so anything that uses **unscaled** time keeps running. That's
+PlayerDeath (the death sequence), CameraShake, and the Player Explosion particles (set to Unscaled in
+the prefab). Freezing is a level-wide operation, which is why it lives here and not in PlayerDeath.
+
+### `DeathSequenceFinished`
+
+Called by PlayerDeath once the ship has exploded and `endDelay` has passed. If the game isn't over, it
+does nothing. Otherwise it logs "Death sequence finished". It's the hook for the game-over screen, which
+isn't built yet.
 
 ### `Win`
 
@@ -110,8 +126,11 @@ anything. Other scripts read from it or call it:
 | --- | --- | --- |
 | **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
-| **AsteroidBehavior** | `GameplayCamera` | `Awake` |
-| **AsteroidSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
+| **PlayerDeath** | reads `IsGameOver` and `GameplayCamera`, calls `DeathSequenceFinished()` | every frame until game over; at the end of the sequence |
+| **AsteroidBehavior** | `GameplayCamera`; `RunStats` | `Awake`; when an asteroid is smashed |
+| **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats` | `Awake`; on pickup |
+| **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
+| **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
 | **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`, calls `Win()` | `Start`; every frame |
 | **OrbitRing** | `Player` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
@@ -130,6 +149,8 @@ anything. Other scripts read from it or call it:
   Changing a GameManager field during Play mode won't reach those scripts.
 - **The PlayerHealth fallback needs `player`.** If `player` is empty, `playerHealth` stays empty too.
   AsteroidBehavior doesn't depend on this, since it finds PlayerHealth through the player it hit.
+- **Anything that must move during the game-over freeze has to use unscaled time.** Anything using
+  `Time.deltaTime`, `WaitForSeconds`, or particle systems left on Scaled stays frozen.
 - **Nothing resets the end state during play.** Once `IsGameOver` or `HasWon` is set, it stays set until
   the scene reloads.
 - **The player is only used by OrbitRing and GameManager's own `Awake`.** Other scripts that need the
