@@ -338,7 +338,7 @@ MonoBehaviour:
     delayAfter: 2
   - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
     delayAfter: 2
-  - pattern: {fileID: 1426364939829335137, guid: 1d587c318660bf94294e131c43e20313, type: 3}
+  - pattern: {fileID: 1426364939829335137, guid: 2066104ffad8a124d837e1e213fbd8f0, type: 3}
     delayAfter: 2
   order: 0
   loop: 1

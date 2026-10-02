@@ -16,7 +16,7 @@ Any script can trigger it with one line: `CameraShake.Shake(duration, magnitude)
 ## Inspector settings
 
 None. Every shake's strength and length come from whoever calls `Shake`. For asteroids, those values are
-in the AsteroidTemplate asset:
+in the SpawnableTemplate asset:
 
 | Event | Duration | Magnitude |
 | --- | --- | --- |

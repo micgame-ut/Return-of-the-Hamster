@@ -131,7 +131,9 @@ Every frame:
 - Forward/back mouse input adds to or removes from `Speed`.
 - No input means `Speed` drains at a flat rate (`speedDecay`).
 - In the top 10% of max speed, an extra drain (`topSpeedDegrade`) is applied on top. Holding top
-  speed is harder, but still possible.
+  speed is harder, but still possible. "The top 10%" is defined once, by the public `InOverdrive`
+  property (`Speed >= maxSpeed * 0.9f`). `UpdateSpeed` copies it into a local `nearMaxSpeed` at the
+  **start** of the method, before this frame's speed change, and RunStats reads it to time overdrive.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
 
@@ -204,6 +206,8 @@ Side effects of doing it this way:
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
+- **RunStats**: reads `InOverdrive` every frame (through GameManager's `Player`) to time overdrive
+- **PowerUp**: passes this component to its effect methods, which find other player components from it
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
 - **Anything reading `Speed`**: see the table above

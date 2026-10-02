@@ -13,6 +13,7 @@ public class RunStats : MonoBehaviour
     public int AsteroidsDestroyed { get; private set; }
     public float OverdriveTime { get; private set; }
     public float TimeSurvived { get; private set; }
+    public int PowerUpsPickedUp { get; private set; }
 
     private void Awake()
     {
@@ -34,10 +35,15 @@ public class RunStats : MonoBehaviour
         AsteroidsDestroyed++;
     }
 
+    public void AddPowerUpPickedUp()
+    {
+        PowerUpsPickedUp++;
+    }
+
     public void RecordDeath()
     {
         PlayerPrefs.SetInt(AttemptKey, Attempt + 1);
         PlayerPrefs.Save();
-        Debug.Log($"{ApolloName}: {AsteroidsDestroyed} asteroids, {OverdriveTime:0.0}s overdrive, {TimeSurvived:0.0}s survived");
+        Debug.Log($"{ApolloName}: {AsteroidsDestroyed} asteroids, {PowerUpsPickedUp} power-ups, {OverdriveTime:0.0}s overdrive, {TimeSurvived:0.0}s survived");
     }
 }

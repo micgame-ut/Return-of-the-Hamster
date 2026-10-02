@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // The one place the orbit's shape and the Game scene's layout are set. Gameplay
-// (PlayerMovement, AsteroidSpawner, AsteroidBehavior) and the pattern builder
+// (PlayerMovement, ObjectSpawner, AsteroidBehavior) and the pattern builder
 // (PatternGizmos) all read from here, so the builder's preview always matches play.
 //
 // The asset lives at Assets/Resources/OrbitSettings.asset and is found by name,
@@ -17,7 +17,7 @@ public class OrbitSettings : ScriptableObject
 
     [Header("Layout")]
     [SerializeField] private float playerZ = -4f;                            // PlayerMovement moves itself here
-    [SerializeField] private Vector3 spawnerPosition = new Vector3(0f, 0f, 15f); // AsteroidSpawner moves itself here
+    [SerializeField] private Vector3 spawnerPosition = new Vector3(0f, 0f, 15f); // ObjectSpawner moves itself here
 
     public float OrbitRadius => orbitRadius;
     public Vector2 OrbitCenter => orbitCenter;

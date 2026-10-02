@@ -7,7 +7,7 @@ using UnityEngine;
 // Each pattern's children are revealed one Z step at a time, closest to the
 // camera first; children that share the same Z appear together, so a row
 // spawns as a row.
-public class AsteroidSpawner : MonoBehaviour
+public class ObjectSpawner : MonoBehaviour
 {
     public enum WaveOrder { Sequential, Random }
 
@@ -23,12 +23,12 @@ public class AsteroidSpawner : MonoBehaviour
     [SerializeField] private bool loop = true;
     [SerializeField] private float startDelay = 1f; // seconds before the first wave
 
-    // Asteroids this close in Z spawn together. Public so PatternGizmos groups them the same way.
+    // Children this close in Z spawn together. Public so PatternGizmos groups them the same way.
     public const float SameZTolerance = 0.01f;
 
     private LevelTimer levelTimer;
 
-    // Once the earth has arrived or the game is over, no more waves or asteroids are spawned.
+    // Once the earth has arrived or the game is over, no more waves or objects are spawned.
     private bool StopSpawning => (levelTimer != null && levelTimer.IsComplete) ||
                                  (GameManager.Instance != null && GameManager.Instance.IsGameOver);
 
@@ -101,7 +101,7 @@ public class AsteroidSpawner : MonoBehaviour
         children.Sort((a, b) =>
             Mathf.Abs(a.position.z - camZ).CompareTo(Mathf.Abs(b.position.z - camZ)));
 
-        // Every asteroid appears at the first step's Z (the spawn plane). The wait
+        // Every child appears at the first step's Z (the spawn plane). The wait
         // before each later step is how long it takes to fly that step's Z gap, so
         // in flight each step trails the one before by exactly its authored gap.
         float spawnZ = children.Count > 0 ? children[0].position.z : 0f;
@@ -115,9 +115,9 @@ public class AsteroidSpawner : MonoBehaviour
             // Equal Zs spawn together; a further Z waits for its gap.
             if (i > 0 && gap > SameZTolerance)
             {
-                AsteroidBehavior asteroid = children[i].GetComponent<AsteroidBehavior>();
-                if (asteroid != null && asteroid.ApproachSpeed > 0f)
-                    yield return new WaitForSeconds(gap / asteroid.ApproachSpeed);
+                float approachSpeed = GetApproachSpeed(children[i]);
+                if (approachSpeed > 0f)
+                    yield return new WaitForSeconds(gap / approachSpeed);
             }
             previousDistance = distance;
 
@@ -125,8 +125,8 @@ public class AsteroidSpawner : MonoBehaviour
             // are still under the pattern root and are removed with it below.
             if (StopSpawning) break;
 
-            // Detach so each asteroid moves on its own, then reveal it. Its
-            // OnEnable starts the warning blink and records its start point.
+            // Detach so each child moves on its own, then reveal it. Its OnEnable
+            // records its start point (and, for asteroids, starts the warning blink).
             Vector3 p = children[i].position;
             children[i].SetParent(null, true);
             children[i].position = new Vector3(p.x, p.y, spawnZ);
@@ -135,5 +135,15 @@ public class AsteroidSpawner : MonoBehaviour
 
         // Only the empty root (plus any unrevealed children) is left.
         Destroy(pattern);
+    }
+
+    // Asteroids and power-ups both report how fast they close on the camera.
+    private float GetApproachSpeed(Transform child)
+    {
+        AsteroidBehavior asteroid = child.GetComponent<AsteroidBehavior>();
+        if (asteroid != null) return asteroid.ApproachSpeed;
+
+        PowerUp powerUp = child.GetComponent<PowerUp>();
+        return powerUp != null ? powerUp.ApproachSpeed : 0f;
     }
 }

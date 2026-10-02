@@ -13,11 +13,10 @@ It lives outside `Assets/` so Unity does not import these files.
 | Script | Doc | Status |
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
-| AsteroidSpawner.cs | [AsteroidSpawner.md](AsteroidSpawner.md) | Done |
-| AsteroidTemplate.cs | [AsteroidTemplate.md](AsteroidTemplate.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
@@ -26,7 +25,10 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
+| PowerUp.cs | — | Pending: needs the user's explanation (section 7) |
+| RunStats.cs | — | Pending: needs the user's explanation (section 7) |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
+| SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
 
 ## Template

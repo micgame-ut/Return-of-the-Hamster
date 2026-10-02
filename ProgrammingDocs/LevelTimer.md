@@ -96,7 +96,7 @@ reached again. `Win()` also ignores repeat calls itself.
   `Win()` once when the earth arrives.
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`
   to stop the player accelerating.
-- **AsteroidSpawner**: reads `IsComplete` to stop spawning.
+- **ObjectSpawner**: reads `IsComplete` to stop spawning.
 
 ## Gotchas
 

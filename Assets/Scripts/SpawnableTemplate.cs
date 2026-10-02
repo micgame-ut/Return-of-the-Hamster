@@ -1,9 +1,10 @@
 using UnityEngine;
 
-// Shared settings for asteroids. Create one asset and assign it to every
-// asteroid prefab so these values can be changed in one place.
-[CreateAssetMenu(fileName = "AsteroidTemplate", menuName = "Return of the Hamster/Asteroid Template")]
-public class AsteroidTemplate : ScriptableObject
+// Shared settings for everything the spawner sends at the player (asteroids
+// and power-ups). Create one asset and assign it to every such prefab so these
+// values can be changed in one place.
+[CreateAssetMenu(fileName = "SpawnableTemplate", menuName = "Return of the Hamster/Spawnable Template")]
+public class SpawnableTemplate : ScriptableObject
 {
     [Header("Warning Glow")]
     [ColorUsage(false, true)] public Color linearGlow = Color.red;
@@ -38,6 +39,12 @@ public class AsteroidTemplate : ScriptableObject
 
     [Header("Player Speed")]
     public float speedMultiplier = 15f; // extra units/sec of approach per point of player Speed
+
+    [Header("Power-Up")]
+    public float powerUpSpinSpeed = 90f;        // degrees per second, around the up axis
+    public ParticleSystem pickupEffectPrefab;
+    public float pickupShakeDuration = 0f;      // seconds; 0 = no shake
+    public float pickupShakeMagnitude = 0f;     // max camera offset in units
 
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {

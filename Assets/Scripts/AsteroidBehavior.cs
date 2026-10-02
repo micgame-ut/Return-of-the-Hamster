@@ -22,7 +22,7 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
 
     [Header("Template")]
-    [SerializeField] private AsteroidTemplate template;
+    [SerializeField] private SpawnableTemplate template;
 
     private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
     private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");

@@ -1,11 +1,14 @@
-# AsteroidSpawner
+# ObjectSpawner
 
 ## Purpose
 
-Sends asteroids at the player. It plays through a list of **waves**, where each wave is a pattern prefab
-(a group of asteroids laid out in the pattern builder). It reveals each pattern's asteroids a few at a
-time so they arrive in the shape they were laid out in, then moves on to the next wave. It stops once
-the earth has arrived or the game is over.
+Sends asteroids and power-ups at the player. It plays through a list of **waves**, where each wave is a
+pattern prefab (a group of asteroids and power-ups laid out in the pattern builder). It reveals each
+pattern's children a few at a time so they arrive in the shape they were laid out in, then moves on to
+the next wave. It stops once the earth has arrived or the game is over.
+
+It was called `AsteroidSpawner` until power-ups were added. The GameObject in `Game.unity` is still named
+`Asteroid Spawner`.
 
 ## Where it lives
 
@@ -13,7 +16,8 @@ the earth has arrived or the game is over.
   spawned as its children, so a pattern keeps its offset from the spawner. The position comes from the
   `OrbitSettings` asset (see `Awake`).
 - **Requires:**
-  - Pattern prefabs whose **direct children** are asteroids (with AsteroidBehavior).
+  - Pattern prefabs whose **direct children** are asteroids (with AsteroidBehavior) or power-ups (with
+    PowerUp).
   - `GameManager.Instance` for the LevelTimer and `IsGameOver` (to know when to stop) and the gameplay
     camera (to sort asteroids by distance). It still runs without one, but it never stops and sorts from
     z = 0.
@@ -105,6 +109,11 @@ For example, three asteroids laid out 5 units apart in Z, approaching at 10 unit
 
 By the time B appears, A has flown 5 units, so they're 5 apart, just as they were laid out.
 
+**Where `ApproachSpeed` comes from: `GetApproachSpeed`.** A small helper that asks the child for its
+approach speed: an asteroid's `AsteroidBehavior.ApproachSpeed` if it has one, otherwise a power-up's
+`PowerUp.ApproachSpeed`, otherwise 0 (no wait). Power-ups use the same formula as asteroids, so a
+power-up laid out between two asteroids stays between them in flight.
+
 Asteroids at the **same depth** (within `SameZTolerance`, 0.01 units) have no gap, so they appear
 together. `SameZTolerance` is `public const`, so PatternGizmos can group asteroids the same way. That's how a ring or row laid out at one depth appears all at once.
 
@@ -113,8 +122,8 @@ For each asteroid, once its wait is over:
 - **Detach it** from the pattern (`SetParent(null, true)`, where `true` means keep its position in the
   world). It then moves on its own instead of with the pattern.
 - Move it to the spawn plane, keeping its x/y.
-- **Switch it on.** That runs the asteroid's `OnEnable`, which records its start point and begins
-  the warning blink.
+- **Switch it on.** That runs its `OnEnable`, which records its start point (and, for asteroids, begins
+  the warning blink; power-ups skip it).
 
 **5. Clean up.** Once the loop finishes, it destroys the pattern root. The revealed asteroids were
 detached, so they're unaffected. Only the empty root and any asteroids that never got revealed (if
@@ -126,8 +135,8 @@ spawning stopped partway) are removed.
   `IsGameOver` through `StopSpawning`.
 - **OrbitSettings**: reads `SpawnerPosition` in `Awake`.
 - **LevelTimer**: checks `IsComplete`, through `StopSpawning`, to stop spawning once the earth has arrived.
-- **AsteroidBehavior**: reads `ApproachSpeed` to time the gaps, and switches asteroids on, which starts
-  their `OnEnable`.
+- **AsteroidBehavior** and **PowerUp**: reads `ApproachSpeed` (through `GetApproachSpeed`) to time the
+  gaps, and switches them on, which starts their `OnEnable`.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
   this script spawns.
 
@@ -145,7 +154,9 @@ spawning stopped partway) are removed.
   the asteroid ahead of it is moving at its own speed. If they have different `speed` values, they drift
   closer or further apart.
 - **Only direct children are spawned.** Asteroids inside a sub-group in the pattern are revealed together
-  with the group, and there's no wait for them (the group has no AsteroidBehavior, so no speed).
+  with the group, and there's no wait for them (the group has no AsteroidBehavior or PowerUp, so no speed).
+- **A new kind of spawnable needs a line in `GetApproachSpeed`.** Anything else placed in a pattern is
+  revealed with no wait, so it drifts off its laid-out spacing.
 - **Everything appears at the closest asteroid's depth.** Moving a whole pattern closer to or further from
   the camera changes where its asteroids appear.
 - **Stopping doesn't clear the screen.** At game over or when the earth arrives, asteroids already

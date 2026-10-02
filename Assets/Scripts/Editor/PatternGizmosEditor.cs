@@ -4,7 +4,7 @@
 // A "custom inspector": Unity lets you replace the panel it draws in the
 // Inspector window for a component. This one draws PatternGizmos' normal
 // fields and then adds a Pattern Builder underneath, with buttons that place
-// Asteroid prefabs on the player's orbit circle.
+// asteroid and power-up prefabs on the player's orbit circle.
 //
 // Because this file lives in a folder named "Editor", Unity compiles it only
 // for the editor and leaves it out of game builds. That is also why it may
@@ -39,10 +39,16 @@ public class PatternGizmosEditor : Editor
     // don't have to re-pick it every time Unity restarts.
     private const string PrefabPrefKey = "PatternBuilder.AsteroidPrefab";
     private const string DefaultPrefabPath = "Assets/Prefabs/Asteroid Types/Asteroid.prefab";
+    private const string PowerUpPrefKey = "PatternBuilder.PowerUpPrefab";
+    private const string DefaultPowerUpPath = "Assets/Prefabs/Health PowerUp.prefab";
 
     // Preview colors: translucent green reads as "not placed yet".
     private static readonly Color PreviewColor = new Color(0.3f, 1f, 0.4f, 0.5f);
     private static readonly Color PreviewLabelColor = new Color(0.3f, 1f, 0.4f, 1f);
+
+    // Power-up previews are yellow, so you can tell which kind the next Add places.
+    private static readonly Color PowerUpPreviewColor = new Color(1f, 0.9f, 0.2f, 0.5f);
+    private static readonly Color PowerUpPreviewLabelColor = new Color(1f, 0.9f, 0.2f, 1f);
 
     // -----------------------------------------------------------------------
     // Builder settings
@@ -55,16 +61,24 @@ public class PatternGizmosEditor : Editor
 
     private static Shape shape = Shape.Ring;
     private static GameObject asteroidPrefab;
+    private static GameObject powerUpPrefab;
+
+    // Which slot the Add button places from.
+    private enum Placing { Asteroid, PowerUp }
+    private static readonly string[] PlacingNames = { "Asteroid", "Power-Up" };
+    private static Placing placing = Placing.Asteroid;
+
+    private static GameObject SelectedPrefab => placing == Placing.Asteroid ? asteroidPrefab : powerUpPrefab;
 
     // Shared by every shape. The radius is always the orbit's, from OrbitSettings.
     private static float z;                // depth; lower Z spawns first
-    private static int count = 8;          // how many asteroids to place
+    private static int count = 8;          // how many objects to place
     private static float previewSize = 1f; // diameter of the preview spheres
 
-    // Ring: count asteroids evenly spaced all the way around.
+    // Ring: count objects evenly spaced all the way around.
     private static float ringStartAngle = -90f;
 
-    // Arc: count asteroids spread evenly from one angle to another (inclusive).
+    // Arc: count objects spread evenly from one angle to another (inclusive).
     private static float arcFrom = -135f;
     private static float arcTo = -45f;
 
@@ -74,7 +88,7 @@ public class PatternGizmosEditor : Editor
     private static float rowYOffset;
     private static float rowSpacing = 1f;
 
-    // Spiral: each asteroid steps around by an angle AND back by a Z amount,
+    // Spiral: each object steps around by an angle AND back by a Z amount,
     // so each one is its own spawn step and they appear one after another.
     private static float spiralStartAngle = -90f;
     private static float spiralAngleStep = 30f;
@@ -87,6 +101,9 @@ public class PatternGizmosEditor : Editor
         if (asteroidPrefab == null)
             asteroidPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 EditorPrefs.GetString(PrefabPrefKey, DefaultPrefabPath));
+        if (powerUpPrefab == null)
+            powerUpPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                EditorPrefs.GetString(PowerUpPrefKey, DefaultPowerUpPath));
     }
 
     // -----------------------------------------------------------------------
@@ -106,7 +123,7 @@ public class PatternGizmosEditor : Editor
         EditorGUILayout.LabelField("Pattern Builder", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "Angles in degrees: 0 = right, 90 = top, -90 = bottom (player start), increasing counter-clockwise. " +
-            "Z is in spawner space; lower Z spawns first. The green spheres in the Scene view preview the next Add.",
+            "Z is in spawner space; lower Z spawns first. Green (asteroid) or yellow (power-up) spheres in the Scene view preview the next Add.",
             MessageType.None);
 
         // BeginChangeCheck / EndChangeCheck wraps a group of fields and tells
@@ -117,12 +134,19 @@ public class PatternGizmosEditor : Editor
         if (EditorGUI.EndChangeCheck())
             EditorPrefs.SetString(PrefabPrefKey, asteroidPrefab != null ? AssetDatabase.GetAssetPath(asteroidPrefab) : "");
 
+        EditorGUI.BeginChangeCheck();
+        powerUpPrefab = (GameObject)EditorGUILayout.ObjectField(
+            "Power-Up Prefab", powerUpPrefab, typeof(GameObject), false);
+        if (EditorGUI.EndChangeCheck())
+            EditorPrefs.SetString(PowerUpPrefKey, powerUpPrefab != null ? AssetDatabase.GetAssetPath(powerUpPrefab) : "");
+
         // Everything below affects the preview, so if any of it changes we ask
         // the Scene view to redraw right away instead of waiting for the mouse
         // to move over it.
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.Space();
+        placing = (Placing)GUILayout.Toolbar((int)placing, PlacingNames); // what Add places
         shape = (Shape)GUILayout.Toolbar((int)shape, ShapeNames); // the tab bar
 
         z = EditorGUILayout.FloatField("Z", z);
@@ -155,14 +179,15 @@ public class PatternGizmosEditor : Editor
 
         // DisabledScope greys out (and blocks) everything inside it while the
         // condition is true, so you can't click Add without a prefab.
-        using (new EditorGUI.DisabledScope(asteroidPrefab == null))
+        using (new EditorGUI.DisabledScope(SelectedPrefab == null))
         {
-            if (GUILayout.Button($"Add {ShapeNames[(int)shape]}"))
-                Build($"Add {ShapeNames[(int)shape]}");
+            string addName = $"Add {PlacingNames[(int)placing]} {ShapeNames[(int)shape]}";
+            if (GUILayout.Button(addName))
+                Build(addName);
         }
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Existing Asteroids", EditorStyles.miniBoldLabel);
+        EditorGUILayout.LabelField("Existing Children", EditorStyles.miniBoldLabel);
 
         if (GUILayout.Button("Snap All to Circle"))
         {
@@ -173,7 +198,7 @@ public class PatternGizmosEditor : Editor
             Snap(pattern, children, "Snap All to Circle");
         }
 
-        if (GUILayout.Button("Delete All Asteroids"))
+        if (GUILayout.Button("Delete All Children"))
             DeleteAll();
     }
 
@@ -195,7 +220,8 @@ public class PatternGizmosEditor : Editor
         // Draw in spawner space, same as the gizmo rings. DrawingScope sets
         // Handles' matrix and color and puts them back when the block ends,
         // so we don't leak our settings into other tools' drawing.
-        using (new Handles.DrawingScope(PreviewColor, SpawnerSpace(pattern)))
+        Color previewColor = placing == Placing.Asteroid ? PreviewColor : PowerUpPreviewColor;
+        using (new Handles.DrawingScope(previewColor, SpawnerSpace(pattern)))
         {
             for (int i = 0; i < count; i++)
             {
@@ -206,7 +232,7 @@ public class PatternGizmosEditor : Editor
                 // fine for a picture like this.
                 Handles.SphereHandleCap(0, p, Quaternion.identity, previewSize, EventType.Repaint);
 
-                // Number each asteroid so you can see the order it was
+                // Number each object so you can see the order it was
                 // generated in (most useful for spirals).
                 Handles.Label(p + Vector3.up * previewSize, (i + 1).ToString(), PreviewLabelStyle);
             }
@@ -214,17 +240,18 @@ public class PatternGizmosEditor : Editor
     }
 
     // Label style for the preview numbers. Created on first use because GUI
-    // styles can't be built before the editor's GUI system is ready.
+    // styles can't be built before the editor's GUI system is ready. Its color
+    // follows the Asteroid / Power-Up toggle.
     private static GUIStyle previewLabelStyle;
     private static GUIStyle PreviewLabelStyle
     {
         get
         {
             if (previewLabelStyle == null)
-            {
                 previewLabelStyle = new GUIStyle(EditorStyles.boldLabel);
-                previewLabelStyle.normal.textColor = PreviewLabelColor;
-            }
+
+            previewLabelStyle.normal.textColor =
+                placing == Placing.Asteroid ? PreviewLabelColor : PowerUpPreviewLabelColor;
             return previewLabelStyle;
         }
     }
@@ -233,7 +260,7 @@ public class PatternGizmosEditor : Editor
     // Shape math
     // -----------------------------------------------------------------------
 
-    // Where asteroid number i (0-based) goes for the selected shape, in spawner
+    // Where object number i (0-based) goes for the selected shape, in spawner
     // space. Both the preview and Build call this, so they always agree.
     private static Vector3 ShapePosition(int i)
     {
@@ -245,7 +272,7 @@ public class PatternGizmosEditor : Editor
 
             case Shape.Arc:
                 // Lerp spreads them from arcFrom to arcTo, landing exactly on both
-                // ends. A single asteroid just goes at arcFrom.
+                // ends. A single object just goes at arcFrom.
                 float t = count > 1 ? i / (float)(count - 1) : 0f;
                 return OnCircle(Mathf.Lerp(arcFrom, arcTo, t), z);
 
@@ -292,7 +319,7 @@ public class PatternGizmosEditor : Editor
     // Undo: editor code has to tell Unity what it's about to change, or Ctrl+Z
     // won't know how to reverse it. Each action below opens an Undo "group",
     // records its changes, then collapses the group so the whole action undoes
-    // with a single Ctrl+Z instead of one asteroid at a time.
+    // with a single Ctrl+Z instead of one object at a time.
     // -----------------------------------------------------------------------
 
     private void Build(string undoName)
@@ -310,14 +337,13 @@ public class PatternGizmosEditor : Editor
         for (int i = 0; i < count; i++)
         {
             // InstantiatePrefab (unlike plain Instantiate) keeps the link to the
-            // Asteroid prefab, so later edits to Asteroid.prefab still apply to
-            // these copies.
-            var asteroid = (GameObject)PrefabUtility.InstantiatePrefab(asteroidPrefab, pattern.transform);
+            // prefab, so later edits to it still apply to these copies.
+            var placed = (GameObject)PrefabUtility.InstantiatePrefab(SelectedPrefab, pattern.transform);
 
             // Tells Undo "this object was just created"; undoing deletes it.
-            Undo.RegisterCreatedObjectUndo(asteroid, undoName);
+            Undo.RegisterCreatedObjectUndo(placed, undoName);
 
-            asteroid.transform.localPosition = ShapePosition(i) - rootOffset;
+            placed.transform.localPosition = ShapePosition(i) - rootOffset;
         }
 
         Undo.CollapseUndoOperations(group);
@@ -328,22 +354,22 @@ public class PatternGizmosEditor : Editor
         var pattern = (PatternGizmos)target;
 
         // DisplayDialog shows a popup and returns true if the first button was clicked.
-        if (!EditorUtility.DisplayDialog("Delete All Asteroids",
+        if (!EditorUtility.DisplayDialog("Delete All Children",
                 $"Delete all {pattern.transform.childCount} children of {pattern.name}?", "Delete", "Cancel"))
             return;
 
-        Undo.SetCurrentGroupName("Delete All Asteroids");
+        Undo.SetCurrentGroupName("Delete All Children");
         int group = Undo.GetCurrentGroup();
 
         // Loop backwards: deleting child 0 would shift every other child's
-        // index down by one and we'd skip every second asteroid.
+        // index down by one and we'd skip every second child.
         for (int i = pattern.transform.childCount - 1; i >= 0; i--)
             Undo.DestroyObjectImmediate(pattern.transform.GetChild(i).gameObject); // undoable delete
 
         Undo.CollapseUndoOperations(group);
     }
 
-    // Selecting individual asteroids deselects the pattern root, which hides
+    // Selecting individual children deselects the pattern root, which hides
     // this inspector and its buttons. So snapping a selection lives in the
     // menu bar instead: Tools > Pattern Builder > Snap Selected to Circle.
     // MenuItem methods must be static; Unity finds them automatically.
@@ -359,18 +385,18 @@ public class PatternGizmosEditor : Editor
         }
     }
 
-    // Moves each asteroid straight out (or in) from the orbit center until it
+    // Moves each child straight out (or in) from the orbit center until it
     // sits on the circle, keeping its angle and Z.
-    private static void Snap(PatternGizmos pattern, Transform[] asteroids, string undoName)
+    private static void Snap(PatternGizmos pattern, Transform[] children, string undoName)
     {
         Vector3 rootOffset = pattern.transform.localPosition;
 
-        foreach (Transform t in asteroids)
+        foreach (Transform t in children)
         {
-            Vector3 p = rootOffset + t.localPosition; // this asteroid in spawner space
+            Vector3 p = rootOffset + t.localPosition; // this child in spawner space
             Vector2 fromCenter = (Vector2)p - PatternGizmos.OrbitCenter;
 
-            // An asteroid exactly at the center has no direction to push along.
+            // A child exactly at the center has no direction to push along.
             if (fromCenter.sqrMagnitude < 1e-6f) continue;
 
             // Atan2 turns an (x, y) direction back into an angle.

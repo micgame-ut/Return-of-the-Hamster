@@ -1,11 +1,15 @@
-# AsteroidTemplate
+# SpawnableTemplate
 
 ## Purpose
 
-Holds the settings every asteroid shares: warning glow colors and timing, spin, explosion, outline colors,
-despawn distance, what happens when the player gets hit, and how much the player's speed affects asteroids.
-All the asteroid prefabs point at the same template asset, so changing a value there changes it for
-every asteroid at once.
+Holds the settings shared by everything the spawner sends at the player, asteroids and power-ups:
+warning glow colors and timing, spin, explosion, outline colors, despawn distance, what happens when the
+player gets hit, how much the player's speed affects approach speed, and the power-up spin and pickup
+effect. Every asteroid and power-up prefab points at the same template asset, so changing a value there
+changes it for all of them at once.
+
+It was called `AsteroidTemplate` until power-ups started using it. Asteroid-only settings and power-up-only
+settings sit in their own sections; `speedMultiplier` and `despawnBehindCamera` are shared by both.
 
 It's only data. It has no `Update` or other logic, apart from one helper that picks the glow color.
 
@@ -13,9 +17,10 @@ It's only data. It has no `Update` or other logic, apart from one helper that pi
 
 - **Attached to:** nothing. It's a **ScriptableObject**, which is saved as an asset file in the project
   instead of being attached to a GameObject.
-- **The asset:** `Assets/Scripts/AsteroidTemplate.asset`.
-- **Used by:** the `template` field on every asteroid prefab in `Assets/Prefabs/Asteroid Types/`.
-- **Making a new one:** right-click in the Project window → Create → Return of the Hamster → Asteroid
+- **The asset:** `Assets/Scripts/SpawnableTemplate.asset`.
+- **Used by:** the `template` field on every asteroid prefab in `Assets/Prefabs/Asteroid Types/`, and on
+  power-up prefabs (`Assets/Prefabs/Health PowerUp.prefab`).
+- **Making a new one:** right-click in the Project window → Create → Return of the Hamster → Spawnable
   Template. The `[CreateAssetMenu]` line at the top of the script adds that menu option.
 
 ### Why a ScriptableObject
@@ -30,7 +35,7 @@ they're meant to differ between asteroids.
 ## Inspector settings
 
 "Default" is what the script starts a new template with. "In the asset" is what the project's
-`AsteroidTemplate.asset` is actually set to, which is what the game uses.
+`SpawnableTemplate.asset` is actually set to, which is what the game uses.
 
 ### Warning Glow
 
@@ -88,7 +93,18 @@ they're meant to differ between asteroids.
 
 | Field | Default | In the asset | What it changes |
 | --- | --- | --- | --- |
-| `speedMultiplier` | 15 | **0.5** | Extra approach speed (units/sec) for each point of the player's `Speed`. See `ApproachSpeed` in AsteroidBehavior |
+| `speedMultiplier` | 15 | **0.5** | Extra approach speed (units/sec) for each point of the player's `Speed`. See `ApproachSpeed` in AsteroidBehavior. Power-ups use it too, so they keep their place in a pattern |
+
+### Power-Up
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `powerUpSpinSpeed` | 90 | How fast power-ups spin around the world's up axis, in degrees per second. Separate from the asteroids' `spinSpeed` |
+| `pickupEffectPrefab` | none | Particle effect spawned when a power-up is picked up. Currently set to Asteroid Explosion in the asset |
+| `pickupShakeDuration` | 0 | Seconds the camera shakes on a pickup. 0 means no shake (PowerUp skips the call entirely, so it can't cut a running shake short) |
+| `pickupShakeMagnitude` | 0 | How far the camera shakes on a pickup, in world units |
+
+`despawnBehindCamera` (Despawn) is shared by asteroids and power-ups.
 
 ## How it works
 
@@ -113,7 +129,8 @@ AsteroidBehavior calls this during the warning blink.
 
 ## Talks to
 
-- **AsteroidBehavior**: the only script that uses it. Reads every field and calls `GetGlow`.
+- **AsteroidBehavior**: reads every asteroid field and calls `GetGlow`.
+- **PowerUp**: reads `speedMultiplier`, `despawnBehindCamera` and the Power-Up section.
 
 The template doesn't read from or call anything itself.
 
@@ -125,6 +142,7 @@ The template doesn't read from or call anything itself.
 - **Changes made in Play mode are kept.** Edits to GameObjects in Play mode are undone when you stop, but
   a ScriptableObject is an asset, so edits to it are saved for real. That's handy for tuning, but it's
   easy to forget and lose the old values.
+- **A new `pickupEffectPrefab` field starts empty.** Until it's assigned in the asset, pickups have no effect.
 - **One template changes every asteroid.** To give one group of asteroids different settings (say, a
   harder knockback), make a second template asset and assign it to just those prefabs.
 - **Adding a movement type needs a glow color here too.** A new type with no case in `GetGlow` quietly
