@@ -44,6 +44,5 @@ public class RunStats : MonoBehaviour
     {
         PlayerPrefs.SetInt(AttemptKey, Attempt + 1);
         PlayerPrefs.Save();
-        Debug.Log($"{ApolloName}: {AsteroidsDestroyed} asteroids, {PowerUpsPickedUp} power-ups, {OverdriveTime:0.0}s overdrive, {TimeSurvived:0.0}s survived");
     }
 }

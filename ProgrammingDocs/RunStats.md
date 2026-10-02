@@ -82,7 +82,6 @@ Called by `GameManager.GameOver()`, once, when the player dies:
    change, so this run's screen still shows the Apollo who died.
 2. `PlayerPrefs.Save()` writes to disk straight away. Otherwise Unity only writes on a normal quit, and a
    crash would bring the same Apollo back.
-3. A **temporary** `Debug.Log` prints the run's stats, until the game-over screen shows them.
 
 Calling it twice would be harmless today (it saves the same number both times, because it never changes
 `Attempt`). That stops being true once it also saves full records, which is why it relies on
@@ -95,6 +94,7 @@ Calling it twice would be harmless today (it saves the same number both times, b
 - **PlayerMovement**: reads `InOverdrive` (through GameManager's `Player`).
 - **AsteroidBehavior**: calls `AddAsteroidDestroyed()`.
 - **PowerUp**: calls `AddPowerUpPickedUp()`.
+- **GameOverScreen**: reads `ApolloName` and every stat to fill in the end screen.
 
 ## Gotchas
 
@@ -105,4 +105,3 @@ Calling it twice would be harmless today (it saves the same number both times, b
 - **Overdrive is defined in PlayerMovement.** If `InOverdrive`'s threshold changes, this stat changes with it.
 - **The timers stop on a win but keep their values,** so `TimeSurvived` after a win is the time it took to
   win.
-- **The temporary stats log** in `RecordDeath` should be removed once the game-over screen shows the stats.

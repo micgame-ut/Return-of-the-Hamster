@@ -29,6 +29,7 @@ scripts itself. It announces the state, and each script checks it and stops itse
 | `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
+| `gameOverScreen` | GameOverScreen | The end screen, on the `EndScreen` canvas. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
 `LevelTimer`, `PlayerHealth`). Other scripts can read the references but can't swap them out.
@@ -97,8 +98,7 @@ the prefab). Freezing is a level-wide operation, which is why it lives here and 
 ### `DeathSequenceFinished`
 
 Called by PlayerDeath once the ship has exploded and `endDelay` has passed. If the game isn't over, it
-does nothing. Otherwise it logs "Death sequence finished". It's the hook for the game-over screen, which
-isn't built yet.
+does nothing. Otherwise it shows the end screen (`gameOverScreen.Show()`), if one is assigned.
 
 ### `Win`
 
@@ -127,6 +127,7 @@ anything. Other scripts read from it or call it:
 | **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
 | **PlayerDeath** | reads `IsGameOver` and `GameplayCamera`, calls `DeathSequenceFinished()` | every frame until game over; at the end of the sequence |
+| **GameOverScreen** | GameManager calls its `Show()`; it reads `RunStats` and `LevelTimer` | when the death sequence finishes |
 | **AsteroidBehavior** | `GameplayCamera`; `RunStats` | `Awake`; when an asteroid is smashed |
 | **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats` | `Awake`; on pickup |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |

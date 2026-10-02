@@ -30,3 +30,7 @@ MonoBehaviour:
   hitShakeDuration: 0.15
   hitShakeMagnitude: 0.2
   speedMultiplier: 0.5
+  powerUpSpinSpeed: 90
+  pickupEffectPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
+  pickupShakeDuration: 0
+  pickupShakeMagnitude: 0

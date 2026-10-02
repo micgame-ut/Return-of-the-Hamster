@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private LevelTimer levelTimer;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private RunStats runStats;
+    [SerializeField] private GameOverScreen gameOverScreen;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -71,7 +72,7 @@ public class GameManager : MonoBehaviour
     {
         if (!IsGameOver) return;
 
-        Debug.Log("Death sequence finished");
+        if (gameOverScreen != null) gameOverScreen.Show();
     }
 
     private void OnDestroy()
