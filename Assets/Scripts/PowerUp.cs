@@ -6,7 +6,7 @@ using UnityEngine;
 // applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health }
+    public enum PowerUpType { Health, Invincible }
 
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [SerializeField] private float speed = 20f;
@@ -60,12 +60,21 @@ public class PowerUp : MonoBehaviour
         if (health != null) health.GainLife();
     }
 
+    private void MakeInvincible(PlayerMovement player)
+    {
+        PlayerInvincibility invincibility = player.GetComponent<PlayerInvincibility>();
+        if (invincibility != null && template != null) invincibility.Activate(template.invincibleDuration);
+    }
+
     private void ApplyEffect(PlayerMovement player)
     {
         switch (type)
         {
             case PowerUpType.Health:
                 Heal(player);
+                break;
+            case PowerUpType.Invincible:
+                MakeInvincible(player);
                 break;
         }
     }

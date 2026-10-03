@@ -45,6 +45,7 @@ public class SpawnableTemplate : ScriptableObject
     public ParticleSystem pickupEffectPrefab;
     public float pickupShakeDuration = 0f;      // seconds; 0 = no shake
     public float pickupShakeMagnitude = 0f;     // max camera offset in units
+    public float invincibleDuration = 5f;       // seconds of invincibility per pickup
 
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {

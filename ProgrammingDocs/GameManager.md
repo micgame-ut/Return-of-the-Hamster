@@ -3,7 +3,7 @@
 ## Purpose
 
 One central place for the scene's important objects: the player, the gameplay camera, the earth, the
-earth camera, the LevelTimer, and the player's PlayerHealth. Instead of every script having its own
+earth camera, the LevelTimer, and the player's PlayerHealth and PlayerInvincibility. Instead of every script having its own
 Inspector fields for these (and each one needing to be dragged in by hand), scripts ask the GameManager
 with `GameManager.Instance`.
 
@@ -15,7 +15,7 @@ checks it and stops itself.
 ## Where it lives
 
 - **Attached to:** the `Game Manager` GameObject in `Game.unity`. `LevelTimer` sits on the same object.
-  `PlayerHealth` sits on the player object instead, since it belongs to the player.
+  `PlayerHealth` and `PlayerInvincibility` sit on the player object instead, since they belong to the player.
 - **Requires:** its Inspector fields filled in (see below). There must be exactly one in the scene.
 - **Not in:** `PatternEnvironment.unity`. Scripts that use it check for `null`, so they still run there
   without it (see Gotchas).
@@ -30,11 +30,12 @@ checks it and stops itself.
 | `earthCamera` | Camera | The camera that renders the earth |
 | `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
+| `playerInvincibility` | PlayerInvincibility | The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
-`LevelTimer`, `PlayerHealth`). Other scripts can read the references but can't swap them out.
+`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`). Other scripts can read the references but can't swap them out.
 
 ## How it works
 
@@ -67,9 +68,9 @@ or `Start` runs, `Instance` is ready.
    runs first (`-100`), so time is normal before any other script runs.
 4. **Fill in the LevelTimer and RunStats.** If either was left empty, it looks for one on the same
    GameObject with `GetComponent`.
-5. **Fill in the PlayerHealth.** If `playerHealth` was left empty and `player` is assigned, it looks for a
-   PlayerHealth on the player object with `player.GetComponent`. Calling `GetComponent` on another
-   component searches that component's GameObject. The `&& player != null` check stops before
+5. **Fill in the PlayerHealth and PlayerInvincibility.** If either was left empty and `player` is
+   assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
+   another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
 
 `[DisallowMultipleComponent]` also stops two GameManagers from being added to the same GameObject in the
@@ -138,7 +139,7 @@ its own.
 
 ## Talks to
 
-GameManager reads `player` once in `Awake` to find the PlayerHealth. Otherwise it doesn't read from or call
+GameManager reads `player` once in `Awake` to find the PlayerHealth and PlayerInvincibility. Otherwise it doesn't read from or call
 anything. Other scripts read from it or call it:
 
 | Script | What it gets or calls | When |
@@ -147,7 +148,8 @@ anything. Other scripts read from it or call it:
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
 | **PlayerDeath** | reads `IsGameOver` and `GameplayCamera`, calls `DeathSequenceFinished()` | every frame until game over; at the end of the sequence |
 | **EndScreen** | GameManager calls `ShowGameOver()` / `ShowWin()`; it reads `RunStats` and `LevelTimer` | when the death sequence finishes; on a win |
-| **AsteroidBehavior** | `GameplayCamera`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
+| **PlayerInvincibility** | reads `IsGameOver` and `HasWon` | every frame |
+| **AsteroidBehavior** | `GameplayCamera`, `PlayerInvincibility`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
 | **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
@@ -167,8 +169,9 @@ anything. Other scripts read from it or call it:
   constructor gets `null`.
 - **Most lookups happen once.** Almost every script grabs its reference in `Awake` or `Start` and keeps it.
   Changing a GameManager field during Play mode won't reach those scripts.
-- **The PlayerHealth fallback needs `player`.** If `player` is empty, `playerHealth` stays empty too.
-  AsteroidBehavior doesn't depend on this, since it finds PlayerHealth through the player it hit.
+- **The PlayerHealth and PlayerInvincibility fallbacks need `player`.** If `player` is empty, both stay
+  empty too. AsteroidBehavior finds PlayerHealth through the player it hit, so lives still work, but it
+  gets PlayerInvincibility from here, so invincibility would stop busting asteroids and turning them green.
 - **Anything that must move during the game-over freeze has to use unscaled time.** Anything using
   `Time.deltaTime`, `WaitForSeconds`, or particle systems left on Scaled stays frozen.
 - **A spawnable that isn't in an `Active` list can't hold up the win.** A new kind of object sent at the
