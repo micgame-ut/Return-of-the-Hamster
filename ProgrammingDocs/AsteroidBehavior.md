@@ -98,9 +98,9 @@ block to `null` removes the override. The material needs **Emission** turned on 
 **Spin.** The mesh rotates around its random axis at `spinSpeed` degrees per second. This runs during
 the warning too, so asteroids appear already tumbling.
 
-**Outline color (`UpdateOutline`).** Destructible asteroids only. The outline is green when the player is
-fast enough to smash it and red when they aren't. It only touches the renderer when that changes, not
-every frame.
+**Outline color (`UpdateOutline`).** Destructible asteroids only. The outline is green when `CanBreak` is
+true (the player is invincible, or fast enough to smash it) and red when it isn't. It only touches the
+renderer when that changes, not every frame.
 
 **Moving.** Once `isMoving` is true:
 
@@ -135,9 +135,12 @@ every frame.
 1. **Is it the player?** It looks for PlayerMovement on the object it touched or any of its parents
    (`GetComponentInParent`), so it still works if the player's collider is on a child. Anything else is
    ignored.
-2. **Smash.** If it's `destructible` and the player's `Speed` is at least `destroySpeed`, it explodes
-   (and `Explode` adds one to `RunStats.AsteroidsDestroyed` through GameManager, null-safe):
-   it spawns the template's `explosionPrefab`, shakes the camera, and destroys itself.
+2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
+   **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
+
+   Exploding spawns the template's `explosionPrefab`, shakes the camera, and destroys the asteroid, and
+   `Explode` adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe). Since this branch
+   comes first, an invincible player gets no knockback, speed loss or lost life.
 3. **Otherwise, hit the player.**
    - **Which way to push.** `OrbitTangent` is the counter-clockwise direction along the player's circle.
      The **dot product** of (player position − asteroid position) with that direction tells you whether
@@ -164,8 +167,14 @@ scene for asteroids every frame. The public properties exist for it:
 | --- | --- |
 | `IsMoving` | Whether it has finished warning and started moving |
 | `ApproachSpeed` | How fast it's closing in right now |
-| `CanBreak` | Whether the player could smash it at their current speed |
+| `CanBreak` | Whether touching it right now would smash it |
 | `HitRadius` | How wide its collider is on screen (0 while the collider is off during the warning) |
+
+`CanBreak` is the one rule for "would this break?": `(invincible) || (destructible && Speed >= destroySpeed)`.
+The outline color, OrbitRing's arc color and `OnTriggerEnter` all use it, so what the player sees always
+matches what happens. "Invincible" comes from the PlayerInvincibility reference each asteroid grabs from
+GameManager once in `Awake`, so checking it costs no searching. If there's no GameManager or no
+PlayerInvincibility, that part is just false.
 
 ## Talks to
 
@@ -174,7 +183,10 @@ scene for asteroids every frame. The public properties exist for it:
 - **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
-- **GameManager**: gets the gameplay camera in `Awake`, and `RunStats` when an asteroid is smashed.
+- **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
+  arc are green and touching it explodes it.
+- **GameManager**: gets the gameplay camera and PlayerInvincibility in `Awake`, and `RunStats` when an
+  asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
@@ -197,6 +209,8 @@ scene for asteroids every frame. The public properties exist for it:
   `OnEnable` has to reset everything, which it does. Any new state added to the script should be reset there too.
 - **Smashing works while invulnerable.** The smash check happens before `TakeHit`, so it ignores the
   player's invulnerability window. Smashing never costs a life.
+- **Non-destructible asteroids have no outline.** While the player is invincible, their arcs turn green,
+  but there's no outline to change, since only destructible asteroids get the outline material.
 - **PlayerHealth must be on the player object.** It's looked up on the object that has PlayerMovement. If
   it's missing, hits still push and shake but never cost a life, with no error.
 - **No template means no lost lives either.** The hit branch is skipped entirely without a template, so

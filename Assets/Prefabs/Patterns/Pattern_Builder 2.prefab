@@ -1,0 +1,552 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1426364939829335137
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 988495457000255784}
+  - component: {fileID: -7279709790386651336}
+  m_Layer: 0
+  m_Name: Pattern_Builder 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &988495457000255784
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426364939829335137}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8465371524581296905}
+  - {fileID: 7951247094343853048}
+  - {fileID: 4181778672529508788}
+  - {fileID: 6781068741474737778}
+  - {fileID: 3981400755668863035}
+  - {fileID: 3544567220347726189}
+  - {fileID: 9186480940647146912}
+  - {fileID: 1176218694106661046}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-7279709790386651336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426364939829335137}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cff99534dbfb69943b0937be20e55aba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PatternGizmos
+  ringColor: {r: 0.3, g: 0.8, b: 1, a: 0.6}
+  playerRingColor: {r: 1, g: 0.8, b: 0.2, a: 0.8}
+--- !u!1001 &464011107003223143
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -1.596096
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.5401728
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &7951247094343853048 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 464011107003223143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1680987253491419711
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.596096
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.5401726
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &9186480940647146912 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 1680987253491419711}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2113301148723815574
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.1213202
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.1213202
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &8465371524581296905 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 2113301148723815574}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &3905690331745677805
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.33589333
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.9811366
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &6781068741474737778 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 3905690331745677805}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5917825798027781675
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.9908371
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.83165
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &4181778672529508788 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 5917825798027781675}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6419929256556119794
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.99083716
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.83165
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &3544567220347726189 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 6419929256556119794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6874806794429327268
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.33589345
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.9811366
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &3981400755668863035 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 6874806794429327268}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8681315096919371561
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 988495457000255784}
+    m_Modifications:
+    - target: {fileID: 3299742882662352789, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_Name
+      value: Invincibility PowerUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.1213202
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.1213202
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+--- !u!4 &1176218694106661046 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7505528872746332063, guid: 72590678cc44a8c45b1f6275aad2953d, type: 3}
+  m_PrefabInstance: {fileID: 8681315096919371561}
+  m_PrefabAsset: {fileID: 0}

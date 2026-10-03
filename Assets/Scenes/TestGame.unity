@@ -536,6 +536,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   waves:
+  - pattern: {fileID: 1426364939829335137, guid: a13cc7ea95908a4498f3cebb2f54adfc, type: 3}
+    delayAfter: 2
   - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
     delayAfter: 2
   - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}

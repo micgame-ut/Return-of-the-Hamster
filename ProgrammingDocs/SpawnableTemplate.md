@@ -4,8 +4,8 @@
 
 Holds the settings shared by everything the spawner sends at the player, asteroids and power-ups:
 warning glow colors and timing, spin, explosion, outline colors, despawn distance, what happens when the
-player gets hit, how much the player's speed affects approach speed, and the power-up spin and pickup
-effect. Every asteroid and power-up prefab points at the same template asset, so changing a value there
+player gets hit, how much the player's speed affects approach speed, and the power-up spin, pickup
+effect and invincibility duration. Every asteroid and power-up prefab points at the same template asset, so changing a value there
 changes it for all of them at once.
 
 It was called `AsteroidTemplate` until power-ups started using it. Asteroid-only settings and power-up-only
@@ -103,6 +103,7 @@ they're meant to differ between asteroids.
 | `pickupEffectPrefab` | none | Particle effect spawned when a power-up is picked up. Currently set to Asteroid Explosion in the asset |
 | `pickupShakeDuration` | 0 | Seconds the camera shakes on a pickup. 0 means no shake (PowerUp skips the call entirely, so it can't cut a running shake short) |
 | `pickupShakeMagnitude` | 0 | How far the camera shakes on a pickup, in world units |
+| `invincibleDuration` | 5 | Seconds of invincibility from an Invincible power-up. Passed to `PlayerInvincibility.Activate` |
 
 `despawnBehindCamera` (Despawn) is shared by asteroids and power-ups.
 
@@ -130,7 +131,8 @@ AsteroidBehavior calls this during the warning blink.
 ## Talks to
 
 - **AsteroidBehavior**: reads every asteroid field and calls `GetGlow`.
-- **PowerUp**: reads `speedMultiplier`, `despawnBehindCamera` and the Power-Up section.
+- **PowerUp**: reads `speedMultiplier`, `despawnBehindCamera` and the Power-Up section, including
+  `invincibleDuration` for the Invincible type.
 
 The template doesn't read from or call anything itself.
 

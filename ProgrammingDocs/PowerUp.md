@@ -6,7 +6,11 @@ A pickup that works like an asteroid: it flies toward the camera (and the player
 collider touches it, does something. Each power-up type has its own effect. Every pickup also adds one to
 the power-ups stat in RunStats.
 
-There's one type so far: **Health**, which gives the player a life back, up to their max.
+There are two types:
+
+- **Health** gives the player a life back, up to their max.
+- **Invincible** makes the player invincible for a few seconds: every asteroid they touch is busted, and a
+  rainbow overlay shows on the ship. The timer and overlay live in PlayerInvincibility on the player.
 
 ## Where it lives
 
@@ -97,7 +101,7 @@ When something touches it:
    timer of a shake already running.)
 6. **Destroy** the power-up.
 
-### `ApplyEffect` and `Heal`
+### `ApplyEffect`, `Heal` and `MakeInvincible`
 
 `ApplyEffect(player)` runs the effect method for this power-up's `type`. Every effect method takes the
 player that picked it up (`PlayerMovement player`), so it can get whatever it needs from the player's
@@ -112,16 +116,26 @@ past the max:
 | 2 | 3 | yes |
 | 3 (max) | 3 | yes (used up and wasted) |
 
+**`MakeInvincible`** finds PlayerInvincibility on the player and calls `Activate(template.invincibleDuration)`.
+It does nothing if either the component or the template is missing (the duration comes from the template).
+
+The timer can't live in PowerUp, because the power-up destroys itself on the same frame it's picked up, so
+its `Update` would never count down. Instant effects like `Heal` can finish inside the effect method;
+effects that last over time hand off to a script on the player.
+
+A second pickup while invincible resets the timer to the full duration rather than adding to it.
+
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
-  `pickupEffectPrefab` and the pickup shake settings.
+  `pickupEffectPrefab`, the pickup shake settings and `invincibleDuration`.
 - **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
 - **PlayerMovement**: finds it on whatever touched the power-up, and reads its static `Speed`.
 - **PlayerHealth**: calls `GainLife()` (Health type).
+- **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
 - **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
 
@@ -135,5 +149,8 @@ past the max:
 - **It doesn't appear on the orbit ring.** OrbitRing only draws danger arcs for asteroids
   (`AsteroidBehavior.Active`).
 - **Only Linear movement.** It doesn't support Wave like asteroids do.
+- **New enum entries go at the end.** Unity saves the `type` dropdown as a position number (Health = 0,
+  Invincible = 1). Inserting a new type before an existing one would quietly change which type every
+  existing prefab is.
 - **It can't be smashed or hit.** Asteroids' smash and knockback logic doesn't apply; touching it is always
   a pickup (unless the level is won).

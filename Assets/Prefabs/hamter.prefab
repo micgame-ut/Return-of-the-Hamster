@@ -169,6 +169,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6807492912756224308}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5416972313573487601}
   m_SourcePrefab: {fileID: 100100000, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
 --- !u!1 &3493068378728214698 stripped
 GameObject:
@@ -314,6 +317,22 @@ MonoBehaviour:
   explodeShakeDuration: 0.4
   explodeShakeMagnitude: 0.5
   endDelay: 1.5
+--- !u!114 &5416972313573487601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3493068378728214698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 737e1f28a4dd5f14fa98356d37492d96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInvincibility
+  meshTransform: {fileID: 8124262161344390682}
+  rainbowMaterial: {fileID: 2100000, guid: d37e1d5e0db73454f83964708bcdfdf7, type: 2}
+  warningTime: 1
+  warningBlinkInterval: 0.1
 --- !u!4 &4265488849847642640 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}

@@ -33,6 +33,7 @@ public class AsteroidBehavior : MonoBehaviour
     private MaterialPropertyBlock outlineBlock;
     private Transform mesh;
     private Transform cam;
+    private PlayerInvincibility invincibility;
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -52,7 +53,8 @@ public class AsteroidBehavior : MonoBehaviour
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
 
     public bool IsMoving => isMoving;
-    public bool CanBreak => destructible && PlayerMovement.Speed >= destroySpeed;
+    public bool CanBreak => (invincibility != null && invincibility.IsInvincible) ||
+                            (destructible && PlayerMovement.Speed >= destroySpeed);
 
     // XY footprint of the collider; its bounds are only valid while it's enabled.
     public float HitRadius => col != null && col.enabled ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.y) : 0f;
@@ -67,6 +69,7 @@ public class AsteroidBehavior : MonoBehaviour
         mesh = rend != null ? rend.transform : null;
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
+        invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -162,7 +165,7 @@ public class AsteroidBehavior : MonoBehaviour
         if (outlineIndex < 0) return;
 
         // Only touch the renderer when the state flips, not every frame.
-        int state = PlayerMovement.Speed >= destroySpeed ? 1 : 0;
+        int state = CanBreak ? 1 : 0;
         if (state == outlineState) return;
         outlineState = state;
 
@@ -217,7 +220,7 @@ public class AsteroidBehavior : MonoBehaviour
         PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
         if (player == null) return;
 
-        if (destructible && PlayerMovement.Speed >= destroySpeed)
+        if (CanBreak)
         {
             Explode();
         }

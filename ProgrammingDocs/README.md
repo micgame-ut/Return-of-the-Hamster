@@ -25,6 +25,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
+| PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |

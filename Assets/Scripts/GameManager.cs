@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Camera earthCamera;
     [SerializeField] private LevelTimer levelTimer;
     [SerializeField] private PlayerHealth playerHealth;
+    [SerializeField] private PlayerInvincibility playerInvincibility;
     [SerializeField] private RunStats runStats;
     [SerializeField] private EndScreen endScreen;
 
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour
     public Camera EarthCamera => earthCamera;
     public LevelTimer LevelTimer => levelTimer;
     public PlayerHealth PlayerHealth => playerHealth;
+    public PlayerInvincibility PlayerInvincibility => playerInvincibility;
     public RunStats RunStats => runStats;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
@@ -53,6 +55,7 @@ public class GameManager : MonoBehaviour
 
         // Player scripts sit on the player object, so look there instead.
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
+        if (playerInvincibility == null && player != null) playerInvincibility = player.GetComponent<PlayerInvincibility>();
     }
 
     private void Update()
