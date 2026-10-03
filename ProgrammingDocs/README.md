@@ -14,8 +14,8 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
-| GameOverScreen.cs | [GameOverScreen.md](GameOverScreen.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |

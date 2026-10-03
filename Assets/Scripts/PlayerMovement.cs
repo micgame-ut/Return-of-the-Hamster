@@ -72,8 +72,9 @@ public class PlayerMovement : MonoBehaviour
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
 
-    // Once the game is over, all input is ignored.
-    private bool InputLocked => GameManager.Instance != null && GameManager.Instance.IsGameOver;
+    // Once the game is over or won, all input is ignored.
+    private bool InputLocked => GameManager.Instance != null &&
+                                (GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Top 10% of max speed, where the extra drain applies. RunStats times how long it's held.
     public bool InOverdrive => Speed >= maxSpeed * 0.9f;
@@ -120,7 +121,7 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Once the game is over, PlayerDeath moves the ship instead.
+        // Once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
         if (InputLocked) return;
 
         Vector2 mouseDelta = moveInput * Time.fixedDeltaTime;

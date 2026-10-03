@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // A pickup that flies toward the camera like a Linear asteroid, using the
@@ -18,6 +19,9 @@ public class PowerUp : MonoBehaviour
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
 
+    // Every revealed power-up, so GameManager can tell when the field is clear.
+    public static readonly List<PowerUp> Active = new List<PowerUp>();
+
     private void Awake()
     {
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
@@ -26,8 +30,14 @@ public class PowerUp : MonoBehaviour
 
     private void OnEnable()
     {
+        Active.Add(this);
         origin = transform.position;
         distance = 0f;
+    }
+
+    private void OnDisable()
+    {
+        Active.Remove(this);
     }
 
     private void Update()

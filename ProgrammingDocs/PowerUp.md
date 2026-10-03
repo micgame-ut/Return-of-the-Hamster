@@ -54,7 +54,13 @@ between two asteroids stays between them in flight. ObjectSpawner reads it to ti
 ### `Awake` and `OnEnable`
 
 - **`Awake`** finds the gameplay camera through GameManager, once.
-- **`OnEnable`** records where the power-up was revealed (`origin`) and resets `distance` to 0.
+- **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
+  and resets `distance` to 0.
+- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up, despawned, or its
+  pattern destroyed) goes through `Destroy`, which runs `OnDisable`.
+
+`Active` is shared by the whole class, the same as `AsteroidBehavior.Active`. GameManager reads it to know
+whether the field is clear before the level can be won.
 
 The start point is recorded in `OnEnable`, not `Awake`, because of how the spawner reveals things. It
 creates the pattern (running `Awake` and `OnEnable`), switches every child off, and later moves each one to
@@ -111,7 +117,8 @@ past the max:
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab` and the pickup shake settings.
-- **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it.
+- **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it. GameManager
+  reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
 - **PlayerMovement**: finds it on whatever touched the power-up, and reads its static `Speed`.
 - **PlayerHealth**: calls `GainLife()` (Health type).

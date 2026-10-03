@@ -43,7 +43,5 @@ public class LevelTimer : MonoBehaviour
         Progress = Mathf.Min(Progress + Time.deltaTime / effectiveTime, 1f);
 
         earth.position = Vector3.Lerp(origin, stopPoint, Progress);
-
-        if (IsComplete) GameManager.Instance.Win();
     }
 }

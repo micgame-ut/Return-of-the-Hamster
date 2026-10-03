@@ -2,12 +2,13 @@
 
 ## Purpose
 
-The hub for every stat tracked during a run. Each stat is a property with a public getter and a private
-setter, so other scripts (and later the UI) can read them, but only RunStats changes them. Other scripts
-call its methods to add to individual stats.
+The hub for every stat tracked for the current Apollo. Each stat is a property with a public getter and a
+private setter, so other scripts (and the end screens) can read them, but only RunStats changes them.
+Other scripts call its methods to add to individual stats.
 
-It also keeps the hamster's name: "Apollo" plus an attempt number. The attempt number is saved in
-`PlayerPrefs`, so it lasts across the whole game save, and it goes up by one each time the player dies.
+The stats follow the **Apollo, not the level**: they're saved when a level is won, carried into the next
+level, and reset when the Apollo dies. The hamster's name is "Apollo" plus an attempt number, which is also
+saved and goes up by one each time the player dies.
 
 ## Where it lives
 
@@ -26,45 +27,55 @@ It also keeps the hamster's name: "Apollo" plus an attempt number. The attempt n
 
 ### The stats
 
-| Property | Type | Saved to disk? | What it counts |
+| Property | Type | Saved under | What it counts |
 | --- | --- | --- | --- |
-| `Attempt` | `int` | **yes**, in `PlayerPrefs` | Which Apollo this run is: deaths so far + 1 |
+| `Attempt` | `int` | `Attempt` | Which Apollo this is: deaths so far + 1 |
 | `ApolloName` | `string` | — | `hamsterName` + `Attempt`, e.g. "Apollo 3". Built each time it's read |
-| `AsteroidsDestroyed` | `int` | no | Asteroids smashed this run |
-| `PowerUpsPickedUp` | `int` | no | Power-ups picked up this run, including ones wasted at full health |
-| `OverdriveTime` | `float` | no | Seconds spent in the top 10% of speed this run |
-| `TimeSurvived` | `float` | no | Seconds from the start of the run until death or a win |
+| `AsteroidsDestroyed` | `int` | `AsteroidsDestroyed` | Asteroids smashed by this Apollo |
+| `PowerUpsPickedUp` | `int` | `PowerUpsPickedUp` | Power-ups picked up, including ones wasted at full health |
+| `OverdriveTime` | `float` | `OverdriveTime` | Seconds spent in the top 10% of speed |
+| `TimeSurvived` | `float` | `TimeSurvived` | Seconds survived, across all levels |
+| `LevelsBeaten` | `int` | `LevelsBeaten` | Levels won. Not shown on any screen yet; kept for future Apollo records |
 
-Only `Attempt` is saved. The other stats are instance properties held in memory, so they start at 0 every
-time the scene loads. Saving each Apollo's full record is planned for a later "top 5 Apollos" screen.
+Everything is stored in `PlayerPrefs`, Unity's small key-value store saved on the computer. Each key is a
+`const` (`AttemptKey`, `AsteroidsKey`, ...), so loading and saving can't use two different spellings. A
+typo in one of them would silently read and write different entries.
 
-### `Awake`: loading the Apollo number
+### The life of the stats
 
-`Attempt = PlayerPrefs.GetInt(AttemptKey, 1)`. It reads the number saved under the key `"Attempt"`. The
-second argument, 1, is the **default**: what `GetInt` returns when nothing has been saved yet, so a brand
-new player is Apollo 1. Nothing is written here; it only reads.
+| Moment | What happens |
+| --- | --- |
+| **Level starts** (`Awake`) | Loads the Apollo's saved totals. A new Apollo has nothing saved, so everything is 0 |
+| **During the level** | `Update` and the `Add...` methods keep adding to those totals |
+| **Win** (`RecordWin`) | `LevelsBeaten` + 1, then all totals are saved, so the next level carries on from them |
+| **Death** (`RecordDeath`) | The next Apollo number is saved and every total is deleted, so the next Apollo starts at 0 |
+| **Quit mid-level** | Nothing is saved for that level. The next launch is the same Apollo, with their totals as of the last level they won |
 
-The key is a `const` (`AttemptKey`), so loading and saving can't use two different spellings. A typo in
-one of them would silently read and write different entries, and every hamster would be Apollo 1.
+Worked example, Apollo 3:
 
-| Run | Loaded | Shown on death | Saved on death |
+| | Level 1 | Level 2 | Dies in level 3 |
 | --- | --- | --- | --- |
-| first ever | 1 (nothing saved) | Apollo 1 | 2 |
-| second | 2 | Apollo 2 | 3 |
-| quit mid-run | 3 | — | nothing, so the next launch is still Apollo 3 |
+| Asteroids smashed in that level | 10 | 7 | 4 |
+| Saved total afterwards | 10 | 17 | deleted |
+| Shown on the end screen | win: 10 | win: 17 | death: 21 |
+
+### `Awake`: loading
+
+Reads every saved value with `PlayerPrefs.GetInt` / `GetFloat`. The second argument is the **default**,
+returned when nothing has been saved under that key: 1 for `Attempt` (so a brand-new player is Apollo 1)
+and 0 for everything else. Nothing is written here.
 
 ### `Update`: the running totals
 
-Each frame it adds `Time.deltaTime` (this frame's length) to `TimeSurvived`, and also to `OverdriveTime`
-when the player's `InOverdrive` is true. These are running totals: spending 10 seconds in overdrive,
-slowing down for 5, then 3 more in overdrive gives 13 seconds of overdrive and 18 survived. Checking only
-at the moment of death would lose all of that.
+Each frame it adds `Time.deltaTime` to `TimeSurvived`, and also to `OverdriveTime` when the player's
+`InOverdrive` is true. These are running totals: 10 seconds in overdrive, 5 slower, then 3 more in
+overdrive gives 13 seconds of overdrive and 18 survived.
 
 It stops counting in two ways:
 
 - **On a win:** `Update` returns early once GameManager's `HasWon` is set.
 - **On a death:** GameManager freezes time (`Time.timeScale = 0`), so `Time.deltaTime` is 0 and both
-  totals stop on their own. No check is needed here.
+  totals stop on their own. (A win freezes time too, so either way they stop.)
 
 ### `AddAsteroidDestroyed` and `AddPowerUpPickedUp`
 
@@ -72,36 +83,44 @@ Each adds one to its count (`++`). AsteroidBehavior calls the first when an aste
 PowerUp calls the second on every pickup.
 
 They're methods instead of public setters so that the counts can only ever go **up by one**. Any script can
-call them, but no script can set a count to 0 or 9999. It also gives one place to add more behavior later.
+call them, but no script can set a count to 0 or 9999.
+
+### `RecordWin` and `SaveStats`
+
+Called by `GameManager.Win()`. Adds one to `LevelsBeaten`, then `SaveStats()` writes all five totals and
+calls `PlayerPrefs.Save()` to write to disk straight away. `SaveStats` is a private helper so all the saving
+is in one place.
 
 ### `RecordDeath`
 
 Called by `GameManager.GameOver()`, once, when the player dies:
 
-1. Saves `Attempt + 1` under `AttemptKey`, so the next run is the next Apollo. `Attempt` itself doesn't
-   change, so this run's screen still shows the Apollo who died.
-2. `PlayerPrefs.Save()` writes to disk straight away. Otherwise Unity only writes on a normal quit, and a
-   crash would bring the same Apollo back.
+1. Saves `Attempt + 1`, so the next run is the next Apollo. `Attempt` itself doesn't change, so the death
+   screen still shows the Apollo who died.
+2. Deletes every saved total (`PlayerPrefs.DeleteKey`). A deleted key gives back its default (0) on the next
+   load, which is what a new Apollo should have.
+3. `PlayerPrefs.Save()` writes to disk straight away. Otherwise Unity only writes on a normal quit, and a
+   crash would bring the same Apollo (and totals) back.
 
-Calling it twice would be harmless today (it saves the same number both times, because it never changes
-`Attempt`). That stops being true once it also saves full records, which is why it relies on
-`GameOver()` only running once.
+It only touches what's saved, not the values in memory, so the death screen (shown after this) still shows
+the totals the Apollo died with. This is also where saving each Apollo's full record would go, for the
+planned "top 5 Apollos" screen.
 
 ## Talks to
 
-- **GameManager**: reads `HasWon` and `Player` every frame. GameManager calls `RecordDeath()` at game over,
-  and keeps a `RunStats` reference that other scripts use to reach it.
+- **GameManager**: reads `HasWon` and `Player` every frame. GameManager calls `RecordWin()` and
+  `RecordDeath()`, and keeps a `RunStats` reference that other scripts use to reach it.
 - **PlayerMovement**: reads `InOverdrive` (through GameManager's `Player`).
 - **AsteroidBehavior**: calls `AddAsteroidDestroyed()`.
 - **PowerUp**: calls `AddPowerUpPickedUp()`.
-- **GameOverScreen**: reads `ApolloName` and every stat to fill in the end screen.
+- **EndScreen**: reads `ApolloName` and every stat to fill in both end screens.
 
 ## Gotchas
 
-- **The run stats aren't saved.** Only the Apollo number survives a scene reload or quitting.
-- **Testing raises the Apollo number for real.** Every death in Play mode saves. Use Edit → Clear All
-  PlayerPrefs in Unity to start again from Apollo 1.
-- **`PlayerPrefs` is per computer,** not part of the project, so each person has their own Apollo count.
+- **Testing piles up for real.** Every win saves totals and every death raises the Apollo number. Use
+  Edit → Clear All PlayerPrefs in Unity to start again from Apollo 1 with nothing saved.
+- **Quitting mid-level loses that level's stats.** Only wins save.
+- **`PlayerPrefs` is per computer,** not part of the project, so each person has their own Apollo and totals.
+- **A new stat needs four things:** a key, a line in `Awake`, a line in `SaveStats`, and a `DeleteKey` in
+  `RecordDeath`. Missing the last one carries it over to the next Apollo.
 - **Overdrive is defined in PlayerMovement.** If `InOverdrive`'s threshold changes, this stat changes with it.
-- **The timers stop on a win but keep their values,** so `TimeSurvived` after a win is the time it took to
-  win.

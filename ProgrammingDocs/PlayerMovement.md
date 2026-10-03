@@ -53,11 +53,13 @@ asset, shared with the pattern builder so the two always match. The orbit's radi
 - **Update** runs every frame and handles everything else: the mesh roll (visual only), `Speed`, and the
   invulnerability blink.
 
-### Game over (`InputLocked`)
+### Game over and win (`InputLocked`)
 
-`InputLocked` is a private property that's true once GameManager's `IsGameOver` is set. At that point
-GameManager also freezes time (`Time.timeScale = 0`), and PlayerDeath takes over the ship. While it's
-true, PlayerMovement gets out of the way:
+`InputLocked` is a private property that's true once GameManager's `IsGameOver` **or** `HasWon` is set
+(the brackets around `IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes
+first). Either way GameManager freezes time (`Time.timeScale = 0`). On a death, PlayerDeath then takes over
+the ship; on a win, the ship just stays put while the win screen is up. While it's true, PlayerMovement
+gets out of the way:
 
 - **`Update` returns straight away.** Roll, speed and the invulnerability blink all stop where they are.
   This matters under the freeze: `Roll` eases back to level using `Time.deltaTime`, which is now 0, but
