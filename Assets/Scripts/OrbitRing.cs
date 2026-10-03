@@ -22,13 +22,16 @@ public class OrbitRing : MonoBehaviour
     [SerializeField] private float playerRadius = 0.5f; // added to the asteroid's radius; match the hamster's collider
 
     private PlayerMovement player;
+    private PlayerShell shell;
+    private Material createdMaterial;
     private LineRenderer ring;
     private readonly List<LineRenderer> arcs = new List<LineRenderer>();
 
     private void Start()
     {
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
-        if (lineMaterial == null) lineMaterial = new Material(Shader.Find("Sprites/Default"));
+        shell = player != null ? player.GetComponent<PlayerShell>() : null;
+        if (lineMaterial == null) lineMaterial = createdMaterial = new Material(Shader.Find("Sprites/Default"));
 
         ring = CreateLine("Orbit Ring", ringWidth, 0);
         ring.loop = true;
@@ -47,12 +50,13 @@ public class OrbitRing : MonoBehaviour
         SetArc(ring, center, radius, z, 0f, Mathf.PI * 2f, ringSegments, closed: true);
 
         int used = 0;
+        float playerReach = shell != null ? Mathf.Max(playerRadius, shell.HitRadius) : playerRadius;
         foreach (AsteroidBehavior asteroid in AsteroidBehavior.Active)
         {
             if (!asteroid.IsMoving) continue;
 
             Vector3 pos = asteroid.transform.position;
-            float reach = asteroid.HitRadius + playerRadius;
+            float reach = asteroid.HitRadius + playerReach;
 
             // Hide once it has fully passed the player's plane.
             float dz = pos.z - z;
@@ -139,5 +143,10 @@ public class OrbitRing : MonoBehaviour
         line.receiveShadows = false;
         line.sortingOrder = sortingOrder; // arcs draw over the ring
         return line;
+    }
+
+    private void OnDestroy()
+    {
+        if (createdMaterial != null) Destroy(createdMaterial);
     }
 }

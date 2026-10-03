@@ -30,7 +30,7 @@ of the circle is about to be dangerous.
 | `arcWidth` | 0.15 | 0.1 | Thickness of the danger arcs |
 | `arcOffset` | 0.6 | 0.5 | How far outside the ring the arcs are drawn, so they don't cover the hamster |
 | `warnTime` | 1.5 | 1.5 | Seconds before impact that an arc starts fading in |
-| `playerRadius` | 0.5 | 0.1 | The player's size, added to the asteroid's size to work out how wide the danger zone is |
+| `playerRadius` | 0.5 | 0.1 | The player's size, added to the asteroid's size to work out how wide the danger zone is. While PlayerShell's hitbox is on and bigger, its size is used instead |
 
 ## How it works
 
@@ -50,8 +50,10 @@ them. A circle is really a lot of short straight lines, so with enough points it
 
 ### `Start`
 
-1. Get the player from GameManager.
-2. If no line material was assigned, make one from the `Sprites/Default` shader.
+1. Get the player from GameManager, and the PlayerShell on it (if there is one).
+2. If no line material was assigned, make one from the `Sprites/Default` shader. It's also stored in
+   `createdMaterial`, so `OnDestroy` can destroy it. A material made with `new` isn't cleaned up with the
+   scene. Only this one is destroyed, never an assigned asset.
 3. Create the orbit ring line.
 
 ### `LateUpdate`: every frame
@@ -64,8 +66,11 @@ and radius from `OrbitSettings`. It's redrawn every frame so it follows the asse
 **2. For each asteroid in `AsteroidBehavior.Active`**, decide whether it gets an arc:
 
 - **Skip it if it's still warning.** Only moving asteroids count.
-- **Work out its reach.** `reach = asteroid's HitRadius + playerRadius`. The player's center is on the ring,
+- **Work out its reach.** `reach = asteroid's HitRadius + playerReach`. The player's center is on the ring,
   so the player gets hit anywhere their center comes within `reach` of the asteroid's center.
+  `playerReach` is worked out once per frame, before the loop: `Max(playerRadius, shell.HitRadius)`. While
+  PlayerShell's hitbox is on (shield or invincible), the player is as big as the shell, so the arcs widen to
+  match. It's `Max`, not a sum, because the shell surrounds the ship from the same center.
 - **Skip it if it has already passed.** `dz` is how far in front of the player it is along z. Once it's
   more than `reach` behind the player, it's gone.
 - **How visible is it?** `timeToImpact = dz / ApproachSpeed` (time = distance ÷ speed). Then
@@ -136,6 +141,7 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 ## Talks to
 
 - **GameManager**: gets the player in `Start`.
+- **PlayerShell**: found on the player in `Start`; reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,
   `ApproachSpeed`, and `CanBreak`.

@@ -14,6 +14,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
@@ -27,6 +28,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
+| PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |

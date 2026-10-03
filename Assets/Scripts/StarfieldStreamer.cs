@@ -37,6 +37,7 @@ public class StarfieldStreamer : MonoBehaviour
     private ParticleSystem stars;
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
     private ParticleSystem.Particle[] particleBuffer;
+    private Material fallbackMaterial;
 
     private void Awake()
     {
@@ -195,6 +196,12 @@ public class StarfieldStreamer : MonoBehaviour
             if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", dot);
             if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", dot);
         }
+        fallbackMaterial = mat;
         return mat;
+    }
+
+    private void OnDestroy()
+    {
+        if (fallbackMaterial != null) Destroy(fallbackMaterial);
     }
 }

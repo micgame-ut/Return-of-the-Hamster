@@ -244,3 +244,13 @@ When asked to change this file:
    top, say so.
 4. **Wait for confirmation**, then make the edit.
 5. **Follow the new wording** from then on, starting in the same conversation.
+
+## 12. Cleaning up runtime objects
+
+- Unity objects made in code (a `Texture2D`, `Material`, `Mesh` or `RenderTexture` created with `new`,
+  or a non-GameObject copied with `Instantiate`, such as `Instantiate(material)`) aren't removed when the
+  scene unloads. The script that creates one must destroy it itself, usually in `OnDestroy`. Point this
+  out in the snippet that creates it.
+- GameObjects and prefab copies made with `Instantiate` belong to the scene and are cleaned up with it.
+  Plain C# objects (arrays, `List`, `MaterialPropertyBlock`) are cleaned up by the garbage collector.
+  Neither needs this.

@@ -32,7 +32,11 @@ after you stop Play mode (the same as with ScriptableObjects, see SpawnableTempl
 the asset directly, the material would be left with whatever value it had when you stopped playing.
 
 To avoid that, `Awake` makes a copy of the material with `Instantiate`, and tells the scene to use the copy
-as its skybox. The script only ever changes the copy, which is thrown away when the game stops.
+as its skybox. The script only ever changes the copy.
+
+A material copied with `Instantiate` isn't part of the scene, so Unity doesn't remove it when the scene
+unloads. `OnDestroy` destroys the copy, so restarting or loading the next level doesn't leave another
+orphaned material in memory each time.
 
 If the scene has no skybox, there's nothing to copy, and `Update` does nothing.
 

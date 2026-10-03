@@ -40,4 +40,9 @@ public class SkyboxSpeedController : MonoBehaviour
 
         skyboxInstance.SetFloat(ScrollOffsetId, scrollOffset);
     }
+
+    private void OnDestroy()
+    {
+        if (skyboxInstance != null) Destroy(skyboxInstance);
+    }
 }

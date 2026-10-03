@@ -29,7 +29,19 @@ GameManager and the scripts that check it.
 - **`MaxLives`** is a read-only property that hands back `maxLives`, so other scripts can read it but
   not change it.
 - **`CurrentLives`** is the number of lives the player has right now in the game. Anyone can read it,
-  but only `PlayerHealth` can assign it (`private set`), so `LoseLife` is the only way it changes.
+  but only `PlayerHealth` can assign it (`private set`), so `LoseLife` and `GainLife` are the only ways it
+  changes.
+
+### `OnLivesChanged`
+
+An **event** (`Action<int>`) that other scripts subscribe to with `+=` (and leave with `-=`). `LoseLife`
+and `GainLife` raise it with the new `CurrentLives`, using `?.Invoke` so nothing happens when no one is
+listening. This lets PlayerShell and DangerWarning react only when lives change, instead of checking every
+frame.
+
+- `LoseLife` raises it **before** calling `GameOver()`, so the drop to 0 is announced too.
+- `GainLife` raises it even at max lives, when nothing changed. Listeners handle a repeat safely.
+- `Awake` doesn't raise it. Listeners read `CurrentLives` themselves in `Start`, after every `Awake` has run.
 
 These are instance members, not static, so a reloaded scene gets a new `PlayerHealth` that starts over
 at `maxLives` without any manual reset.
@@ -78,6 +90,9 @@ over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(Curr
 - **AsteroidBehavior**: calls `LoseLife()` on a counted hit, finding this component with
   `player.GetComponent<PlayerHealth>()`.
 - **PowerUp**: calls `GainLife()` from its Health effect, found the same way.
+- **PlayerShell**: subscribes to `OnLivesChanged`, and reads `CurrentLives` and `MaxLives` to show the shield
+  at full health.
+- **DangerWarning**: subscribes to `OnLivesChanged` (through GameManager's reference) to show the warning at 1 life.
 
 ## Gotchas
 
