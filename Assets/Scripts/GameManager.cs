@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private LevelTimer levelTimer;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private RunStats runStats;
+    [SerializeField] private EndScreen endScreen;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -27,6 +28,11 @@ public class GameManager : MonoBehaviour
     public RunStats RunStats => runStats;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
+
+    // Won once the earth has arrived and nothing spawned is still flying.
+    // A boss fight would add its own condition here.
+    private bool LevelCleared => levelTimer != null && levelTimer.IsComplete &&
+                                 AsteroidBehavior.Active.Count == 0 && PowerUp.Active.Count == 0;
 
     private void Awake()
     {
@@ -49,6 +55,11 @@ public class GameManager : MonoBehaviour
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
     }
 
+    private void Update()
+    {
+        if (!HasWon && !IsGameOver && LevelCleared) Win();
+    }
+
     public void GameOver()
     {
         if (IsGameOver || HasWon) return;
@@ -64,14 +75,16 @@ public class GameManager : MonoBehaviour
         if (IsGameOver || HasWon) return;
 
         HasWon = true;
-        Debug.Log("Level complete");
+        Time.timeScale = 0f;
+        if (runStats != null) runStats.RecordWin();
+        if (endScreen != null) endScreen.ShowWin();
     }
 
     public void DeathSequenceFinished()
     {
         if (!IsGameOver) return;
 
-        Debug.Log("Death sequence finished");
+        if (endScreen != null) endScreen.ShowGameOver();
     }
 
     private void OnDestroy()

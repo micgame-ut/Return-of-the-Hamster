@@ -1,10 +1,16 @@
 using UnityEngine;
 
-// Tracks this run's stats (the current Apollo) for the game-over screen, and
-// saves the Apollo number so each death moves on to the next one.
+// Tracks the current Apollo's stats across levels. The totals are saved on
+// each win and reset when the Apollo dies, which also moves on to the next
+// Apollo number.
 public class RunStats : MonoBehaviour
 {
     private const string AttemptKey = "Attempt";
+    private const string AsteroidsKey = "AsteroidsDestroyed";
+    private const string PowerUpsKey = "PowerUpsPickedUp";
+    private const string OverdriveKey = "OverdriveTime";
+    private const string TimeKey = "TimeSurvived";
+    private const string LevelsKey = "LevelsBeaten";
 
     [SerializeField] private string hamsterName = "Apollo";
 
@@ -14,10 +20,16 @@ public class RunStats : MonoBehaviour
     public float OverdriveTime { get; private set; }
     public float TimeSurvived { get; private set; }
     public int PowerUpsPickedUp { get; private set; }
+    public int LevelsBeaten { get; private set; }
 
     private void Awake()
     {
         Attempt = PlayerPrefs.GetInt(AttemptKey, 1);
+        AsteroidsDestroyed = PlayerPrefs.GetInt(AsteroidsKey, 0);
+        PowerUpsPickedUp = PlayerPrefs.GetInt(PowerUpsKey, 0);
+        OverdriveTime = PlayerPrefs.GetFloat(OverdriveKey, 0f);
+        TimeSurvived = PlayerPrefs.GetFloat(TimeKey, 0f);
+        LevelsBeaten = PlayerPrefs.GetInt(LevelsKey, 0);
     }
 
     private void Update()
@@ -40,10 +52,32 @@ public class RunStats : MonoBehaviour
         PowerUpsPickedUp++;
     }
 
+    public void RecordWin()
+    {
+        LevelsBeaten++;
+        SaveStats();
+    }
+
+    private void SaveStats()
+    {
+        PlayerPrefs.SetInt(AsteroidsKey, AsteroidsDestroyed);
+        PlayerPrefs.SetInt(PowerUpsKey, PowerUpsPickedUp);
+        PlayerPrefs.SetFloat(OverdriveKey, OverdriveTime);
+        PlayerPrefs.SetFloat(TimeKey, TimeSurvived);
+        PlayerPrefs.SetInt(LevelsKey, LevelsBeaten);
+        PlayerPrefs.Save();
+    }
+
     public void RecordDeath()
     {
         PlayerPrefs.SetInt(AttemptKey, Attempt + 1);
+
+        // The next Apollo starts with no totals.
+        PlayerPrefs.DeleteKey(AsteroidsKey);
+        PlayerPrefs.DeleteKey(PowerUpsKey);
+        PlayerPrefs.DeleteKey(OverdriveKey);
+        PlayerPrefs.DeleteKey(TimeKey);
+        PlayerPrefs.DeleteKey(LevelsKey);
         PlayerPrefs.Save();
-        Debug.Log($"{ApolloName}: {AsteroidsDestroyed} asteroids, {PowerUpsPickedUp} power-ups, {OverdriveTime:0.0}s overdrive, {TimeSurvived:0.0}s survived");
     }
 }

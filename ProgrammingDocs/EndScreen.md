@@ -1,0 +1,167 @@
+# EndScreen
+
+## Purpose
+
+The end-of-level screens. One component handles both:
+
+- **Game Over**, shown after the player loses all their lives and the death sequence has played out:
+  "GAME OVER", the Apollo's name, their stats, and Restart / Menu / Quit.
+- **Win**, shown when the level is cleared: "MISSION ACCOMPLISHED", the Apollo's name, their stats (no
+  progress line), and Next Level / Menu / Quit.
+
+The stats are the Apollo's totals so far, across every level they've played. The name also tells you how
+many deaths there have been: on the Game Over screen, "Apollo 4" is the fourth death.
+
+It was called `GameOverScreen` until the win screen was added.
+
+## Where it lives
+
+- **Attached to:** the `EndScreen` canvas in `Game.unity`. The canvas is always active; each screen is a
+  panel underneath it (`Game Over Panel`, `Win Panel`), which this script switches on. It can't go on a
+  panel: a switched-off object's scripts don't run, so it could never switch itself back on.
+- **Shown by:** GameManager, through its `endScreen` slot. `DeathSequenceFinished()` calls
+  `ShowGameOver()`, and `Win()` calls `ShowWin()`.
+- **Requires:**
+  - Both groups (Game Over and Win) filled in, in the Inspector.
+  - `GameManager.Instance` with RunStats (and LevelTimer, for progress). Without RunStats, the texts are
+    left as they are.
+  - Every button's **On Click ()** pointing at this component on the EndScreen canvas, calling `Restart`,
+    `NextLevel`, `Menu` or `Quit`.
+  - Build Settings with **Menu at index 0** and the levels after it (`Game` at 1).
+
+### Layout (set up in the Unity Editor)
+
+Each panel has the same layout:
+
+- **Vertical Layout** (800 × 640, spacing 30, Control Child Size on) stacks Title, Hamster Name Text and
+  Stats Text. Because it controls the children's height, Stats Text grows to fit its lines.
+- **Horizontal Layout** (1000 × 80, spacing 60) holds the three buttons, left to right in their Hierarchy
+  order.
+- Stats Text is **left + top** aligned with wrapping off, which the columns rely on.
+- Buttons are sized, not scaled. A scale above 1 makes them overlap, because layout groups ignore scale.
+
+## Inspector settings
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `gameOver` | — | The Game Over screen's parts (see below) |
+| `win` | — | The Win screen's parts (see below) |
+| `menuSceneName` | Menu | The scene the Menu button loads, and Next Level's fallback. Must match the scene file's name and be in Build Settings |
+
+Each group (`ScreenParts`) has:
+
+| Field | Game Over | Win | What it is |
+| --- | --- | --- | --- |
+| `panel` | Game Over Panel | Win Panel | The panel switched on to show this screen |
+| `hamsterNameText` | its name text | its name text | Text that gets the Apollo name |
+| `statsText` | its stats text | its stats text | Text that gets the stats |
+| `showProgress` | ✓ | ✗ | Whether to add the Progress line |
+
+The titles are typed straight into their texts in the Inspector; the script doesn't touch them.
+
+## How it works
+
+### `ScreenParts` (`[System.Serializable]`)
+
+Both screens need the same four settings, so they're bundled into a small class inside EndScreen and used
+twice. `[System.Serializable]` lets Unity save a plain class's fields and show them in the Inspector, as a
+collapsible group. ObjectSpawner's `Wave` uses the same idea. The class is `private` because only
+EndScreen uses it.
+
+### `Awake`
+
+Switches both panels off. They should already be off in the scene; this makes sure neither covers the game
+from the start if someone leaves one on by accident.
+
+### `ShowGameOver`, `ShowWin` and `Show`
+
+`ShowGameOver()` and `ShowWin()` are one-line methods (`=> Show(gameOver)`, `=> Show(win)`), so the name
+says which screen you want. Both use one private `Show(parts)`:
+
+1. **`FillStats(parts)`** first, so the panel never shows a frame of placeholder text.
+2. Switches that screen's panel on.
+3. **Unlocks and shows the cursor.** PlayerMovement locks it to the center and hides it for flying.
+   Without these two lines, the buttons couldn't be clicked.
+
+Time is frozen on both screens (`Time.timeScale = 0`), but UI clicks still work.
+
+### `FillStats`
+
+Gets RunStats through GameManager (null-safe; with no RunStats it does nothing) and fills in the given
+screen's texts:
+
+- **Hamster name:** `ApolloName`.
+- **Stats**, one per line:
+
+| Line | Comes from | Format |
+| --- | --- | --- |
+| Asteroids destroyed | `AsteroidsDestroyed` | whole number |
+| Power-ups | `PowerUpsPickedUp` | whole number |
+| Time in overdrive | `OverdriveTime` | one decimal, e.g. `4.2 s` |
+| Time survived | `TimeSurvived` | minutes and seconds, e.g. `1:23` |
+| Progress (only if `showProgress`) | `LevelTimer.Progress` | whole percentage, rounded down, e.g. `63%` |
+
+The first four are the Apollo's totals across levels. Progress is the current level only. Levels beaten is
+tracked by RunStats but not shown.
+
+**Time survived:** `minutes = (int)(TimeSurvived / 60)` and `seconds = (int)(TimeSurvived % 60)`. The
+`(int)` cast cuts off the decimals and `%` is the remainder after dividing. For 83.7 seconds: 1 minute,
+23 seconds. `{seconds:00}` always shows two digits, so 5 seconds is `1:05`.
+
+**Progress** is rounded down (`Mathf.FloorToInt`) so the screen never says 100% for a level that wasn't
+finished. It's added with `+=` only when `showProgress` is on; its `\n` is at the front so there's no empty
+line when it's left off.
+
+**Columns:** each line is `label<pos=70%>value`. `<pos=70%>` is a TextMesh Pro rich text tag that moves the
+drawing point to 70% of the box's width, so every value starts at the same spot and they line up. The tag
+is kept in one local variable, `col`, so moving the column is a one-number change. If a label is ever
+longer than 70% of the box, its value is drawn over the end of the label; raise the percentage or shorten
+the label.
+
+### `Restart` (Game Over)
+
+Reloads the current scene by its build index, so it still works if the scene is renamed. GameManager's
+`Awake` unfreezes time, PlayerHealth goes back to full lives, RunStats loads the next Apollo (with totals
+reset to 0), and PlayerMovement locks the cursor again.
+
+### `NextLevel` (Win)
+
+Sets `Time.timeScale` back to 1, then loads the scene **after** the current one in Build Settings
+(build index + 1). If there isn't one (`next < SceneManager.sceneCountInBuildSettings` is false), it loads
+the menu instead. With Menu = 0 and Game = 1, Game's next index is 2, so for now it goes to the menu. A new
+level added at index 2 is picked up with no code change.
+
+### `Menu`
+
+Sets `Time.timeScale` back to 1, then loads `menuSceneName`. The time scale is global and survives scene
+loads. GameManager normally resets it, but the menu scene has no GameManager, so without this the menu
+would open frozen.
+
+### `Quit`
+
+Closes the game. In the Unity Editor, `Application.Quit()` does nothing, so inside `#if UNITY_EDITOR` it
+stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` part is what a built game uses.
+
+## Talks to
+
+- **GameManager**: calls `ShowGameOver()` and `ShowWin()`. FillStats reads `RunStats` and `LevelTimer`
+  through it.
+- **RunStats**: reads `ApolloName` and every stat.
+- **LevelTimer**: reads `Progress`.
+- **PlayerMovement**: no direct link, but undoes its cursor lock.
+- **SceneManager** (Unity): loads scenes for Restart, Next Level and Menu.
+
+## Gotchas
+
+- **Fill in both groups.** `Awake` switches off both panels without a null check, so an empty `panel` in
+  either group throws an error when the scene starts.
+- **Duplicated buttons keep their old On Click targets.** Every button should point at the EndScreen
+  canvas, and Next Level must call `NextLevel`, not `Restart`.
+- **Build order matters.** Menu must be index 0 and levels after it, in play order. Next Level just loads
+  the next index.
+- **The menu scene needs its own way back,** such as a Play button that loads `Game`.
+- **Stats Text must stay left-aligned with wrapping off,** or the `<pos>` columns stop lining up.
+- **UI buttons need an EventSystem using the Input System UI module.** The scene has one; a new scene
+  would need its own.
+- **Long titles need a smaller font.** "MISSION ACCOMPLISHED" doesn't fit the 800-wide layout at the Game
+  Over title's size.

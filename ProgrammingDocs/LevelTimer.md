@@ -82,28 +82,22 @@ changes how fast progress grows from then on.
 **Lerp** (linear interpolation) finds the point a certain fraction of the way between two positions.
 `Progress = 0` gives `origin`, `1` gives `stopPoint`, and `0.5` gives the point exactly halfway.
 
-**4. Tell GameManager if the level was just won.**
-
-`if (IsComplete) GameManager.Instance.Win();`
-
-This only runs once. On the frame `Progress` reaches 1, `IsComplete` becomes true and `Win()` is called.
-Every frame after that, the early return at the top of `Update` exits first, so this line is never
-reached again. `Win()` also ignores repeat calls itself.
+LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is one half of GameManager's
+`LevelCleared`; the other half is that nothing spawned is still flying.
 
 ## Talks to
 
-- **GameManager**: gets the earth and earth camera in `Start`. Reads `IsGameOver` every frame, and calls
-  `Win()` once when the earth arrives.
+- **GameManager**: gets the earth and earth camera in `Start`, and reads `IsGameOver` every frame.
+  GameManager reads `IsComplete` as part of deciding the win.
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`
   to stop the player accelerating.
 - **ObjectSpawner**: reads `IsComplete` to stop spawning.
 
 ## Gotchas
 
-- **Winning is only a placeholder so far.** `IsComplete` stops asteroids spawning and stops the player
-  speeding up, and `Win()` sets GameManager's `HasWon` and logs, but there's no win screen or next level
-  yet. Anything that should happen at the end needs to check `IsComplete` or `HasWon` itself (there's no
-  event to listen for).
+- **The earth arriving isn't the win.** `IsComplete` stops spawning and stops the player speeding up, but
+  the level is only won once the field is clear too (GameManager's `LevelCleared`). Code that should run
+  on the win should check `HasWon`, not `IsComplete`.
 - **No null checks.** A scene with LevelTimer but no GameManager, or with `earth` / `earthCamera` left
   empty, throws an error in `Start`. With no GameManager, `Update` also throws every frame when it reads
   `IsGameOver`. With no earth, `Update` also throws every frame. With no earth

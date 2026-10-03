@@ -1,0 +1,139 @@
+# PowerUp
+
+## Purpose
+
+A pickup that works like an asteroid: it flies toward the camera (and the player) and, when the player's
+collider touches it, does something. Each power-up type has its own effect. Every pickup also adds one to
+the power-ups stat in RunStats.
+
+There's one type so far: **Health**, which gives the player a life back, up to their max.
+
+## Where it lives
+
+- **Attached to:** each power-up prefab, e.g. `Assets/Prefabs/Health PowerUp.prefab`. The prefab also needs
+  a collider with **Is Trigger** on, and no Rigidbody (the player has the Rigidbody, the same as with
+  asteroids).
+- **Placed in:** wave pattern prefabs, as **direct children** of the pattern root, using the pattern
+  builder's Power-Up slot. ObjectSpawner reveals them like asteroids.
+- **Requires:**
+  - The SpawnableTemplate asset in `template`, for the shared speed multiplier, despawn distance, and the
+    Power-Up section (spin, pickup effect, pickup shake).
+  - `GameManager.Instance`, for the gameplay camera (despawning), `HasWon`, and RunStats. Without one, it
+    still flies and works, but never despawns and isn't counted.
+
+## Inspector settings
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType` |
+| `speed` | 20 | Base approach speed, before the player's speed is added |
+| `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
+
+## How it works
+
+### `PowerUpType` and one method per effect
+
+`PowerUpType` is an **enum** declared inside the class, so it shows as a dropdown. All power-up types live
+in this one class. Each type gets its own private method for its effect, and `ApplyEffect` picks the right
+one with a `switch`.
+
+Adding a new type takes three things:
+
+1. a new entry in the enum (it appears in the dropdown straight away),
+2. a method for its effect,
+3. a `case` in `ApplyEffect`'s switch that calls that method.
+
+Without the method and the case, the new type can be picked in the Inspector but does nothing.
+
+### `ApproachSpeed`
+
+`speed + PlayerMovement.Speed × template.speedMultiplier`, worked out fresh each time it's read, so it
+rises and falls with the player's speed. It's the same formula as asteroids, so a power-up laid out
+between two asteroids stays between them in flight. ObjectSpawner reads it to time when to reveal it.
+
+### `Awake` and `OnEnable`
+
+- **`Awake`** finds the gameplay camera through GameManager, once.
+- **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
+  and resets `distance` to 0.
+- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up, despawned, or its
+  pattern destroyed) goes through `Destroy`, which runs `OnDisable`.
+
+`Active` is shared by the whole class, the same as `AsteroidBehavior.Active`. GameManager reads it to know
+whether the field is clear before the level can be won.
+
+The start point is recorded in `OnEnable`, not `Awake`, because of how the spawner reveals things. It
+creates the pattern (running `Awake` and `OnEnable`), switches every child off, and later moves each one to
+the spawn plane and switches it back **on**. Only `OnEnable` runs again at that point. Recording `origin` in
+`Awake` would keep the laid-out depth, and the power-up would jump back to it and arrive late.
+
+### `Update`
+
+Each frame, the same as a Linear asteroid:
+
+1. **Move.** `distance += ApproachSpeed × Time.deltaTime`, then `position = origin + back × distance`.
+   `distance` is a running total, so a change in the player's speed changes how fast it grows from then
+   on, instead of making the power-up jump.
+2. **Spin** around the world's up axis at `template.powerUpSpinSpeed`.
+3. **Despawn.** Once it's `template.despawnBehindCamera` units past the camera, it's been missed, so it
+   destroys itself.
+
+Without a template it still moves, but doesn't spin or despawn. There's no warning blink, unlike
+asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by itself.
+
+### `OnTriggerEnter`
+
+When something touches it:
+
+1. **Is it the player?** It looks for `PlayerMovement` on what it touched or its parents. If none is found,
+   it ignores it.
+2. **Is the level already won?** It reads `GameManager.Instance`. If `HasWon` is set, it ignores the
+   touch, and the power-up flies on through the ship without being used up.
+3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
+   that does nothing (Health at full lives) still counts.
+4. **Apply the effect** with `ApplyEffect(player)`.
+5. **Feedback** from the template's Power-Up section: spawn `pickupEffectPrefab`, and shake the camera only
+   if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling `Shake` would restart the
+   timer of a shake already running.)
+6. **Destroy** the power-up.
+
+### `ApplyEffect` and `Heal`
+
+`ApplyEffect(player)` runs the effect method for this power-up's `type`. Every effect method takes the
+player that picked it up (`PlayerMovement player`), so it can get whatever it needs from the player's
+object.
+
+**`Heal`** finds PlayerHealth on the player and calls `GainLife()`, which adds one life but never goes
+past the max:
+
+| Lives before | After | Counted? |
+| --- | --- | --- |
+| 1 | 2 | yes |
+| 2 | 3 | yes |
+| 3 (max) | 3 | yes (used up and wasted) |
+
+## Talks to
+
+- **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
+- **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
+  `pickupEffectPrefab` and the pickup shake settings.
+- **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it. GameManager
+  reads `PowerUp.Active` to decide the win.
+- **RunStats**: calls `AddPowerUpPickedUp()`.
+- **PlayerMovement**: finds it on whatever touched the power-up, and reads its static `Speed`.
+- **PlayerHealth**: calls `GainLife()` (Health type).
+- **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
+- **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
+
+## Gotchas
+
+- **It must be a direct child of a pattern,** or the spawner won't reveal it on its own.
+- **The pickup effect must be assigned in the template** (`pickupEffectPrefab`), or there's no visual
+  feedback.
+- **A new type needs its `case`.** A type with no case in `ApplyEffect` is counted as picked up but does
+  nothing.
+- **It doesn't appear on the orbit ring.** OrbitRing only draws danger arcs for asteroids
+  (`AsteroidBehavior.Active`).
+- **Only Linear movement.** It doesn't support Wave like asteroids do.
+- **It can't be smashed or hit.** Asteroids' smash and knockback logic doesn't apply; touching it is always
+  a pickup (unless the level is won).

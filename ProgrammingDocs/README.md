@@ -14,6 +14,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
@@ -25,8 +26,8 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
-| PowerUp.cs | — | Pending: needs the user's explanation (section 7) |
-| RunStats.cs | — | Pending: needs the user's explanation (section 7) |
+| PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
+| RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |

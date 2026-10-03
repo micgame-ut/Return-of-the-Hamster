@@ -7,8 +7,10 @@ earth camera, the LevelTimer, and the player's PlayerHealth. Instead of every sc
 Inspector fields for these (and each one needing to be dragged in by hand), scripts ask the GameManager
 with `GameManager.Instance`.
 
-It also holds the level's end state: whether the game is over or the level is won. It doesn't stop other
-scripts itself. It announces the state, and each script checks it and stops itself.
+It also holds the level's end state: whether the game is over or the level is won. It decides when the
+level is won (the earth has arrived and the field is clear), freezes the game on either ending, and shows
+the matching end screen. It doesn't stop other scripts itself. It announces the state, and each script
+checks it and stops itself.
 
 ## Where it lives
 
@@ -29,6 +31,7 @@ scripts itself. It announces the state, and each script checks it and stops itse
 | `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
+| `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
 `LevelTimer`, `PlayerHealth`). Other scripts can read the references but can't swap them out.
@@ -97,14 +100,30 @@ the prefab). Freezing is a level-wide operation, which is why it lives here and 
 ### `DeathSequenceFinished`
 
 Called by PlayerDeath once the ship has exploded and `endDelay` has passed. If the game isn't over, it
-does nothing. Otherwise it logs "Death sequence finished". It's the hook for the game-over screen, which
-isn't built yet.
+does nothing. Otherwise it shows the Game Over screen (`endScreen.ShowGameOver()`), if one is assigned.
 
 ### `Win`
 
-Called by LevelTimer on the frame the earth arrives. It mirrors `GameOver`: it exits if either state is
-already set, otherwise it sets `HasWon` and logs "Level complete". It's a placeholder for now, for things
-like a victory screen.
+Called by GameManager's own `Update` when the level is cleared (see below). It mirrors `GameOver`: it exits
+if either state is already set, otherwise it sets `HasWon`, freezes the game (`Time.timeScale = 0`), records
+the win in RunStats (`RecordWin()`, which saves the Apollo's totals for the next level), and shows the win
+screen (`endScreen.ShowWin()`).
+
+### `LevelCleared` and `Update`: deciding the win
+
+`LevelCleared` is a private property that's true when:
+
+- the earth has arrived (`LevelTimer.IsComplete`), so the spawner has stopped starting waves and revealing
+  objects, **and**
+- nothing spawned is still flying: `AsteroidBehavior.Active` and `PowerUp.Active` are both empty.
+
+`&&` short-circuits, so the lists aren't checked until the earth has arrived. `Update` checks it every
+frame, but only while neither ending has happened (`!HasWon && !IsGameOver`), and calls `Win()` the first
+time it's true. So the level doesn't end while a wave is still on screen, and dying before the field
+clears is still a game over.
+
+A boss fight at the end of a level would add one more condition to `LevelCleared` (e.g. "and the boss is
+defeated"); nothing else would change.
 
 ### `OnDestroy`
 
@@ -127,11 +146,12 @@ anything. Other scripts read from it or call it:
 | **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
 | **PlayerDeath** | reads `IsGameOver` and `GameplayCamera`, calls `DeathSequenceFinished()` | every frame until game over; at the end of the sequence |
-| **AsteroidBehavior** | `GameplayCamera`; `RunStats` | `Awake`; when an asteroid is smashed |
-| **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats` | `Awake`; on pickup |
+| **EndScreen** | GameManager calls `ShowGameOver()` / `ShowWin()`; it reads `RunStats` and `LevelTimer` | when the death sequence finishes; on a win |
+| **AsteroidBehavior** | `GameplayCamera`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
+| **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
-| **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`, calls `Win()` | `Start`; every frame |
+| **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
 | **OrbitRing** | `Player` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
 
@@ -151,6 +171,9 @@ anything. Other scripts read from it or call it:
   AsteroidBehavior doesn't depend on this, since it finds PlayerHealth through the player it hit.
 - **Anything that must move during the game-over freeze has to use unscaled time.** Anything using
   `Time.deltaTime`, `WaitForSeconds`, or particle systems left on Scaled stays frozen.
+- **A spawnable that isn't in an `Active` list can't hold up the win.** A new kind of object sent at the
+  player (other than asteroids and power-ups) needs its own list, added to `LevelCleared`, or the level
+  can be won while it's still flying.
 - **Nothing resets the end state during play.** Once `IsGameOver` or `HasWon` is set, it stays set until
   the scene reloads.
 - **The player is only used by OrbitRing and GameManager's own `Awake`.** Other scripts that need the
