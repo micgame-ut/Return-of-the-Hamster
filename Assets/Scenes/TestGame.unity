@@ -491,6 +491,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkyboxSpeedController
   baseTimeSpeed: 0.3
   speedInfluence: 0.01
+  baseStreamSpeed: 0.01
+  streamSpeedInfluence: 0.05
+  streamCoverageMin: 1
+  streamCoverageMax: 4
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -3844,13 +3848,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e3c306a44a2d4d4cb039b47de68447a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DangerWarning
-  volume: {fileID: 832575518}
   warningPrefab: {fileID: 8667058562618061593, guid: dbf490129484dc34ea5a54d6a5206800, type: 3}
   cornerInset: 40
   blinkInterval: 0.4
-  vignetteColor: {r: 1, g: 0, b: 0, a: 1}
-  vignetteMin: 0.3
-  vignetteMax: 1
+  overlayColor: {r: 0.6981132, g: 0, b: 0, a: 1}
+  overlayAlphaMin: 0.4
+  overlayAlphaMax: 0.8
+  overlayWidthMin: 0.1
+  overlayWidthMax: 0.18
 --- !u!114 &1716721907
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -133,9 +133,12 @@ Every frame:
 - Forward/back mouse input adds to or removes from `Speed`.
 - No input means `Speed` drains at a flat rate (`speedDecay`).
 - In the top 10% of max speed, an extra drain (`topSpeedDegrade`) is applied on top. Holding top
-  speed is harder, but still possible. "The top 10%" is defined once, by the public `InOverdrive`
-  property (`Speed >= maxSpeed * 0.9f`). `UpdateSpeed` copies it into a local `nearMaxSpeed` at the
-  **start** of the method, before this frame's speed change, and RunStats reads it to time overdrive.
+  speed is harder, but still possible. "The top 10%" is defined once, by the public constant
+  `OverdriveFraction` (0.9), which the public `InOverdrive` property uses
+  (`Speed >= maxSpeed * OverdriveFraction`). `UpdateSpeed` copies `InOverdrive` into a local
+  `nearMaxSpeed` at the **start** of the method, before this frame's speed change, and RunStats reads
+  it to time overdrive. SkyboxSpeedController reads `OverdriveFraction` directly (a `const` belongs to
+  the class, so no reference to the player is needed) to know where to start fading in the streams.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
 
@@ -151,7 +154,7 @@ everything else reacts to `Speed`:
 | **AsteroidBehavior** | Asteroids approach faster. Also decides whether the player is fast enough to smash an asteroid (`destroySpeed`), and turns on the asteroid's outline when it can be broken |
 | **LevelTimer** | Faster = the level finishes sooner (the earth arrives sooner) |
 | **PlayerCamera** | Widens the camera's field of view as speed goes up (uses `Speed01`, speed as 0–1) |
-| **SkyboxSpeedController** | Makes the skybox drift faster |
+| **SkyboxSpeedController** | Makes the skybox clouds drift and the radial streams flow faster, and fades the streams in across the overdrive range (uses `Speed01` and `OverdriveFraction`) |
 | **StarfieldStreamer** | Makes the star particles stream past faster |
 
 `MaxSpeed` and `Speed01` are also static, so other scripts can compare against max speed.

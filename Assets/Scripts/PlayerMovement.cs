@@ -76,8 +76,11 @@ public class PlayerMovement : MonoBehaviour
     private bool InputLocked => GameManager.Instance != null &&
                                 (GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
+    // Fraction of max speed where overdrive starts. SkyboxSpeedController reads it too.
+    public const float OverdriveFraction = 0.9f;
+
     // Top 10% of max speed, where the extra drain applies. RunStats times how long it's held.
-    public bool InOverdrive => Speed >= maxSpeed * 0.9f;
+    public bool InOverdrive => Speed >= maxSpeed * OverdriveFraction;
 
     void Awake()
     {

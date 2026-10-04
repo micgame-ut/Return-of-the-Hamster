@@ -1,6 +1,7 @@
 # Programming Documentation
 
-This folder has one Markdown file per script in `Assets/Scripts`. Each file explains
+This folder has one Markdown file per script in `Assets/Scripts`, and one per Shader Graph or Sub Graph
+in `Assets/Shaders`. Each file explains
 the approach and logic behind its script: what it does, how it does it, and why.
 
 Only hand-written scripts are documented. Auto-generated ones (like `PlayerInput.cs`, which Unity
@@ -34,6 +35,16 @@ It lives outside `Assets/` so Unity does not import these files.
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
+
+## Shaders
+
+| Graph | Doc | Status |
+| --- | --- | --- |
+| Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Not started |
+| Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
+| Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Not started |
+| Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Draft, awaiting review |
+| Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Not started |
 
 ## Template
 
