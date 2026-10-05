@@ -14,7 +14,7 @@ checks it and stops itself.
 
 ## Where it lives
 
-- **Attached to:** the `Game Manager` GameObject in `Game.unity`. `LevelTimer` sits on the same object.
+- **Attached to:** the `Game Manager` GameObject in `TestGame.unity`. `LevelTimer` sits on the same object.
   `PlayerHealth` and `PlayerInvincibility` sit on the player object instead, since they belong to the player.
 - **Requires:** its Inspector fields filled in (see below). There must be exactly one in the scene.
 - **Not in:** `PatternEnvironment.unity`. Scripts that use it check for `null`, so they still run there
@@ -28,14 +28,15 @@ checks it and stops itself.
 | `gameplayCamera` | Camera | The main camera. Used to despawn asteroids once they're behind it, and to sort a pattern's asteroids by distance |
 | `earth` | Renderer | The earth model that approaches as the level goes on |
 | `earthCamera` | Camera | The camera that renders the earth |
-| `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
+| `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `TestGame.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
 | `playerInvincibility` | PlayerInvincibility | The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
+| `showOrbitRing` | bool (default on) | Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts. Meant to be set from a menu setting later |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
-`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`). Other scripts can read the references but can't swap them out.
+`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
 
 ## How it works
 
@@ -154,7 +155,7 @@ anything. Other scripts read from it or call it:
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
 | **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
-| **OrbitRing** | `Player` | `Start` |
+| **OrbitRing** | `ShowOrbitRing`, `Player` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
 
 ## Gotchas
@@ -164,7 +165,7 @@ anything. Other scripts read from it or call it:
 - **LevelTimer doesn't check for `null`.** Every other script uses `GameManager.Instance != null ? ... : null`,
   so it keeps running in a scene without a GameManager. LevelTimer reads `GameManager.Instance` directly
   (for `Earth`, `EarthCamera`, `IsGameOver` and `Win()`), so it throws an error if there's no GameManager or
-  `earth` / `earthCamera` is empty. It's fine today because LevelTimer is only in `Game.unity`.
+  `earth` / `earthCamera` is empty. It's fine today because LevelTimer is only in `TestGame.unity`.
 - **Only safe from `Awake` onward.** `Instance` is set in `Awake`. Reading it from a field initializer or a
   constructor gets `null`.
 - **Most lookups happen once.** Almost every script grabs its reference in `Awake` or `Start` and keeps it.

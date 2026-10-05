@@ -29,6 +29,13 @@ public class OrbitRing : MonoBehaviour
 
     private void Start()
     {
+        // Turned off in GameManager (an accessibility setting): draw nothing.
+        if (GameManager.Instance != null && !GameManager.Instance.ShowOrbitRing)
+        {
+            enabled = false;
+            return;
+        }
+
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         shell = player != null ? player.GetComponent<PlayerShell>() : null;
         if (lineMaterial == null) lineMaterial = createdMaterial = new Material(Shader.Find("Sprites/Default"));

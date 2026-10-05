@@ -13,7 +13,7 @@ of the circle is about to be dangerous.
 
 ## Where it lives
 
-- **Attached to:** the `Game Manager` GameObject in `Game.unity`. The lines it draws are created as child
+- **Attached to:** the `Game Manager` GameObject in `TestGame.unity`. The lines it draws are created as child
   objects of it when the game starts.
 - **Requires:** `GameManager.Instance` with `player` assigned. Without a player, it draws nothing.
 
@@ -50,6 +50,10 @@ them. A circle is really a lot of short straight lines, so with enough points it
 
 ### `Start`
 
+0. If GameManager's `ShowOrbitRing` is off (an accessibility setting), set `enabled = false` and stop.
+   A disabled component gets no `LateUpdate` calls, so nothing is drawn, and nothing is created, so
+   there's nothing to clean up. `enabled = false` (rather than removing the component) means turning it
+   back on later only needs `enabled = true`. Without a GameManager, the ring always shows.
 1. Get the player from GameManager, and the PlayerShell on it (if there is one).
 2. If no line material was assigned, make one from the `Sprites/Default` shader. It's also stored in
    `createdMaterial`, so `OnDestroy` can destroy it. A material made with `new` isn't cleaned up with the
@@ -140,7 +144,7 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 
 ## Talks to
 
-- **GameManager**: gets the player in `Start`.
+- **GameManager**: reads `ShowOrbitRing` and gets the player in `Start`.
 - **PlayerShell**: found on the player in `Start`; reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,
@@ -148,6 +152,8 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 
 ## Gotchas
 
+- **`showOrbitRing` is only read in `Start`.** Changing it on GameManager during Play mode does nothing
+  until the scene restarts.
 - **Asteroids are treated as circles.** `HitRadius` uses whichever of the collider's width or height is
   bigger, so an oddly shaped collider gets a slightly bigger arc than the real hit area.
 - **Arcs show where a Wave asteroid is now, not where it will be.** A Wave asteroid keeps swinging along

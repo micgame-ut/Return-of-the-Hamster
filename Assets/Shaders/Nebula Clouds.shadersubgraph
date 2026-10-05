@@ -344,6 +344,12 @@
     },
     {
       "m_Id": "fbc202a33d6c499f818f682847460717"
+    },
+    {
+      "m_Id": "ff57c5d089ac46cf89c09656392691b4"
+    },
+    {
+      "m_Id": "5a5236b42ae44cb7915053268752e66e"
     }
   ],
   "m_GroupDatas": [
@@ -1673,34 +1679,6 @@
     {
       "m_OutputSlot": {
         "m_Node": {
-          "m_Id": "884f18c087994ba7a43255d630f694bd"
-        },
-        "m_SlotId": 0
-      },
-      "m_InputSlot": {
-        "m_Node": {
-          "m_Id": "ba9b776db0ff4669841f2b832659955b"
-        },
-        "m_SlotId": 1
-      }
-    },
-    {
-      "m_OutputSlot": {
-        "m_Node": {
-          "m_Id": "b44af2adf83f41c1b60f1dd764bf0b2f"
-        },
-        "m_SlotId": 1
-      },
-      "m_InputSlot": {
-        "m_Node": {
-          "m_Id": "d65639e4de4d400c9719d66961b9decb"
-        },
-        "m_SlotId": 0
-      }
-    },
-    {
-      "m_OutputSlot": {
-        "m_Node": {
           "m_Id": "ba9b776db0ff4669841f2b832659955b"
         },
         "m_SlotId": 2
@@ -1850,6 +1828,90 @@
           "m_Id": "0c4be04c56bc414e8519114d95d84775"
         },
         "m_SlotId": 2
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "608eae0206204d1d8f07a7631f39cffd"
+        },
+        "m_SlotId": 3
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "758d917e84284b3fa9f357d53298f142"
+        },
+        "m_SlotId": 9.0
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "884f18c087994ba7a43255d630f694bd"
+        },
+        "m_SlotId": 0
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "ff57c5d089ac46cf89c09656392691b4"
+        },
+        "m_SlotId": 0
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "ff57c5d089ac46cf89c09656392691b4"
+        },
+        "m_SlotId": 2
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "ba9b776db0ff4669841f2b832659955b"
+        },
+        "m_SlotId": 1
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "b44af2adf83f41c1b60f1dd764bf0b2f"
+        },
+        "m_SlotId": 1
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "5a5236b42ae44cb7915053268752e66e"
+        },
+        "m_SlotId": 0
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "ff57c5d089ac46cf89c09656392691b4"
+        },
+        "m_SlotId": 2
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "5a5236b42ae44cb7915053268752e66e"
+        },
+        "m_SlotId": 1
+      }
+    },
+    {
+      "m_OutputSlot": {
+        "m_Node": {
+          "m_Id": "5a5236b42ae44cb7915053268752e66e"
+        },
+        "m_SlotId": 2
+      },
+      "m_InputSlot": {
+        "m_Node": {
+          "m_Id": "d65639e4de4d400c9719d66961b9decb"
+        },
+        "m_SlotId": 0
       }
     }
   ],
@@ -5872,6 +5934,9 @@
       "m_Id": "cca0127e7a05442d8e229df1b789fa42"
     },
     {
+      "m_Id": "121d8ffb675f4a1d8a84b7fe6ad99248"
+    },
+    {
       "m_Id": "f4e383f79ee1457a9b9d226656fd6cc9"
     },
     {
@@ -5896,7 +5961,7 @@
   "m_FunctionName": "NebulaNoise",
   "m_FunctionSource": "",
   "m_FunctionSourceUsePragmas": true,
-  "m_FunctionBody": "// Four passes of 3D value noise: warp, density, dust (fbm), and tint (one octave).\n// Cell indices wrap every 289 cells so large offsets (endless mode) stay precise.\nfloat3 warp = 0.0;\nDensity = 0.0;\nDust = 0.0;\nTint = 0.0;\nfor (int stage = 0; stage < 4; stage++)\n{\n    float3 q = P + float3(31.4, 17.7, 0.0);\n    if (stage == 1) q = P + warp * Warp;\n    if (stage == 2) q = P * DustScale + float3(-12.3, 45.1, 0.0);\n    if (stage == 3) q = P * TintScale + float3(5.2, -8.3, 0.0);\n    float octaves = (stage == 2) ? max(1.0, Octaves - 1.0) : ((stage == 3) ? 1.0 : Octaves);\n    float sum = 0.0;\n    float amp = 1.0;\n    float total = 0.0;\n    for (int o = 0; o < 6; o++)\n    {\n        if (o >= octaves) break;\n        q -= floor(q / 289.0) * 289.0;\n        float3 cell = floor(q);\n        float3 f = q - cell;\n        float3 u = f * f * (3.0 - 2.0 * f);\n        float corner[8];\n        for (int k = 0; k < 8; k++)\n        {\n            float3 id = cell + float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);\n            id -= floor(id / 289.0) * 289.0;\n            float3 h = frac(id * 0.1031);\n            h += dot(h, h.zyx + 31.32);\n            corner[k] = frac((h.x + h.y) * h.z);\n        }\n        float v = lerp(lerp(lerp(corner[0], corner[1], u.x), lerp(corner[2], corner[3], u.x), u.y),\n                       lerp(lerp(corner[4], corner[5], u.x), lerp(corner[6], corner[7], u.x), u.y), u.z);\n        sum += v * amp;\n        total += amp;\n        amp *= Detail;\n        q = q * 2.03 + float3(7.13, 3.71, 1.37);\n    }\n    float n = sum / max(total, 0.0001);\n    if (stage == 0) warp = float3(cos(n * 6.2832), sin(n * 6.2832), 0.0);\n    else if (stage == 1) Density = n;\n    else if (stage == 2) Dust = n;\n    else Tint = n;\n}"
+  "m_FunctionBody": "// Nothing to draw where the center fade has removed the clouds: skip all the noise.\nif (Fade <= 0.0) { Density = 0.0; Dust = 0.0; Tint = 0.0; return; }\n// Four passes of 3D value noise: warp, density, dust (fbm), and tint (one octave).\n// Cell indices wrap every 289 cells so large offsets (endless mode) stay precise.\nfloat3 warp = 0.0;\nDensity = 0.0;\nDust = 0.0;\nTint = 0.0;\nfor (int stage = 0; stage < 4; stage++)\n{\n    float3 q = P + float3(31.4, 17.7, 0.0);\n    if (stage == 1) q = P + warp * Warp;\n    if (stage == 2) q = P * DustScale + float3(-12.3, 45.1, 0.0);\n    if (stage == 3) q = P * TintScale + float3(5.2, -8.3, 0.0);\n    float octaves = (stage == 0 || stage == 2) ? min(Octaves, 2.0) : ((stage == 3) ? 1.0 : Octaves);\n    float sum = 0.0;\n    float amp = 1.0;\n    float total = 0.0;\n    for (int o = 0; o < 6; o++)\n    {\n        if (o >= octaves) break;\n        q -= floor(q / 289.0) * 289.0;\n        float3 cell = floor(q);\n        float3 f = q - cell;\n        float3 u = f * f * (3.0 - 2.0 * f);\n        float corner[8];\n        for (int k = 0; k < 8; k++)\n        {\n            float3 id = cell + float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);\n            id -= floor(id / 289.0) * 289.0;\n            float3 h = frac(id * 0.1031);\n            h += dot(h, h.zyx + 31.32);\n            corner[k] = frac((h.x + h.y) * h.z);\n        }\n        float v = lerp(lerp(lerp(corner[0], corner[1], u.x), lerp(corner[2], corner[3], u.x), u.y),\n                       lerp(lerp(corner[4], corner[5], u.x), lerp(corner[6], corner[7], u.x), u.y), u.z);\n        sum += v * amp;\n        total += amp;\n        amp *= Detail;\n        q = q * 2.03 + float3(7.13, 3.71, 1.37);\n    }\n    float n = sum / max(total, 0.0001);\n    if (stage == 0) warp = float3(cos(n * 6.2832), sin(n * 6.2832), 0.0);\n    else if (stage == 1) Density = n;\n    else if (stage == 2) Dust = n;\n    else Tint = n;\n}"
 }
 
 {
@@ -12143,4 +12208,323 @@
     "e32": 0.0,
     "e33": 1.0
   }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
+  "m_ObjectId": "121d8ffb675f4a1d8a84b7fe6ad99248",
+  "m_Id": 9.0,
+  "m_DisplayName": "Fade",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "Fade",
+  "m_StageCapability": 3,
+  "m_Value": 0.0,
+  "m_DefaultValue": 0.0,
+  "m_Labels": [],
+  "m_LiteralMode": false
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.MultiplyNode",
+  "m_ObjectId": "ff57c5d089ac46cf89c09656392691b4",
+  "m_Group": {
+    "m_Id": "ca524e90d6e64d57a96711bdcf71e0ef"
+  },
+  "m_Name": "Multiply",
+  "m_DrawState": {
+    "m_Expanded": true,
+    "m_Position": {
+      "serializedVersion": "2",
+      "x": -492.9998779296875,
+      "y": -1180.0,
+      "width": 208.0,
+      "height": 301.99993896484375
+    }
+  },
+  "m_Slots": [
+    {
+      "m_Id": "75250da2d2b646b48055a731dc54c7a6"
+    },
+    {
+      "m_Id": "ad00c6f2680b4d9c8812763d49872d5e"
+    },
+    {
+      "m_Id": "f9a8a92bfc7b4d34b2f0e06f358f3829"
+    }
+  ],
+  "synonyms": [
+    "multiplication",
+    "times",
+    "x"
+  ],
+  "m_Precision": 0,
+  "m_PreviewExpanded": true,
+  "m_DismissedVersion": 0,
+  "m_PreviewMode": 0,
+  "m_CustomColors": {
+    "m_SerializableColors": []
+  }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicValueMaterialSlot",
+  "m_ObjectId": "75250da2d2b646b48055a731dc54c7a6",
+  "m_Id": 0,
+  "m_DisplayName": "A",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "A",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "e00": 0.0,
+    "e01": 0.0,
+    "e02": 0.0,
+    "e03": 0.0,
+    "e10": 0.0,
+    "e11": 0.0,
+    "e12": 0.0,
+    "e13": 0.0,
+    "e20": 0.0,
+    "e21": 0.0,
+    "e22": 0.0,
+    "e23": 0.0,
+    "e30": 0.0,
+    "e31": 0.0,
+    "e32": 0.0,
+    "e33": 0.0
+  },
+  "m_DefaultValue": {
+    "e00": 1.0,
+    "e01": 0.0,
+    "e02": 0.0,
+    "e03": 0.0,
+    "e10": 0.0,
+    "e11": 1.0,
+    "e12": 0.0,
+    "e13": 0.0,
+    "e20": 0.0,
+    "e21": 0.0,
+    "e22": 1.0,
+    "e23": 0.0,
+    "e30": 0.0,
+    "e31": 0.0,
+    "e32": 0.0,
+    "e33": 1.0
+  }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicValueMaterialSlot",
+  "m_ObjectId": "ad00c6f2680b4d9c8812763d49872d5e",
+  "m_Id": 1,
+  "m_DisplayName": "B",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "B",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "e00": 0.5,
+    "e01": 0.5,
+    "e02": 0.5,
+    "e03": 0.5,
+    "e10": 0.5,
+    "e11": 0.5,
+    "e12": 0.5,
+    "e13": 0.5,
+    "e20": 0.5,
+    "e21": 0.5,
+    "e22": 0.5,
+    "e23": 0.5,
+    "e30": 0.5,
+    "e31": 0.5,
+    "e32": 0.5,
+    "e33": 0.5
+  },
+  "m_DefaultValue": {
+    "e00": 1.0,
+    "e01": 0.0,
+    "e02": 0.0,
+    "e03": 0.0,
+    "e10": 0.0,
+    "e11": 1.0,
+    "e12": 0.0,
+    "e13": 0.0,
+    "e20": 0.0,
+    "e21": 0.0,
+    "e22": 1.0,
+    "e23": 0.0,
+    "e30": 0.0,
+    "e31": 0.0,
+    "e32": 0.0,
+    "e33": 1.0
+  }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicValueMaterialSlot",
+  "m_ObjectId": "f9a8a92bfc7b4d34b2f0e06f358f3829",
+  "m_Id": 2,
+  "m_DisplayName": "Out",
+  "m_SlotType": 1,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "Out",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "e00": 0.0,
+    "e01": 0.0,
+    "e02": 0.0,
+    "e03": 0.0,
+    "e10": 0.0,
+    "e11": 0.0,
+    "e12": 0.0,
+    "e13": 0.0,
+    "e20": 0.0,
+    "e21": 0.0,
+    "e22": 0.0,
+    "e23": 0.0,
+    "e30": 0.0,
+    "e31": 0.0,
+    "e32": 0.0,
+    "e33": 0.0
+  },
+  "m_DefaultValue": {
+    "e00": 1.0,
+    "e01": 0.0,
+    "e02": 0.0,
+    "e03": 0.0,
+    "e10": 0.0,
+    "e11": 1.0,
+    "e12": 0.0,
+    "e13": 0.0,
+    "e20": 0.0,
+    "e21": 0.0,
+    "e22": 1.0,
+    "e23": 0.0,
+    "e30": 0.0,
+    "e31": 0.0,
+    "e32": 0.0,
+    "e33": 1.0
+  }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.SubtractNode",
+  "m_ObjectId": "5a5236b42ae44cb7915053268752e66e",
+  "m_Group": {
+    "m_Id": "ca524e90d6e64d57a96711bdcf71e0ef"
+  },
+  "m_Name": "Subtract (Nebula Color Ramp)",
+  "m_DrawState": {
+    "m_Expanded": true,
+    "m_Position": {
+      "serializedVersion": "2",
+      "x": -342.9998779296875,
+      "y": -1100.0,
+      "width": 216.0,
+      "height": 301.99993896484375
+    }
+  },
+  "m_Slots": [
+    {
+      "m_Id": "0f43793bb3db44d8bd3b4d5f2c1304bf"
+    },
+    {
+      "m_Id": "a05c9fc8f31e465caee53076f45b59d3"
+    },
+    {
+      "m_Id": "0a63adef925b4089a144cb16298cfaee"
+    }
+  ],
+  "synonyms": [
+    "minus"
+  ],
+  "m_Precision": 0,
+  "m_PreviewExpanded": true,
+  "m_DismissedVersion": 0,
+  "m_PreviewMode": 0,
+  "m_CustomColors": {
+    "m_SerializableColors": []
+  }
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+  "m_ObjectId": "0f43793bb3db44d8bd3b4d5f2c1304bf",
+  "m_Id": 0,
+  "m_DisplayName": "A",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "A",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "x": 1.0,
+    "y": 1.0,
+    "z": 1.0,
+    "w": 1.0
+  },
+  "m_DefaultValue": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "w": 0.0
+  },
+  "m_LiteralMode": false
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+  "m_ObjectId": "a05c9fc8f31e465caee53076f45b59d3",
+  "m_Id": 1,
+  "m_DisplayName": "B",
+  "m_SlotType": 0,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "B",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "x": 2.0,
+    "y": 2.0,
+    "z": 2.0,
+    "w": 2.0
+  },
+  "m_DefaultValue": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "w": 0.0
+  },
+  "m_LiteralMode": false
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.DynamicVectorMaterialSlot",
+  "m_ObjectId": "0a63adef925b4089a144cb16298cfaee",
+  "m_Id": 2,
+  "m_DisplayName": "Out",
+  "m_SlotType": 1,
+  "m_Hidden": false,
+  "m_ShaderOutputName": "Out",
+  "m_StageCapability": 3,
+  "m_Value": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "w": 0.0
+  },
+  "m_DefaultValue": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0,
+    "w": 0.0
+  },
+  "m_LiteralMode": false
 }

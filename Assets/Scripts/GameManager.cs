@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerInvincibility playerInvincibility;
     [SerializeField] private RunStats runStats;
     [SerializeField] private EndScreen endScreen;
+    [SerializeField] private bool showOrbitRing = true;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -28,6 +29,7 @@ public class GameManager : MonoBehaviour
     public PlayerHealth PlayerHealth => playerHealth;
     public PlayerInvincibility PlayerInvincibility => playerInvincibility;
     public RunStats RunStats => runStats;
+    public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
 

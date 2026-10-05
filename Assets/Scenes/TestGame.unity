@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 3d6ed8d6111c72e40ab4ad61122ee138, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -493,8 +493,7 @@ MonoBehaviour:
   speedInfluence: 0.01
   baseStreamSpeed: 0.01
   streamSpeedInfluence: 0.05
-  streamCoverageMin: 1
-  streamCoverageMax: 4
+  glowEarthScale: 1.1
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -2871,6 +2870,7 @@ MonoBehaviour:
   playerInvincibility: {fileID: 0}
   runStats: {fileID: 0}
   endScreen: {fileID: 1540957282}
+  showOrbitRing: 0
 --- !u!4 &1402038715
 Transform:
   m_ObjectHideFlags: 0
