@@ -124,7 +124,9 @@ how they're drawn. Normally you'd set these in the Inspector. This script sets t
 8. **Material:** uses `starMaterial` if assigned. Otherwise `CreateFallbackStarMaterial` makes one. It tries
    the URP particle shader first, then older built-in ones, and uses the first it finds (`??` means "if
    this is null, use the next one"). It then gives it Unity's built-in soft round dot texture, so stars
-   look like glowing dots instead of squares.
+   look like glowing dots instead of squares. The made material is also stored in `fallbackMaterial`, and
+   `OnDestroy` destroys it. A material made with `new` isn't cleaned up with the scene, and the scene
+   leaves `starMaterial` empty, so this runs every scene load.
 
 It also saves the velocity module and makes a `particleBuffer` array big enough for every particle, so
 `Update` and `LateUpdate` don't have to create anything new each frame.

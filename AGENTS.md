@@ -244,3 +244,36 @@ When asked to change this file:
    top, say so.
 4. **Wait for confirmation**, then make the edit.
 5. **Follow the new wording** from then on, starting in the same conversation.
+
+## 12. Cleaning up runtime objects
+
+- Unity objects made in code (a `Texture2D`, `Material`, `Mesh` or `RenderTexture` created with `new`,
+  or a non-GameObject copied with `Instantiate`, such as `Instantiate(material)`) aren't removed when the
+  scene unloads. The script that creates one must destroy it itself, usually in `OnDestroy`. Point this
+  out in the snippet that creates it.
+- GameObjects and prefab copies made with `Instantiate` belong to the scene and are cleaned up with it.
+  Plain C# objects (arrays, `List`, `MaterialPropertyBlock`) are cleaned up by the garbage collector.
+  Neither needs this.
+
+## 13. Shader Graph work
+
+These rules apply only to Shader Graph files (`.shadergraph`, `.shadersubgraph`). The agent edits
+these files directly, unless the user asks to build a step themselves in the Unity Editor.
+
+- **Name the values first.** Before each step, list the values it makes (for example `dir`, `c`,
+  `right`), say what each one means, and say which nodes make it.
+- **One group per value.** The nodes that make each value go in a Shader Graph group named after
+  it. Later steps refer to values by their group name.
+- **One step at a time.** Explain the step (section 2) and get approval before building it.
+  Understanding checks (section 6) aren't needed for Shader Graph work.
+- **Changing an existing graph** only needs approval, the same as changing an existing script
+  (section 6).
+- **Editing the file.** Before editing, the user saves and closes the graph in Unity, so Unity
+  doesn't save its open copy over the change. After editing, the user reopens the graph to check
+  that it loads and looks right. When the user builds a step themselves, the agent reads the saved
+  file afterwards to check the nodes, connections, and groups.
+- **Shader docs.** Each Shader Graph and Sub Graph gets a doc in `ProgrammingDocs/`
+  (`<GraphName>.md`, listed in the Shaders table of the README). Unlike section 7, the agent
+  writes it from the saved graph file without asking the user to explain it first, then asks
+  the user to review it. Lay it out in the order the graph's values are built, by group where
+  the graph has groups.

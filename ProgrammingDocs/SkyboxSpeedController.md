@@ -2,14 +2,23 @@
 
 ## Purpose
 
-Makes the skybox's nebula clouds drift faster as the player speeds up. Every frame it moves the clouds a
-little further, by an amount based on the player's `Speed`, and sends the total to the skybox shader.
+Drives the moving parts of the skybox from the player's `Speed`:
+
+- The nebula clouds drift faster as the player speeds up.
+- The radial streams (warp streaks from the `Radial Streams` sub graph) flow outward faster as the
+  player speeds up.
+- The radial streams only exist in overdrive: they fade in across the top 10% of max speed.
+
+Every frame it moves the clouds and the streams a little further, by amounts based on `Speed`, and sends
+the totals and the streams' visibility to the skybox shader.
 
 ## Where it lives
 
-- **Attached to:** `Main Camera` in `Game.unity`. It doesn't use the camera. It could sit on any GameObject.
+- **Attached to:** `Main Camera` in `TestGame.unity`. It doesn't use the camera. It could sit on any
+  GameObject.
 - **Requires:** a skybox material set in the scene's Lighting settings (currently `StarrySkyMat`, which uses
-  the `Starry Sky` shader graph). The shader needs a float property with the reference name `_ScrollOffset`.
+  the `Starry Sky` shader graph). The shader needs float properties with the reference names
+  `_ScrollOffset`, `_StreamOffset` and `_StreamIntensity`.
 
 ## Inspector settings
 
@@ -17,8 +26,14 @@ little further, by an amount based on the player's `Speed`, and sends the total 
 | --- | --- | --- | --- |
 | `baseTimeSpeed` | 0.3 | 0.3 | How fast the clouds drift when the player's `Speed` is 0 |
 | `speedInfluence` | 0.05 | 0.01 | How much each point of player `Speed` adds to the drift speed |
+| `baseStreamSpeed` | 0.5 | 0.01 | How fast the streams flow when the player's `Speed` is 0 |
+| `streamSpeedInfluence` | 0.2 | 0.05 | How much each point of player `Speed` adds to the stream speed |
 
-With the scene's values, the drift speed goes from 0.3 (stopped) to 0.4 (max speed 10).
+With the scene's values, the drift speed goes from 0.3 (stopped) to 0.4 (max speed 10), and the stream
+speed from 0.01 to 0.51. The streams are only visible from 90% of max speed, so in practice they flow at
+0.46 to 0.51.
+
+How much of the sky the streams cover is set on the material (`Stream Coverage`), not here.
 
 ## How it works
 
@@ -32,7 +47,11 @@ after you stop Play mode (the same as with ScriptableObjects, see SpawnableTempl
 the asset directly, the material would be left with whatever value it had when you stopped playing.
 
 To avoid that, `Awake` makes a copy of the material with `Instantiate`, and tells the scene to use the copy
-as its skybox. The script only ever changes the copy, which is thrown away when the game stops.
+as its skybox. The script only ever changes the copy.
+
+A material copied with `Instantiate` isn't part of the scene, so Unity doesn't remove it when the scene
+unloads. `OnDestroy` destroys the copy, so restarting or loading the next level doesn't leave another
+orphaned material in memory each time.
 
 If the scene has no skybox, there's nothing to copy, and `Update` does nothing.
 
@@ -67,10 +86,47 @@ AsteroidBehavior does the same for its emission and outline colors.
 **Pausing.** When `Time.timeScale` is 0, `Time.deltaTime` is 0, so nothing gets added and the clouds
 freeze where they are. It needs no special case.
 
+### `Update`: moving the radial streams
+
+**4. Stream offset.** The same running total as the clouds, with its own speeds:
+
+`streamSpeed = baseStreamSpeed + PlayerMovement.Speed × streamSpeedInfluence`
+`streamOffset += streamSpeed × Time.deltaTime`
+
+The total is sent as `_StreamOffset`. `baseStreamSpeed` is never 0, so the streams always flow outward,
+even at low speed. Pausing freezes them the same way as the clouds.
+
+### `Update`: fading the streams in during overdrive
+
+**5. Stream intensity.**
+
+`streamIntensity = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1, PlayerMovement.Speed01)`
+
+`InverseLerp(a, b, value)` is the reverse of `Lerp`: it says how far `value` is between `a` and `b`, as
+0–1, clamped. `OverdriveFraction` is PlayerMovement's shared overdrive threshold (0.9), so the streams
+start exactly where overdrive starts.
+
+| `Speed01` | `streamIntensity` | Streams |
+| --- | --- | --- |
+| below 0.9 | 0 | Don't exist |
+| 0.9 (overdrive starts) | 0 | Just starting to appear |
+| 0.95 | 0.5 | Half visible |
+| 1.0 (max) | 1 | Fully visible |
+
+It's sent as `_StreamIntensity`. Unlike the offsets, it's a local variable worked out fresh each frame,
+because it only depends on the current speed. Speed changes smoothly, so the streams fade in and out
+without popping. `streamOffset` keeps growing while the streams are invisible, so they fade in mid-flow.
+
 ### What the shader does with it
 
-Inside the `Starry Sky` shader graph, `_ScrollOffset` is used as the offset of the noise that makes the
-clouds. As the offset grows, the clouds slide across the sky.
+Inside the `Starry Sky` shader graph:
+
+- `_ScrollOffset` is the offset of the noise that makes the clouds. As it grows, the clouds slide across
+  the sky.
+- `_StreamOffset` goes to both `Radial Streams` layers (layer 2 gets it multiplied by `Layer 2 Speed`).
+  As it grows, the dashes move outward from the vanishing point.
+- `_StreamIntensity` multiplies both stream layers before they're added onto the clouds. At 0 nothing
+  is added, so the sky is only clouds.
 
 ### Why it's a running total
 
@@ -89,10 +145,16 @@ at the start. Building the offset up here, a little each frame, fixes both.
 
 ## Talks to
 
-- **PlayerMovement**: reads the static `Speed` every frame.
-- **The `Starry Sky` shader**: sets its `_ScrollOffset` property on a copy of the skybox material.
+- **PlayerMovement**: reads the static `Speed` and `Speed01` every frame, and the constant
+  `OverdriveFraction`.
+- **The `Starry Sky` shader**: sets its `_ScrollOffset`, `_StreamOffset` and `_StreamIntensity` properties
+  on a copy of the skybox material.
 
 ## Gotchas
 
 - **Tweak the sky in the material, not in Play mode.** While the game runs, the scene uses the copy. Edits to
   `StarrySkyMat` in Play mode change the asset, but not what's on screen.
+- **Stream Intensity on the material is only for editing.** The script overwrites it every frame in Play
+  mode. Its default of 1 is there so the streams show in the Scene view while you tune them.
+- **The reference names must match.** If `_StreamOffset` or `_StreamIntensity` is renamed in Starry Sky,
+  `SetFloat` silently sets nothing and the streams stop moving or never appear. No error is shown.

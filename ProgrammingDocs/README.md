@@ -1,6 +1,7 @@
 # Programming Documentation
 
-This folder has one Markdown file per script in `Assets/Scripts`. Each file explains
+This folder has one Markdown file per script in `Assets/Scripts`, and one per Shader Graph or Sub Graph
+in `Assets/Shaders`. Each file explains
 the approach and logic behind its script: what it does, how it does it, and why.
 
 Only hand-written scripts are documented. Auto-generated ones (like `PlayerInput.cs`, which Unity
@@ -14,6 +15,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
@@ -27,11 +29,22 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
+| PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
+
+## Shaders
+
+| Graph | Doc | Status |
+| --- | --- | --- |
+| Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Not started |
+| Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
+| Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Not started |
+| Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Draft, awaiting review |
+| Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Not started |
 
 ## Template
 
