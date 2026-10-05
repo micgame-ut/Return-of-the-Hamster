@@ -7,79 +7,7 @@
       "m_Id": "ec1344cb397247b8b007e586ab1198a7"
     },
     {
-      "m_Id": "7b6b75720acd457f940d08397417f85f"
-    },
-    {
       "m_Id": "30d37373fdd44af6a3abb189fd0f8f35"
-    },
-    {
-      "m_Id": "18daa586a56a4371a5aaa3b6f5eebb24"
-    },
-    {
-      "m_Id": "cd6523c1b770488f84f491ccf765876c"
-    },
-    {
-      "m_Id": "7888597fa94e403ebe8cadaaa90467bd"
-    },
-    {
-      "m_Id": "185d87f1698c4508890837d1601cec40"
-    },
-    {
-      "m_Id": "4c32561b62d442d0ba4ef27b1bc956d9"
-    },
-    {
-      "m_Id": "e49edc3bc95e46438c5963c4f17051d4"
-    },
-    {
-      "m_Id": "309171b8bea4472ca7b2343cf16cb1d6"
-    },
-    {
-      "m_Id": "1b829cf8c43c447e86c71a4465b6f914"
-    },
-    {
-      "m_Id": "120b06115bb9443b9de933c051b1e1e8"
-    },
-    {
-      "m_Id": "effbd79a10e14c059b5c4e0013d012e9"
-    },
-    {
-      "m_Id": "97dc1a2fea934f87ba74c284f807e4a8"
-    },
-    {
-      "m_Id": "be165d60d4874c3bbd8acbf9a9a87fe8"
-    },
-    {
-      "m_Id": "81b8972332fc436c85c03109eaa288c2"
-    },
-    {
-      "m_Id": "839124a62d644fac910f9013b684fa56"
-    },
-    {
-      "m_Id": "afc6d86d99fd49c9bc5b2e172214b7e9"
-    },
-    {
-      "m_Id": "fdf594cf0bac4bae8b9e2c3f2e1152c1"
-    },
-    {
-      "m_Id": "660d9a97b79d4753a965283c7cf590f7"
-    },
-    {
-      "m_Id": "c0c3b6f296af410a8f7550aa90d8f3e9"
-    },
-    {
-      "m_Id": "8244b9400628409a86b66829011457d1"
-    },
-    {
-      "m_Id": "d81904e1757b426db32c050300b02857"
-    },
-    {
-      "m_Id": "150c2c2a3cd94d428e5c82b5069e7a77"
-    },
-    {
-      "m_Id": "aeeefe487e5d414e976b37f43c3ea92c"
-    },
-    {
-      "m_Id": "7c9ab1eba5c6473ea97ae2168c4c8816"
     },
     {
       "m_Id": "4e4f7b0836f042f4970b6adadcc36a7b"
@@ -103,6 +31,9 @@
       "m_Id": "b912d1cfc9394b6a8a7122f67714f6dc"
     },
     {
+      "m_Id": "80748a43121347be8ac187f638a6f8d4"
+    },
+    {
       "m_Id": "302d7449912c4425b6694dca1e2dd61d"
     },
     {
@@ -124,15 +55,6 @@
       "m_Id": "a072a891eb8e4a9992157465aa7e4a28"
     },
     {
-      "m_Id": "0ae64a4c663a4db883da5936cdfbcce8"
-    },
-    {
-      "m_Id": "d392b5ea2a1d4d8185ce4c9a66c3af8b"
-    },
-    {
-      "m_Id": "80748a43121347be8ac187f638a6f8d4"
-    },
-    {
       "m_Id": "b772676c007c4e5892ef822e61612a19"
     },
     {
@@ -152,13 +74,121 @@
     },
     {
       "m_Id": "ec1b9d2d564349f1a897c252f173a25c"
+    },
+    {
+      "m_Id": "0ae64a4c663a4db883da5936cdfbcce8"
+    },
+    {
+      "m_Id": "d392b5ea2a1d4d8185ce4c9a66c3af8b"
+    },
+    {
+      "m_Id": "cd6523c1b770488f84f491ccf765876c"
+    },
+    {
+      "m_Id": "e49edc3bc95e46438c5963c4f17051d4"
+    },
+    {
+      "m_Id": "aeeefe487e5d414e976b37f43c3ea92c"
+    },
+    {
+      "m_Id": "effbd79a10e14c059b5c4e0013d012e9"
+    },
+    {
+      "m_Id": "be165d60d4874c3bbd8acbf9a9a87fe8"
+    },
+    {
+      "m_Id": "839124a62d644fac910f9013b684fa56"
+    },
+    {
+      "m_Id": "81b8972332fc436c85c03109eaa288c2"
+    },
+    {
+      "m_Id": "120b06115bb9443b9de933c051b1e1e8"
+    },
+    {
+      "m_Id": "1b829cf8c43c447e86c71a4465b6f914"
+    },
+    {
+      "m_Id": "150c2c2a3cd94d428e5c82b5069e7a77"
+    },
+    {
+      "m_Id": "18daa586a56a4371a5aaa3b6f5eebb24"
+    },
+    {
+      "m_Id": "97dc1a2fea934f87ba74c284f807e4a8"
+    },
+    {
+      "m_Id": "7888597fa94e403ebe8cadaaa90467bd"
+    },
+    {
+      "m_Id": "185d87f1698c4508890837d1601cec40"
+    },
+    {
+      "m_Id": "4c32561b62d442d0ba4ef27b1bc956d9"
+    },
+    {
+      "m_Id": "afc6d86d99fd49c9bc5b2e172214b7e9"
+    },
+    {
+      "m_Id": "fdf594cf0bac4bae8b9e2c3f2e1152c1"
+    },
+    {
+      "m_Id": "660d9a97b79d4753a965283c7cf590f7"
+    },
+    {
+      "m_Id": "c0c3b6f296af410a8f7550aa90d8f3e9"
+    },
+    {
+      "m_Id": "8244b9400628409a86b66829011457d1"
+    },
+    {
+      "m_Id": "d81904e1757b426db32c050300b02857"
+    },
+    {
+      "m_Id": "7b6b75720acd457f940d08397417f85f"
+    },
+    {
+      "m_Id": "309171b8bea4472ca7b2343cf16cb1d6"
+    },
+    {
+      "m_Id": "7c9ab1eba5c6473ea97ae2168c4c8816"
     }
   ],
   "m_Keywords": [],
   "m_Dropdowns": [],
   "m_CategoryData": [
     {
-      "m_Id": "dab7210027194df79ce77bffbc244c59"
+      "m_Id": "b663ae6e418644f1835c8851eb1ade3c"
+    },
+    {
+      "m_Id": "4de25e5b9bfb45768212eb7847ceebc2"
+    },
+    {
+      "m_Id": "82c0a26e43264ae7adc7f8fe211d52c7"
+    },
+    {
+      "m_Id": "834dce15f68341d5b532f3f412b2ae13"
+    },
+    {
+      "m_Id": "9ba310aac75746d6a7a73be0dfb72796"
+    },
+    {
+      "m_Id": "2f4e27e2f3704ed0b51dd2f82e9a1088"
+    },
+    {
+      "m_Id": "070276f805014aefa26b52f0186f4e67"
+    },
+    {
+      "m_Id": "14eada5996cd4eb6bf518d0c59b563a8"
+    },
+    {
+      "m_Id": "4abb33525b494f6d8afde4a37dfe6cb9"
+    },
+    {
+      "m_Id": "fbd476ec19174a5d874c3f193542a1db"
+    },
+    {
+      "m_Id": "fad0ac46ed30409cbb05f586aa874004"
     }
   ],
   "m_Nodes": [
@@ -1437,87 +1467,24 @@
 {
   "m_SGVersion": 0,
   "m_Type": "UnityEditor.ShaderGraph.CategoryData",
-  "m_ObjectId": "dab7210027194df79ce77bffbc244c59",
-  "m_Name": "",
+  "m_ObjectId": "b663ae6e418644f1835c8851eb1ade3c",
+  "m_Name": "Sky",
   "m_ChildObjectList": [
     {
       "m_Id": "ec1344cb397247b8b007e586ab1198a7"
     },
     {
-      "m_Id": "7b6b75720acd457f940d08397417f85f"
-    },
-    {
       "m_Id": "30d37373fdd44af6a3abb189fd0f8f35"
-    },
-    {
-      "m_Id": "18daa586a56a4371a5aaa3b6f5eebb24"
-    },
-    {
-      "m_Id": "cd6523c1b770488f84f491ccf765876c"
-    },
-    {
-      "m_Id": "7888597fa94e403ebe8cadaaa90467bd"
-    },
-    {
-      "m_Id": "185d87f1698c4508890837d1601cec40"
-    },
-    {
-      "m_Id": "4c32561b62d442d0ba4ef27b1bc956d9"
-    },
-    {
-      "m_Id": "e49edc3bc95e46438c5963c4f17051d4"
-    },
-    {
-      "m_Id": "309171b8bea4472ca7b2343cf16cb1d6"
-    },
-    {
-      "m_Id": "1b829cf8c43c447e86c71a4465b6f914"
-    },
-    {
-      "m_Id": "120b06115bb9443b9de933c051b1e1e8"
-    },
-    {
-      "m_Id": "effbd79a10e14c059b5c4e0013d012e9"
-    },
-    {
-      "m_Id": "97dc1a2fea934f87ba74c284f807e4a8"
-    },
-    {
-      "m_Id": "be165d60d4874c3bbd8acbf9a9a87fe8"
-    },
-    {
-      "m_Id": "81b8972332fc436c85c03109eaa288c2"
-    },
-    {
-      "m_Id": "839124a62d644fac910f9013b684fa56"
-    },
-    {
-      "m_Id": "afc6d86d99fd49c9bc5b2e172214b7e9"
-    },
-    {
-      "m_Id": "fdf594cf0bac4bae8b9e2c3f2e1152c1"
-    },
-    {
-      "m_Id": "660d9a97b79d4753a965283c7cf590f7"
-    },
-    {
-      "m_Id": "c0c3b6f296af410a8f7550aa90d8f3e9"
-    },
-    {
-      "m_Id": "8244b9400628409a86b66829011457d1"
-    },
-    {
-      "m_Id": "d81904e1757b426db32c050300b02857"
-    },
-    {
-      "m_Id": "150c2c2a3cd94d428e5c82b5069e7a77"
-    },
-    {
-      "m_Id": "aeeefe487e5d414e976b37f43c3ea92c"
-    },
-    {
-      "m_Id": "7c9ab1eba5c6473ea97ae2168c4c8816"
-    },
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "4de25e5b9bfb45768212eb7847ceebc2",
+  "m_Name": "Clouds: Shape",
+  "m_ChildObjectList": [
     {
       "m_Id": "4e4f7b0836f042f4970b6adadcc36a7b"
     },
@@ -1540,11 +1507,32 @@
       "m_Id": "b912d1cfc9394b6a8a7122f67714f6dc"
     },
     {
+      "m_Id": "80748a43121347be8ac187f638a6f8d4"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "82c0a26e43264ae7adc7f8fe211d52c7",
+  "m_Name": "Clouds: Dust",
+  "m_ChildObjectList": [
+    {
       "m_Id": "302d7449912c4425b6694dca1e2dd61d"
     },
     {
       "m_Id": "cea241ed4d4d4e3eb3ad7a16d5ad3595"
-    },
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "834dce15f68341d5b532f3f412b2ae13",
+  "m_Name": "Clouds: Main Palette",
+  "m_ChildObjectList": [
     {
       "m_Id": "d07c4142bbff4305be6e06390dddd9bf"
     },
@@ -1559,16 +1547,16 @@
     },
     {
       "m_Id": "a072a891eb8e4a9992157465aa7e4a28"
-    },
-    {
-      "m_Id": "0ae64a4c663a4db883da5936cdfbcce8"
-    },
-    {
-      "m_Id": "d392b5ea2a1d4d8185ce4c9a66c3af8b"
-    },
-    {
-      "m_Id": "80748a43121347be8ac187f638a6f8d4"
-    },
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "9ba310aac75746d6a7a73be0dfb72796",
+  "m_Name": "Clouds: Second Palette",
+  "m_ChildObjectList": [
     {
       "m_Id": "b772676c007c4e5892ef822e61612a19"
     },
@@ -1589,6 +1577,138 @@
     },
     {
       "m_Id": "ec1b9d2d564349f1a897c252f173a25c"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "2f4e27e2f3704ed0b51dd2f82e9a1088",
+  "m_Name": "Core Glow",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "0ae64a4c663a4db883da5936cdfbcce8"
+    },
+    {
+      "m_Id": "d392b5ea2a1d4d8185ce4c9a66c3af8b"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "070276f805014aefa26b52f0186f4e67",
+  "m_Name": "Streams: Shared",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "cd6523c1b770488f84f491ccf765876c"
+    },
+    {
+      "m_Id": "e49edc3bc95e46438c5963c4f17051d4"
+    },
+    {
+      "m_Id": "aeeefe487e5d414e976b37f43c3ea92c"
+    },
+    {
+      "m_Id": "effbd79a10e14c059b5c4e0013d012e9"
+    },
+    {
+      "m_Id": "be165d60d4874c3bbd8acbf9a9a87fe8"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "14eada5996cd4eb6bf518d0c59b563a8",
+  "m_Name": "Streams: Color",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "839124a62d644fac910f9013b684fa56"
+    },
+    {
+      "m_Id": "81b8972332fc436c85c03109eaa288c2"
+    },
+    {
+      "m_Id": "120b06115bb9443b9de933c051b1e1e8"
+    },
+    {
+      "m_Id": "1b829cf8c43c447e86c71a4465b6f914"
+    },
+    {
+      "m_Id": "150c2c2a3cd94d428e5c82b5069e7a77"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "4abb33525b494f6d8afde4a37dfe6cb9",
+  "m_Name": "Streams: Layer 1",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "18daa586a56a4371a5aaa3b6f5eebb24"
+    },
+    {
+      "m_Id": "97dc1a2fea934f87ba74c284f807e4a8"
+    },
+    {
+      "m_Id": "7888597fa94e403ebe8cadaaa90467bd"
+    },
+    {
+      "m_Id": "185d87f1698c4508890837d1601cec40"
+    },
+    {
+      "m_Id": "4c32561b62d442d0ba4ef27b1bc956d9"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "fbd476ec19174a5d874c3f193542a1db",
+  "m_Name": "Streams: Layer 2",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "afc6d86d99fd49c9bc5b2e172214b7e9"
+    },
+    {
+      "m_Id": "fdf594cf0bac4bae8b9e2c3f2e1152c1"
+    },
+    {
+      "m_Id": "660d9a97b79d4753a965283c7cf590f7"
+    },
+    {
+      "m_Id": "c0c3b6f296af410a8f7550aa90d8f3e9"
+    },
+    {
+      "m_Id": "8244b9400628409a86b66829011457d1"
+    },
+    {
+      "m_Id": "d81904e1757b426db32c050300b02857"
+    }
+  ]
+}
+
+{
+  "m_SGVersion": 0,
+  "m_Type": "UnityEditor.ShaderGraph.CategoryData",
+  "m_ObjectId": "fad0ac46ed30409cbb05f586aa874004",
+  "m_Name": "Set by Script",
+  "m_ChildObjectList": [
+    {
+      "m_Id": "7b6b75720acd457f940d08397417f85f"
+    },
+    {
+      "m_Id": "309171b8bea4472ca7b2343cf16cb1d6"
+    },
+    {
+      "m_Id": "7c9ab1eba5c6473ea97ae2168c4c8816"
     }
   ]
 }

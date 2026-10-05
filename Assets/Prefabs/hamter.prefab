@@ -424,8 +424,9 @@ MonoBehaviour:
   rollDamping: 5
   acceleration: 2
   speedDecay: 20
-  maxSpeed: 60
-  topSpeedDegrade: 20
+  maxSpeed: 100
+  topSpeedDegrade: 10
+  overdriveFraction: 0.8
   boostForce: 3
   boostDecay: 3
   speedBoost: 20

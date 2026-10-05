@@ -7,7 +7,7 @@ Drives the moving parts of the skybox from the player's `Speed`:
 - The nebula clouds drift faster as the player speeds up.
 - The radial streams (warp streaks from the `Radial Streams` sub graph) flow outward faster as the
   player speeds up.
-- The radial streams only exist in overdrive: they fade in across the top 10% of max speed.
+- The radial streams only exist in overdrive: they fade in across the overdrive band (from PlayerMovement's `overdriveFraction`, 0.9 by default, up to max speed).
 
 Every frame it moves the clouds and the streams a little further, by amounts based on `Speed`, and sends
 the totals and the streams' visibility to the skybox shader.
@@ -28,6 +28,9 @@ the totals and the streams' visibility to the skybox shader.
 | `speedInfluence` | 0.05 | 0.01 | How much each point of player `Speed` adds to the drift speed |
 | `baseStreamSpeed` | 0.5 | 0.01 | How fast the streams flow when the player's `Speed` is 0 |
 | `streamSpeedInfluence` | 0.2 | 0.05 | How much each point of player `Speed` adds to the stream speed |
+| `glowEarthScale` | 2 | 2 | How far the core glow reaches past the Earth's edge, in Earth radii |
+| `streamFadeTime` | 1.5 | 1.5 | Seconds for the streams to fade fully in or out |
+| `streamIntensityCurve` | 2 | 2 | Ease-in for stream brightness across overdrive. 1 = linear, higher = slower start |
 
 With the scene's values, the drift speed goes from 0.3 (stopped) to 0.4 (max speed 10), and the stream
 speed from 0.01 to 0.51. The streams are only visible from 90% of max speed, so in practice they flow at
@@ -98,24 +101,34 @@ even at low speed. Pausing freezes them the same way as the clouds.
 
 ### `Update`: fading the streams in during overdrive
 
-**5. Stream intensity.**
+**5. Stream intensity**, in three steps.
 
-`streamIntensity = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1, PlayerMovement.Speed01)`
+**How far into overdrive:**
+`overdriveDepth = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1, PlayerMovement.Speed01)`
 
 `InverseLerp(a, b, value)` is the reverse of `Lerp`: it says how far `value` is between `a` and `b`, as
-0–1, clamped. `OverdriveFraction` is PlayerMovement's shared overdrive threshold (0.9), so the streams
-start exactly where overdrive starts.
+0–1, clamped. `OverdriveFraction` is PlayerMovement's shared overdrive threshold (its
+`overdriveFraction` slider, 0.9 by default), so the streams start exactly where overdrive starts.
 
-| `Speed01` | `streamIntensity` | Streams |
+**Ease-in curve:** `targetIntensity = Mathf.Pow(overdriveDepth, streamIntensityCurve)`. Added light
+(and Bloom) makes low values already look bright, so the curve keeps the start of overdrive faint.
+
+| `Speed01` | `overdriveDepth` | `targetIntensity` (curve 2) |
 | --- | --- | --- |
-| below 0.9 | 0 | Don't exist |
-| 0.9 (overdrive starts) | 0 | Just starting to appear |
-| 0.95 | 0.5 | Half visible |
-| 1.0 (max) | 1 | Fully visible |
+| below 0.9 | 0 | 0 (streams don't exist) |
+| 0.9 (overdrive starts) | 0 | 0 |
+| 0.95 | 0.5 | 0.25 |
+| 1.0 (max) | 1 | 1 |
 
-It's sent as `_StreamIntensity`. Unlike the offsets, it's a local variable worked out fresh each frame,
-because it only depends on the current speed. Speed changes smoothly, so the streams fade in and out
-without popping. `streamOffset` keeps growing while the streams are invisible, so they fade in mid-flow.
+**Smoothing over time:** `streamIntensity = Mathf.MoveTowards(streamIntensity, targetIntensity, Time.deltaTime / streamFadeTime)`.
+Speed can jump across the whole overdrive band in one frame (a boost adds `speedBoost`), so the shown
+intensity moves toward the target at a steady rate instead of snapping: a full 0 → 1 (or back) takes
+`streamFadeTime` seconds. `MoveTowards` moves at a constant rate and arrives exactly, unlike a `Lerp`
+toward the target, which slows down and never quite gets there. `streamIntensity` is a field so it's
+remembered between frames. Pausing freezes it, because `Time.deltaTime` is 0.
+
+It's sent as `_StreamIntensity`. `streamOffset` keeps growing while the streams are invisible, so they
+fade in mid-flow.
 
 ### What the shader does with it
 

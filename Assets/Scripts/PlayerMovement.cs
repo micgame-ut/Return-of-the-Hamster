@@ -23,6 +23,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float speedDecay = 2f;
     [SerializeField] private float maxSpeed = 10f;
     [SerializeField] private float topSpeedDegrade = 3f;
+    [SerializeField, Range(0.5f, 1f)] private float overdriveFraction = 0.9f;
 
     [Header("Boost")]
     [SerializeField] private float boostForce = 5f;
@@ -76,10 +77,10 @@ public class PlayerMovement : MonoBehaviour
     private bool InputLocked => GameManager.Instance != null &&
                                 (GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
-    // Fraction of max speed where overdrive starts. SkyboxSpeedController reads it too.
-    public const float OverdriveFraction = 0.9f;
+    // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
+    public static float OverdriveFraction { get; private set; }
 
-    // Top 10% of max speed, where the extra drain applies. RunStats times how long it's held.
+    // From OverdriveFraction of max speed up, where the extra drain applies. RunStats times how long it's held.
     public bool InOverdrive => Speed >= maxSpeed * OverdriveFraction;
 
     void Awake()
@@ -87,6 +88,7 @@ public class PlayerMovement : MonoBehaviour
         // Statics survive scene reloads, so reset them for a fresh run.
         Speed = 0f;
         MaxSpeed = maxSpeed;
+        OverdriveFraction = overdriveFraction;
 
         // Depth comes from OrbitSettings so it always matches the pattern builder.
         // Done in Awake so other scripts' Start already sees the right z.
@@ -187,8 +189,10 @@ public class PlayerMovement : MonoBehaviour
 
         if (nearMaxSpeed)
         {
-            // Within the top 10% of max, extra constant degrade applies on top - makes it harder, not impossible, to hold near max
-            Speed -= topSpeedDegrade * Time.deltaTime;
+            // Extra drain that grows across the overdrive band: none at its start, full topSpeedDegrade at max.
+            // Easy to stay in overdrive, harder to stay at max.
+            float overdriveDepth = Mathf.InverseLerp(OverdriveFraction, 1f, Speed01);
+            Speed -= topSpeedDegrade * overdriveDepth * Time.deltaTime;
         }
 
         Speed = Mathf.Clamp(Speed, 0f, maxSpeed);

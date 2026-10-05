@@ -32,7 +32,8 @@ the same way you would handle a mouse.
 | `acceleration` | 5 | How much forward/back input changes `Speed` |
 | `speedDecay` | 2 | How fast `Speed` drops per second with no input |
 | `maxSpeed` | 10 | The top speed |
-| `topSpeedDegrade` | 3 | Extra drain per second while in the top 10% of max speed |
+| `topSpeedDegrade` | 3 | The most extra drain per second in overdrive, reached at max speed. It ramps up from 0 at the start of overdrive |
+| `overdriveFraction` | 0.9 (slider 0.5–1) | Fraction of max speed where overdrive starts. 0.9 = the top 10% |
 | `boostForce` | 5 | Sideways boost strength (around the circle) |
 | `boostDecay` | 3 | How fast a sideways boost or knockback fades out |
 | `speedBoost` | 3 | How much `Speed` a forward boost adds |
@@ -132,13 +133,23 @@ Every frame:
 
 - Forward/back mouse input adds to or removes from `Speed`.
 - No input means `Speed` drains at a flat rate (`speedDecay`).
-- In the top 10% of max speed, an extra drain (`topSpeedDegrade`) is applied on top. Holding top
-  speed is harder, but still possible. "The top 10%" is defined once, by the public constant
-  `OverdriveFraction` (0.9), which the public `InOverdrive` property uses
-  (`Speed >= maxSpeed * OverdriveFraction`). `UpdateSpeed` copies `InOverdrive` into a local
-  `nearMaxSpeed` at the **start** of the method, before this frame's speed change, and RunStats reads
-  it to time overdrive. SkyboxSpeedController reads `OverdriveFraction` directly (a `const` belongs to
-  the class, so no reference to the player is needed) to know where to start fading in the streams.
+- In **overdrive** (from `overdriveFraction` of max speed up), an extra drain is applied on top. It
+  **ramps** across the overdrive band: `topSpeedDegrade × InverseLerp(OverdriveFraction, 1, Speed01)`.
+  With max speed 10 and overdrive at 0.9:
+
+  | Speed | Extra drain per second |
+  | --- | --- |
+  | 9 (overdrive starts) | 0 |
+  | 9.5 | 1.5 |
+  | 10 (max) | 3 |
+
+  So it's easy to stay in overdrive, but holding the very top still takes effort.
+- Where overdrive starts is defined once. The `overdriveFraction` slider is copied in `Awake` into the
+  static property `OverdriveFraction` (like `maxSpeed` into `MaxSpeed`), and the public `InOverdrive`
+  property uses it (`Speed >= maxSpeed * OverdriveFraction`). `UpdateSpeed` copies `InOverdrive` into a
+  local `nearMaxSpeed` at the **start** of the method, before this frame's speed change, and RunStats
+  reads it to time overdrive. SkyboxSpeedController reads `OverdriveFraction` directly (it's static, so
+  no reference to the player is needed) to know where to start fading in the streams.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
 

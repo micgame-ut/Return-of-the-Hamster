@@ -17,10 +17,13 @@ public class SkyboxSpeedController : MonoBehaviour
     [SerializeField] private float baseStreamSpeed = 0.5f;
     [SerializeField] private float streamSpeedInfluence = 0.2f;
     [SerializeField] private float glowEarthScale = 2f;
+    [SerializeField] private float streamFadeTime = 1.5f;
+    [SerializeField] private float streamIntensityCurve = 2f;
 
     private Material skyboxInstance;
     private float scrollOffset;
     private float streamOffset;
+    private float streamIntensity;
 
     private void Awake()
     {
@@ -52,7 +55,9 @@ public class SkyboxSpeedController : MonoBehaviour
         streamOffset += streamSpeed * Time.deltaTime;
         skyboxInstance.SetFloat(StreamOffsetId, streamOffset);
 
-        float streamIntensity = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1f, PlayerMovement.Speed01);
+        float overdriveDepth = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1f, PlayerMovement.Speed01);
+        float targetIntensity = Mathf.Pow(overdriveDepth, streamIntensityCurve);
+        streamIntensity = Mathf.MoveTowards(streamIntensity, targetIntensity, Time.deltaTime / Mathf.Max(streamFadeTime, 0.01f));
         skyboxInstance.SetFloat(StreamIntensityId, streamIntensity);
 
         GameManager gm = GameManager.Instance;
