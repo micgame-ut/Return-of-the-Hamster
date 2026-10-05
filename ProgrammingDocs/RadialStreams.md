@@ -10,6 +10,10 @@ outward from a vanishing point, as if the player is flying through hyperspace. I
 
 - **File:** `Assets/Shaders/Radial Streams.shadersubgraph`
 - **Used by:** the `Starry Sky` shader graph, twice (layer 1 and layer 2). See [StarrySky.md](StarrySky.md).
+  Starry Sky Volume uses **Tube Streams** instead, a copy of this Sub Graph with tunnel-depth dashes, a glow
+  layer and sparkles. See [TubeStreams.md](TubeStreams.md).
+- **Blackboard:** inputs are grouped into sections (Sky, Streams: Shared, Streams: Color, Streams: Streaks,
+  Set by Script).
 - **Values set at runtime:** `Offset` comes from `_StreamOffset`, which SkyboxSpeedController grows every
   frame. Everything else is set on `StarrySkyMat` through Starry Sky's properties.
 

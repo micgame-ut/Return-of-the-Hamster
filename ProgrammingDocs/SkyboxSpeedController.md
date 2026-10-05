@@ -4,21 +4,23 @@
 
 Drives the moving parts of the skybox from the player's `Speed`:
 
-- The nebula clouds drift faster as the player speeds up.
-- The radial streams (warp streaks from the `Radial Streams` sub graph) flow outward faster as the
-  player speeds up.
-- The radial streams only exist in overdrive: they fade in across the overdrive band (from PlayerMovement's `overdriveFraction`, 0.9 by default, up to max speed).
+- The nebula clouds drift (flow toward the player) faster as the player speeds up.
+- The warp streams flow outward faster as the player speeds up.
+- The streams only exist in overdrive: they ease in across the overdrive band (from PlayerMovement's
+  `overdriveFraction` up to max speed), smoothed over time.
+- The core glow at the vanishing point is sized to how big the Earth looks.
 
 Every frame it moves the clouds and the streams a little further, by amounts based on `Speed`, and sends
-the totals and the streams' visibility to the skybox shader.
+the totals, the streams' visibility and the glow size to the skybox shader.
 
 ## Where it lives
 
 - **Attached to:** `Main Camera` in `TestGame.unity`. It doesn't use the camera. It could sit on any
   GameObject.
-- **Requires:** a skybox material set in the scene's Lighting settings (currently `StarrySkyMat`, which uses
-  the `Starry Sky` shader graph). The shader needs float properties with the reference names
-  `_ScrollOffset`, `_StreamOffset` and `_StreamIntensity`.
+- **Requires:** a skybox material set in the scene's Lighting settings (currently `StarrySkyVolumeMat`, which
+  uses the `Starry Sky Volume` shader graph; `StarrySkyMat` with `Starry Sky` also works), and GameManager's
+  `Earth` and `EarthCamera` for the glow. The shader needs float properties with the reference names
+  `_ScrollOffset`, `_StreamOffset`, `_StreamIntensity` and `_Core_Glow_Size`.
 
 ## Inspector settings
 
@@ -130,16 +132,36 @@ remembered between frames. Pausing freezes it, because `Time.deltaTime` is 0.
 It's sent as `_StreamIntensity`. `streamOffset` keeps growing while the streams are invisible, so they
 fade in mid-flow.
 
+### `Update`: sizing the core glow to the Earth
+
+**6. Core glow size.** If GameManager, its `Earth` and its `EarthCamera` all exist:
+
+1. `earthDistance` = distance from Earth Camera to the Earth's center.
+2. `glowRadius` = the Earth's radius (`bounds.extents.x`) × `glowEarthScale`.
+3. `glowAngle = Mathf.Asin(Mathf.Clamp01(glowRadius / earthDistance))`. A line from the camera that just
+   touches a sphere of that radius makes this angle with the line to its center (sin = radius ÷ distance).
+   `Clamp01` keeps the ratio at 1 or below, so a camera inside the glow radius can't produce NaN.
+4. `_Core_Glow_Size = 1 − cos(glowAngle)`. The shader measures distance from the vanishing point as
+   1 − `along`, and `along` is the cosine of the angle, so this converts the angle into the same units.
+
+| Distance to Earth (radius 10, scale 2) | Glow reaches | Core Glow Size |
+| --- | --- | --- |
+| 1000 | about 1.1° | 0.0002 |
+| 200 | about 5.7° | 0.005 |
+| 50 | about 24° | 0.083 |
+
+So the glow hugs the Earth at any distance, growing as it approaches. Without a GameManager (or Earth /
+camera), it's skipped and the material's value stays.
+
 ### What the shader does with it
 
-Inside the `Starry Sky` shader graph:
+Inside the sky shader (Starry Sky Volume or Starry Sky):
 
-- `_ScrollOffset` is the offset of the noise that makes the clouds. As it grows, the clouds slide across
-  the sky.
-- `_StreamOffset` goes to both `Radial Streams` layers (layer 2 gets it multiplied by `Layer 2 Speed`).
-  As it grows, the dashes move outward from the vanishing point.
-- `_StreamIntensity` multiplies both stream layers before they're added onto the clouds. At 0 nothing
-  is added, so the sky is only clouds.
+- `_ScrollOffset` is the clouds' Offset. As it grows, the cloud field flows toward the player.
+- `_StreamOffset` drives the streams' dashes outward (scaled by Stream Speed, or Layer 2 Speed for the
+  second layer in Starry Sky).
+- `_StreamIntensity` multiplies the streams before they're added onto the clouds. At 0 nothing is added.
+- `_Core_Glow_Size` sets how far the glow at the vanishing point spreads.
 
 ### Why it's a running total
 
@@ -160,8 +182,9 @@ at the start. Building the offset up here, a little each frame, fixes both.
 
 - **PlayerMovement**: reads the static `Speed` and `Speed01` every frame, and the constant
   `OverdriveFraction`.
-- **The `Starry Sky` shader**: sets its `_ScrollOffset`, `_StreamOffset` and `_StreamIntensity` properties
-  on a copy of the skybox material.
+- **GameManager**: reads `Earth` and `EarthCamera` every frame for the glow size.
+- **The sky shader** (Starry Sky Volume or Starry Sky): sets `_ScrollOffset`, `_StreamOffset`,
+  `_StreamIntensity` and `_Core_Glow_Size` on a copy of the skybox material.
 
 ## Gotchas
 
@@ -169,5 +192,6 @@ at the start. Building the offset up here, a little each frame, fixes both.
   `StarrySkyMat` in Play mode change the asset, but not what's on screen.
 - **Stream Intensity on the material is only for editing.** The script overwrites it every frame in Play
   mode. Its default of 1 is there so the streams show in the Scene view while you tune them.
-- **The reference names must match.** If `_StreamOffset` or `_StreamIntensity` is renamed in Starry Sky,
-  `SetFloat` silently sets nothing and the streams stop moving or never appear. No error is shown.
+- **Core Glow Size on the material is only for editing** too: in Play mode it follows the Earth.
+- **The reference names must match.** If `_StreamOffset`, `_StreamIntensity` or `_Core_Glow_Size` is renamed
+  in the sky shader, `SetFloat` silently sets nothing. No error is shown.

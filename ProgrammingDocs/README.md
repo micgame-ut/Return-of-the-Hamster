@@ -40,11 +40,16 @@ It lives outside `Assets/` so Unity does not import these files.
 
 | Graph | Doc | Status |
 | --- | --- | --- |
-| Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Not started |
+| Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
+| Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
+| Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
+| Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
 | Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
-| Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Not started |
-| Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Draft, awaiting review |
-| Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Not started |
+| Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Done |
+| Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Done |
+| Starry Sky Volume.shadergraph | [StarrySkyVolume.md](StarrySkyVolume.md) | Done |
+| Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Done |
+| Tube Streams.shadersubgraph | [TubeStreams.md](TubeStreams.md) | Done |
 
 ## Template
 
