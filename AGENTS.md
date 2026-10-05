@@ -3,6 +3,8 @@
 This is a Unity (C#) project. Gameplay scripts live in `Assets/Scripts`, and each one has a matching doc
 in `ProgrammingDocs/` (see [ProgrammingDocs/README.md](ProgrammingDocs/README.md)).
 
+Planned work is listed in [TODO.md](TODO.md); update it when an item is done.
+
 **The main goal:** the user should understand every line that goes into this project. Explaining comes
 before code, and short snippets are better than large blocks. A snippet of new-script logic isn't
 ready to go into the project until the user has answered a check on it, and had any misunderstanding
