@@ -69,6 +69,7 @@ public class PlayerMovement : MonoBehaviour
 
     // Level
     private LevelTimer levelTimer;
+    private PlayerInvincibility invincibility;
 
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
@@ -100,6 +101,8 @@ public class PlayerMovement : MonoBehaviour
         meshRenderers = meshTransform != null
             ? meshTransform.GetComponentsInChildren<Renderer>()
             : GetComponentsInChildren<Renderer>();
+
+        invincibility = GetComponent<PlayerInvincibility>();
     }
 
     void Start()
@@ -196,6 +199,10 @@ public class PlayerMovement : MonoBehaviour
         }
 
         Speed = Mathf.Clamp(Speed, 0f, maxSpeed);
+
+        // Invincibility holds the player at max speed, unless the level has ended.
+        if (CanAccelerate && invincibility != null && invincibility.LocksMaxSpeed)
+            Speed = maxSpeed;
     }
 
     private void OnMove(InputValue value)

@@ -152,6 +152,12 @@ Every frame:
   no reference to the player is needed) to know where to start fading in the streams.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
+- **Invincibility lock:** last of all, if PlayerInvincibility's `LocksMaxSpeed` is true (the power-up is
+  active and its `lockMaxSpeed` is on), `Speed` is set to `maxSpeed`. It runs after input, decay and the
+  overdrive drain, so nothing that frame can lower it. It's skipped once the level is complete
+  (`CanAccelerate` is false), so the level-end rule always wins. The PlayerInvincibility on the same object
+  is found once in `Awake` (`invincibility`). Side effects: the player is in overdrive while invincible, so
+  the skybox streams fade in and RunStats counts it as overdrive time.
 
 `Speed` is reset in `Awake` because static values survive scene reloads.
 
@@ -220,6 +226,7 @@ Side effects of doing it this way:
   frame and on the boost button
 - **OrbitSettings**: reads the orbit's radius and center every tick, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
+- **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
 - **RunStats**: reads `InOverdrive` every frame (through GameManager's `Player`) to time overdrive

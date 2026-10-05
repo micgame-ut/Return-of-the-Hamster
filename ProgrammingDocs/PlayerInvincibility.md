@@ -22,6 +22,7 @@ It keeps the timer and decides when the rainbow should show, including a flicker
 | --- | --- | --- |
 | `warningTime` | 1 | Seconds before the end when the rainbow starts flickering |
 | `warningBlinkInterval` | 0.1 | Seconds between each flicker on/off |
+| `lockMaxSpeed` | true | While invincible, PlayerMovement holds the player at max speed |
 
 The duration isn't set here. It's `invincibleDuration` in the SpawnableTemplate (default 5), passed in by
 the power-up.
@@ -44,6 +45,9 @@ The whole feature, start to finish:
   the timer. AsteroidBehavior reads it (in `CanBreak`), and PlayerShell reads it for the hitbox.
 - **`RainbowShowing`**: whether the rainbow should be visible right now, including the flicker (`overlayOn`).
   PlayerShell reads it for the look.
+- **`LocksMaxSpeed`**: `lockMaxSpeed && IsInvincible`. PlayerMovement reads it at the end of every speed
+  update and, while it's true, sets `Speed` to max (unless the level has ended). When invincibility runs out,
+  the normal overdrive drain takes over straight away.
 
 They differ during the flicker: you're still invincible on the "off" moments, so the hitbox stays on while
 only the look flickers.
@@ -130,6 +134,8 @@ visuals, and this script only announces state. The rainbow shader is documented 
 - **AsteroidBehavior**: reads `IsInvincible` in its `CanBreak`. While it's true, any asteroid explodes on
   contact, and destructible outlines turn green.
 - **OrbitRing**: not directly; it reads `CanBreak`, so every danger arc turns green while invincible.
+- **PlayerMovement**: reads `LocksMaxSpeed` every frame (it finds this component in `Awake`) to hold the
+  player at max speed.
 - **GameManager**: reads `IsGameOver` and `HasWon` every frame. GameManager also keeps a reference to this
   component (auto-filled from the player), which is how asteroids find it.
 

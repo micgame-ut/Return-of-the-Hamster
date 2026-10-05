@@ -7,8 +7,11 @@ public class PlayerInvincibility : MonoBehaviour
 {
     [SerializeField] private float warningTime = 1f;
     [SerializeField] private float warningBlinkInterval = 0.1f;
+    [SerializeField] private bool lockMaxSpeed = true;
 
     public bool IsInvincible => timer > 0f;
+    // True while invincible with lockMaxSpeed on; PlayerMovement holds the player at max speed then.
+    public bool LocksMaxSpeed => lockMaxSpeed && IsInvincible;
 
     public event Action<bool> OnInvincibilityChanged;
     public bool RainbowShowing => overlayOn;
