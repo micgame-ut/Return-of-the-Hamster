@@ -92,22 +92,38 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _CloudNoise: 1
+    - _Cloud_Brightness: 1
+    - _Cloud_Center_Fade: 0.15
+    - _Cloud_Density: 0.6
+    - _Cloud_Depth_Scale: 0.5
+    - _Cloud_Detail: 0.5
+    - _Cloud_Octaves: 4
+    - _Cloud_Scale: 2.6
+    - _Cloud_Softness: 0.8
     - _Color_Scale: 1
+    - _Core_Glow_Size: 0.0018
     - _Cull: 2
     - _Cutoff: 0.5
     - _Dash_Frequency: 0.2
     - _Dash_Length: 0.3
     - _Dash_Scatter: 3
+    - _Depth_Haze: 0.6
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
+    - _Dust_Amount: 0.5
+    - _Dust_Scale: 3
     - _EnvironmentReflections: 1
+    - _Far_Distance: 4
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Head_Softness: 0.1
     - _Hue_Drift: 0.02
+    - _Hue_Region_Balance: 0.5
+    - _Hue_Region_Scale: 0.4
+    - _Hue_Region_Softness: 0.3
     - _Hue_Spread: 1
     - _Intensity: 0.12
     - _Layer_2_Brightness: 0.6
@@ -117,6 +133,7 @@ Material:
     - _Layer_2_Softness: 0.8
     - _Layer_2_Speed: 1.5
     - _Metallic: 0
+    - _Near_Distance: 1
     - _NoiseSize: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.005
@@ -124,13 +141,14 @@ Material:
     - _QueueOffset: 0
     - _ReceiveShadows: 1
     - _ScrollOffset: 0
+    - _Slice_Count: 3
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Streak_Softness: 0.8
-    - _StreamCoverage: 0.3
+    - _StreamCoverage: 0.5
     - _StreamIntensity: 1
     - _StreamNoise: 1
     - _StreamOffset: 0
@@ -139,13 +157,23 @@ Material:
     - _Stream_Saturation: 0.8
     - _Surface: 0
     - _TimeSpeed: 0
+    - _Warp_Strength: 0.4
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
+    - _Alt_Color_Bright: {r: 0.8627451, g: 0.23529407, b: 0.27450976, a: 1}
+    - _Alt_Color_Core: {r: 1, g: 0.7843137, b: 0.8627451, a: 1}
+    - _Alt_Color_Deep: {r: 0.11764706, g: 0.11764706, b: 0.43137258, a: 1}
+    - _Alt_Color_Mid: {r: 0.43137258, g: 0.27450976, b: 0.7843137, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudTint: {r: 0.18611196, g: 0.13616943, b: 0.18867922, a: 1}
+    - _Cloud_Color_Bright: {r: 1, g: 0.50980395, b: 0.19607836, a: 1}
+    - _Cloud_Color_Core: {r: 1, g: 0.8823529, b: 0.6666667, a: 1}
+    - _Cloud_Color_Deep: {r: 0.23529407, g: 0.078431346, b: 0.35294116, a: 1}
+    - _Cloud_Color_Mid: {r: 0.7843137, g: 0.23529407, b: 0.50980395, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Core_Glow_Color: {r: 0.766, g: 0.66086274, b: 0.48062745, a: 1}
     - _Darkness: {r: 0.023184411, g: 0.014462441, b: 0.047169805, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Hue_Offset: {r: 12.3, g: 45.6, b: 0, a: 0}
