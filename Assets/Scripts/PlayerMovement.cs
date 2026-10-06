@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -61,9 +62,11 @@ public class PlayerMovement : MonoBehaviour
 
     // Boost
     private float boostVelocity;
+    public event Action OnSpeedBoost;
 
     // Hit
     public bool IsInvulnerable => invulnerableTimer > 0f;
+    public bool MeshVisible { get; private set; } = true;
     private float invulnerableTimer;
     private Renderer[] meshRenderers;
 
@@ -231,11 +234,11 @@ public class PlayerMovement : MonoBehaviour
         invulnerableTimer -= Time.deltaTime;
 
         // Flip visibility every hitBlinkInterval, and always end visible.
-        bool visible = invulnerableTimer <= 0f ||
-                       Mathf.FloorToInt(invulnerableTimer / hitBlinkInterval) % 2 == 0;
+        MeshVisible = invulnerableTimer <= 0f ||
+                      Mathf.FloorToInt(invulnerableTimer / hitBlinkInterval) % 2 == 0;
 
         foreach (Renderer r in meshRenderers)
-            r.enabled = visible;
+            r.enabled = MeshVisible;
     }
 
     private void OnButton(InputValue value)
@@ -252,6 +255,7 @@ public class PlayerMovement : MonoBehaviour
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
+            OnSpeedBoost?.Invoke();
         }
     }
 }
