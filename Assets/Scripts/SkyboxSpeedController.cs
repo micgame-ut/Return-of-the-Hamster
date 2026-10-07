@@ -19,6 +19,8 @@ public class SkyboxSpeedController : MonoBehaviour
     [SerializeField] private float glowEarthScale = 2f;
     [SerializeField] private float streamFadeTime = 1.5f;
     [SerializeField] private float streamIntensityCurve = 2f;
+    [Tooltip("Highest random starting point for the clouds, in world units. 427 = one full repeat of the baked noise (64 cells / Cloud Scale 0.15); 0 = same sky every load.")]
+    [SerializeField] private float randomStartRange = 427f;
 
     private Material skyboxInstance;
     private float scrollOffset;
@@ -36,6 +38,9 @@ public class SkyboxSpeedController : MonoBehaviour
         }
         // If there's no skybox assigned, skyboxInstance stays null and
         // Update simply no-ops every frame.
+
+        // A different starting point in the noise each load, so every level's sky looks different.
+        scrollOffset = Random.Range(0f, randomStartRange);
     }
 
     private void Update()

@@ -33,6 +33,7 @@ the totals, the streams' visibility and the glow size to the skybox shader.
 | `glowEarthScale` | 2 | 2 | How far the core glow reaches past the Earth's edge, in Earth radii |
 | `streamFadeTime` | 1.5 | 1.5 | Seconds for the streams to fade fully in or out |
 | `streamIntensityCurve` | 2 | 2 | Ease-in for stream brightness across overdrive. 1 = linear, higher = slower start |
+| `randomStartRange` | 427 | 427 | Highest random starting value for the cloud scroll, so each load shows a different sky. 0 = the same sky every load |
 
 With the scene's values, the drift speed goes from 0.3 (stopped) to 0.4 (max speed 10), and the stream
 speed from 0.01 to 0.51. The streams are only visible from 90% of max speed, so in practice they flow at
@@ -59,6 +60,27 @@ unloads. `OnDestroy` destroys the copy, so restarting or loading the next level 
 orphaned material in memory each time.
 
 If the scene has no skybox, there's nothing to copy, and `Update` does nothing.
+
+### `Awake`: a random starting sky
+
+The clouds are a fixed 3D noise field: the same position always gives the same clouds, with both the math
+noise and the baked noise. Which clouds you see depends on where the camera starts in that field, and
+`scrollOffset` is that starting point. Starting it at 0 every time gave the same sky on every load.
+
+So `Awake` starts it at `Random.Range(0, randomStartRange)` instead. `Update` keeps adding to it as before,
+so the sky still flows smoothly from there. One noise cell (about one cloud feature) is 1 ÷ Cloud Scale world
+units, so with Cloud Scale 0.15:
+
+| Starting `scrollOffset` | Noise cells moved | Result |
+| --- | --- | --- |
+| 0 | 0 | The old fixed sky |
+| 7 | about 1 | A visibly different layout |
+| 100 | 15 | A completely different sky |
+| 427 | 64 | One full repeat of the baked noise, back to where 0 started |
+
+That's why the default is 427 (64 ÷ 0.15): every distinct baked sky can come up. It moves the clouds, the dust
+lanes and the second-palette regions, which all read the same position. The stars don't use the offset, so
+their layout stays the same. Unity seeds `Random` differently each launch, so even the first level varies.
 
 ### `Update`: scrolling the clouds
 
@@ -193,5 +215,8 @@ at the start. Building the offset up here, a little each frame, fixes both.
 - **Stream Intensity on the material is only for editing.** The script overwrites it every frame in Play
   mode. Its default of 1 is there so the streams show in the Scene view while you tune them.
 - **Core Glow Size on the material is only for editing** too: in Play mode it follows the Earth.
+- **`randomStartRange` depends on Cloud Scale** (and on CloudNoiseBaker's `Size`). The ideal value is
+  `Size ÷ Cloud Scale`. If either changes, update it: too low gives less variety, too high repeats some skies.
+  Neither breaks anything.
 - **The reference names must match.** If `_StreamOffset`, `_StreamIntensity` or `_Core_Glow_Size` is renamed
   in the sky shader, `SetFloat` silently sets nothing. No error is shown.

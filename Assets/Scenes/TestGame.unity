@@ -2849,6 +2849,7 @@ GameObject:
   - component: {fileID: 1402038716}
   - component: {fileID: 1402038717}
   - component: {fileID: 1402038718}
+  - component: {fileID: 1402038719}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -2943,6 +2944,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunStats
   hamsterName: Apollo
+--- !u!114 &1402038719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402038713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4def4a2c21f7c04b9bf2ff756e31dc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GraphicsQuality
+  lowQualityLevel: 0
+  highRaySteps: 16
+  lowRaySteps: 8
 --- !u!1 &1441542810
 GameObject:
   m_ObjectHideFlags: 0
@@ -2974,7 +2990,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
+  m_RenderShadows: 0
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
@@ -3046,7 +3062,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 64
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
