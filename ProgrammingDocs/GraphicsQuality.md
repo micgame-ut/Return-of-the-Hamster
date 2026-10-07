@@ -17,20 +17,22 @@ tooltip (see [PERFORMANCE.md](../PERFORMANCE.md)). Right now that's only the sky
 
 ## Inspector settings
 
-| Field | Default | What it changes |
-| --- | --- | --- |
-| `lowQualityLevel` | 0 | Position in **Project Settings → Quality** that uses the Low values. 0 = top of the list (PC Low) |
-| **Sky** | | |
-| `highRaySteps` | 16 | Ray Steps on every other level (PC High). Slider 4–48 |
-| `lowRaySteps` | 8 | Ray Steps on `lowQualityLevel` (PC Low). Slider 4–48 |
+| Field | Default | In the scene | What it changes |
+| --- | --- | --- | --- |
+| `lowQualityLevel` | 0 | 0 | Position in **Project Settings → Quality** that uses the Low values. 0 = top of the list (PC Low) |
+| **Sky** | | | |
+| `highRaySteps` | 16 | 24 | Ray Steps on every other level (PC High). Slider 4–48 |
+| `lowRaySteps` | 8 | 8 | Ray Steps on `lowQualityLevel` (PC Low). Slider 4–48 |
 
 The slider range matches the shader, which clamps Ray Steps to 4–48.
 
-Cost of the sky's clouds is about Ray Steps × 2 + 2 noise reads per pixel (Cloud Octaves is 1):
+Cost of the sky's clouds is about Ray Steps × 2 + 2 noise reads per pixel (Cloud Octaves is 1), each read
+one sample of the baked noise texture:
 
 | Ray Steps | Noise reads per pixel | Compared with 16 |
 | --- | --- | --- |
-| 16 (PC High) | 34 | — |
+| 24 (PC High, scene) | 50 | about 47% more |
+| 16 (default) | 34 | — |
 | 8 (PC Low) | 18 | about 47% cheaper |
 
 ## How it works

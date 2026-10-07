@@ -22,8 +22,8 @@ Check an item off when it's done and tested in Play mode.
   per pixel, and Tube Streams adds 6 more. Cloud Octaves is already at its cheapest (Cloud Detail is 0, so
   extra octaves would cost time but add nothing), which leaves Ray Steps as the main setting. See [StarrySkyVolume.md](ProgrammingDocs/StarrySkyVolume.md) and
   [NebulaVolume.md](ProgrammingDocs/NebulaVolume.md).
-  - [x] *(visual)* Lower Ray Steps (8–12), and compare the look. Done: `GraphicsQuality` sets 16 on PC High,
-    8 on PC Low.
+  - [x] *(visual)* Lower Ray Steps (8–12), and compare the look. Done: `GraphicsQuality` sets 8 on PC Low.
+    PC High was later raised to 24 (scene value) for a smoother sky, since baked noise made each step cheaper.
   - [x] Replace procedural noise with a pre-baked noise texture (3D texture for the volume). Done:
     `CloudNoiseBaker` (Editor menu) bakes `CloudNoise3D` (64³, R8); `NebulaVolumeNoise` reads it with one sample
     per noise read, on both levels. It looked just as good, so it isn't *(visual)* and the math path was removed.

@@ -496,6 +496,7 @@ MonoBehaviour:
   glowEarthScale: 1.1
   streamFadeTime: 1.5
   streamIntensityCurve: 2
+  randomStartRange: 427
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -2957,7 +2958,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GraphicsQuality
   lowQualityLevel: 0
-  highRaySteps: 16
+  highRaySteps: 24
   lowRaySteps: 8
 --- !u!1 &1441542810
 GameObject:
