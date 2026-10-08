@@ -9,14 +9,35 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private float fadeDuration = 1f;
     [SerializeField] private CanvasGroup fadePanel;
     [SerializeField] private Button startButton;
+    [SerializeField] private Button creditsButton;
     [SerializeField] private TMP_Text startButtonText;
+    [SerializeField] private TMP_Text creditsButtonText;
     [SerializeField] private float blinksPerSecond = 4f;
+    [SerializeField] private float creditsBlinkDuration = 1f;
+    [SerializeField] private CreditsPanel creditsPanel;
 
     public void OnStartPressed()
     {
         startButton.interactable = false;
         StartCoroutine(FadeAndLoad());
-    StartCoroutine(BlinkText());
+        StartCoroutine(BlinkText(startButtonText, fadeDuration));
+    }
+
+    public void OnCreditsPressed()
+    {
+        creditsButton.interactable = false;
+        StartCoroutine(BlinkText(creditsButtonText, creditsBlinkDuration));
+        StartCoroutine(OpenCreditsAfterBlink());
+    }
+
+    public void OnOptionsPressed()
+    {
+        
+    }
+
+    public void OnQuitPressed()
+    {
+        Application.Quit();
     }
 
     private IEnumerator FadeAndLoad()
@@ -32,17 +53,23 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene(_gameSceneName);
     }
 
-    private IEnumerator BlinkText()
-{
-    float interval = 1f / (blinksPerSecond * 2f);
-    float elapsed = 0f;
-    while (elapsed < fadeDuration)
+    private IEnumerator BlinkText(TMP_Text text, float duration)
     {
-        startButtonText.enabled = !startButtonText.enabled;
-        yield return new WaitForSeconds(interval);
-        elapsed += interval;
+        float interval = 1f / (blinksPerSecond * 2f);
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            text.enabled = !text.enabled;
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
+        }
+        text.enabled = true;
     }
-    startButtonText.enabled = true;
-}
+
+    private IEnumerator OpenCreditsAfterBlink()
+    {
+        yield return new WaitForSeconds(creditsBlinkDuration);
+        creditsPanel.OpenCredits();
+    }
 
 }
