@@ -31,9 +31,12 @@ public class AsteroidBehavior : MonoBehaviour
     private Collider col;
     private MaterialPropertyBlock block;
     private MaterialPropertyBlock outlineBlock;
+    private WaitForSeconds blinkWait;
     private Transform mesh;
     private Transform cam;
     private PlayerInvincibility invincibility;
+    private PlayerMovement player;
+    private PlayerHealth health;
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -64,12 +67,15 @@ public class AsteroidBehavior : MonoBehaviour
         rend = GetComponentInChildren<Renderer>();
         col = GetComponent<Collider>();
         block = new MaterialPropertyBlock();
+        if (template != null) blinkWait = new WaitForSeconds(template.blinkInterval);
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
+        player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+        health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -126,7 +132,7 @@ public class AsteroidBehavior : MonoBehaviour
             {
                 on = !on;
                 SetGlow(on);
-                yield return new WaitForSeconds(template.blinkInterval);
+                yield return blinkWait;
             }
 
             SetGlow(false);
@@ -215,10 +221,9 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only react to the player. GetComponentInParent covers the collider
-        // being on a child of the object that has PlayerMovement.
-        PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
-        if (player == null) return;
+        // Only react to the player. IsChildOf also covers the collider being
+        // on a child of the player object.
+        if (player == null || !other.transform.IsChildOf(player.transform)) return;
 
         if (CanBreak)
         {
@@ -234,7 +239,6 @@ public class AsteroidBehavior : MonoBehaviour
             {
                 CameraShake.Shake(template.hitShakeDuration, template.hitShakeMagnitude);
 
-                PlayerHealth health = player.GetComponent<PlayerHealth>();
                 if (health != null) health.LoseLife();
             }
         }

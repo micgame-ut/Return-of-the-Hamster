@@ -14,7 +14,7 @@ it keeps going while the rest of the level stands still.
 - **Attached to:** the player object, alongside `PlayerMovement` and `PlayerHealth`.
 - **Requires:**
   - `meshTransform` assigned to the ship's mesh child (the same one `PlayerMovement` uses).
-  - `GameManager.Instance`, for `IsGameOver`, the gameplay camera, and `DeathSequenceFinished()`.
+  - `GameManager.Instance`, for the `OnGameOver` event, the gameplay camera, and `DeathSequenceFinished()`.
   - An explosion prefab whose particle system uses **Unscaled** delta time (`Player Explosion`, a copy of
     `Asteroid Explosion`), or it spawns frozen.
 
@@ -45,13 +45,18 @@ With the defaults:
 | 2 s | Explosion and camera shake; the ship disappears |
 | 3.5 s | `DeathSequenceFinished()` |
 
-### `Update` and `started`
+### `OnEnable` / `OnDisable` and `HandleGameOver`
 
-`Update` runs every frame, checking whether the game is over. On the first frame it is, it sets `started`
-to true and starts the `DeathSequence` coroutine. On every frame after that, the first line exits the
-method, so the sequence only starts once. Without `started`, a new coroutine would start every frame.
+There's no `Update`. Instead it subscribes to GameManager's `OnGameOver` event in `OnEnable` and
+unsubscribes in `OnDisable`, so GameManager never holds on to a destroyed PlayerDeath. GameManager's
+`Awake` runs first (`DefaultExecutionOrder(-100)`), so `Instance` is ready by `OnEnable`.
 
-`Update` still runs while time is frozen. `Time.timeScale = 0` only makes `Time.deltaTime` 0.
+When the game ends, `HandleGameOver` starts the `DeathSequence` coroutine. `OnGameOver` fires at most once
+per level, so the sequence can only start once. It starts in the same frame as the hit that cost the last
+life, from inside `GameOver()`.
+
+The coroutine keeps running while time is frozen. `Time.timeScale = 0` only makes `Time.deltaTime` 0, and
+the sequence uses unscaled time.
 
 ### `DeathSequence`: setup
 
@@ -105,7 +110,7 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 
 ## Talks to
 
-- **GameManager**: reads `IsGameOver` every frame until the sequence starts, gets `GameplayCamera` for the
+- **GameManager**: subscribes to `OnGameOver` to start the sequence, gets `GameplayCamera` for the
   target, and calls `DeathSequenceFinished()` at the end.
 - **CameraShake**: calls `Shake` at the explosion.
 - **PlayerMovement**: no direct link. PlayerMovement stops moving the ship at game over so this script

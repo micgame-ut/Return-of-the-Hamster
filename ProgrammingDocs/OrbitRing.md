@@ -45,6 +45,12 @@ them. A circle is really a lot of short straight lines, so with enough points it
   point uses the same cos/sin placement as PlayerMovement: `center + (cos(a), sin(a)) × radius`. It
   splits the angle range into `segments` equal steps and places a point at each one.
 
+  The points are written into the shared `points` array, then handed to the LineRenderer in **one**
+  `SetPositions` call. Each call into Unity's engine has a fixed overhead, so one call carrying every point
+  is much cheaper than one `SetPosition` call per point. `SetPositions` copies the points, so the same
+  array is reused for every line, and only the first `positionCount` points are used. `SetArc` takes the
+  array as a parameter, so it stays `static`.
+
   A full circle is set to `loop`, so the LineRenderer joins the last point back to the first by itself.
   That's why it needs one fewer point than an open arc.
 
@@ -54,7 +60,7 @@ them. A circle is really a lot of short straight lines, so with enough points it
    A disabled component gets no `LateUpdate` calls, so nothing is drawn, and nothing is created, so
    there's nothing to clean up. `enabled = false` (rather than removing the component) means turning it
    back on later only needs `enabled = true`. Without a GameManager, the ring always shows.
-1. Get the player from GameManager, and the PlayerShell on it (if there is one).
+1. Get the player and its PlayerShell (if there is one) from GameManager.
 2. If no line material was assigned, make one from the `Sprites/Default` shader. It's also stored in
    `createdMaterial`, so `OnDestroy` can destroy it. A material made with `new` isn't cleaned up with the
    scene. Only this one is destroyed, never an assigned asset.
@@ -64,8 +70,16 @@ them. A circle is really a lot of short straight lines, so with enough points it
 
 It runs in `LateUpdate` so the player and asteroids have already moved this frame.
 
+**0. Make sure `points` is big enough.** The longest line, an arc covering the whole ring, needs
+`ringSegments + 1` points. The array is created on the first frame, and again only if `ringSegments` is
+raised in Play mode.
+
 **1. Draw the orbit ring** at the player's orbit center, radius, and depth (z). The player gets the center
-and radius from `OrbitSettings`. It's redrawn every frame so it follows the asset if it's tuned in Play mode.
+and radius from `OrbitSettings`. It's only redrawn when the center, radius, z, or `ringSegments` differs from
+what it was last drawn with (`drawnCenter`, `drawnRadius`, `drawnZ`, `drawnSegments`), so most frames it
+costs four comparisons. It still follows the asset if it's tuned in Play mode, because a change counts as a
+difference. `drawnSegments` starts at -1, so the first frame always draws. The danger arcs below are still
+redrawn every frame, since asteroids move and fade constantly.
 
 **2. For each asteroid in `AsteroidBehavior.Active`**, decide whether it gets an arc:
 
@@ -144,8 +158,8 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 
 ## Talks to
 
-- **GameManager**: reads `ShowOrbitRing` and gets the player in `Start`.
-- **PlayerShell**: found on the player in `Start`; reads `HitRadius` once per frame.
+- **GameManager**: reads `ShowOrbitRing` and gets `Player` and `PlayerShell` in `Start`.
+- **PlayerShell**: reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,
   `ApproachSpeed`, and `CanBreak`.

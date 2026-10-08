@@ -57,7 +57,11 @@ though both feed into how fast the asteroid approaches.
 
 - Finds the Renderer on its child and the Collider on itself. The child mesh is what spins, so the
   collider (on the root) doesn't rotate with it.
-- Gets the gameplay camera from GameManager.
+- Gets the gameplay camera from GameManager, and the player's PlayerMovement, PlayerHealth and
+  PlayerInvincibility. Like every script that isn't on the player, it gets player components from
+  GameManager once instead of looking them up on each hit.
+- Creates `blinkWait`, one `WaitForSeconds(blinkInterval)` that every blink of the warning reuses (see
+  `WarnThenMove`). Only when there's a template, since that's where `blinkInterval` lives.
 - **Destructible outline:** if `destructible` is on, it adds the template's `outlineMaterial` as an extra
   material slot on the renderer. A mesh with two materials gets drawn twice, and the outline shader
   draws the second copy slightly larger and inside out (an "inverted hull"), so only a rim shows around
@@ -85,7 +89,9 @@ blink easy to write as a simple loop.
 
 1. **Turn the collider off.** The asteroid can't hit the player until it has visibly warned them.
 2. **Blink.** Every `blinkInterval` seconds, flip the glow on or off until `warningTime` has passed.
-   With the defaults (1s and 0.1s), that's 10 flips.
+   With the defaults (1s and 0.1s), that's 10 flips. Each wait yields the same `blinkWait` made in `Awake`
+   instead of a `new WaitForSeconds`, so blinking creates no garbage. Reusing it is safe because it only
+   holds the wait length; Unity tracks each wait's timing separately.
 3. **Glow off, collider on, `isMoving = true`.**
 
 The glow color depends on `movementType` (red for Linear, cyan for Wave by default), so the player can
@@ -136,9 +142,9 @@ renderer when that changes, not every frame.
 
 ### `OnTriggerEnter`: touching the player
 
-1. **Is it the player?** It looks for PlayerMovement on the object it touched or any of its parents
-   (`GetComponentInParent`), so it still works if the player's collider is on a child. Anything else is
-   ignored.
+1. **Is it the player?** `other.transform.IsChildOf(player.transform)` is true when the collider it
+   touched is the player or anywhere under it, so it still works if the player's collider is on a child.
+   `player` is the one cached from GameManager in `Awake`. Anything else, or no player at all, is ignored.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
 
@@ -154,8 +160,7 @@ renderer when that changes, not every frame.
      random.
    - It calls `player.TakeHit(knockback, speedLoss)`. If the player wasn't invulnerable, `TakeHit`
      returns `true`, meaning the hit counted. Only then does the camera shake and the player lose a life:
-     it finds PlayerHealth on the player's object (`player.GetComponent<PlayerHealth>()`) and calls
-     `LoseLife()`. Both are inside braces under the `if`, so neither happens during invulnerability.
+     it calls `LoseLife()` on the PlayerHealth cached in `Awake`. Both are inside braces under the `if`, so neither happens during invulnerability.
 
 The asteroid isn't destroyed when it hits the player. It keeps flying past.
 
@@ -190,7 +195,7 @@ PlayerInvincibility, that part is just false.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
   arc are green and touching it explodes it.
-- **GameManager**: gets the gameplay camera and PlayerInvincibility in `Awake`, and `RunStats` when an
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth` and `PlayerInvincibility` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
@@ -210,6 +215,9 @@ PlayerInvincibility, that part is just false.
   distance per swing, so its wave looks stretched out along the Z axis.
 - **`destructible` is only read in `Awake`.** Ticking it on a live asteroid in Play mode lets it be smashed,
   but it won't get an outline.
+- **`blinkInterval` is only read into `blinkWait` in `Awake`.** Changing it on the template in Play mode
+  won't change how long existing asteroids wait between blinks, though their loop already steps by the new
+  value, so the number of blinks changes. Stop and press Play again after tuning it.
 - **The glow needs Emission turned on** in the asteroid's material, or the blink is invisible.
 - **`OnEnable` runs every time it's revealed, and the asteroid is reused.** Creating a pattern copy switches
   its children on once (running `Awake` and `OnEnable`) before the spawner switches them off, and with
@@ -222,8 +230,10 @@ PlayerInvincibility, that part is just false.
   player's invulnerability window. Smashing never costs a life.
 - **Non-destructible asteroids have no outline.** While the player is invincible, their arcs turn green,
   but there's no outline to change, since only destructible asteroids get the outline material.
-- **PlayerHealth must be on the player object.** It's looked up on the object that has PlayerMovement. If
-  it's missing, hits still push and shake but never cost a life, with no error.
+- **PlayerHealth comes from GameManager.** If GameManager has none (not assigned and not on the player
+  object), hits still push and shake but never cost a life, with no error.
+- **No GameManager or no `player` on it means no contact at all.** The player check needs the cached
+  player, so without one the asteroid flies through the ship without hitting or breaking.
 - **No template means no lost lives either.** The hit branch is skipped entirely without a template, so
   `TakeHit` and `LoseLife` are never called.
 - **An overlapping asteroid won't hit twice.** `OnTriggerEnter` only fires on first contact, so an asteroid

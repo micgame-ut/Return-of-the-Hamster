@@ -80,11 +80,14 @@ when the scene unloads (see AGENTS.md section 12).
 
 Turns the warning on if you start at 1 life. It runs after every `Awake`, so `CurrentLives` is already set.
 
-### `OnEnable` / `OnDisable` and `HandleLivesChanged`
+### `OnEnable` / `OnDisable`, `HandleLivesChanged` and `HandleWin`
 
-Sign up to and leave `OnLivesChanged`; `OnDisable` also turns the warning off, so a disabled HUD can't leave
-the red up. The handler is `SetDanger(lives == 1)`. It uses the value passed in directly, because the
-decision depends on nothing else.
+Sign up to and leave `OnLivesChanged` and GameManager's `OnWin`; `OnDisable` also turns the warning off, so
+a disabled HUD can't leave the red up. The lives handler is `SetDanger(lives == 1)`. It uses the value
+passed in directly, because the decision depends on nothing else.
+
+`HandleWin` is `SetDanger(false)`. A win doesn't change lives, so `OnLivesChanged` can't catch it. It only
+listens for a win: a game over already turns the warning off, because lives reach 0 on the same hit.
 
 ### `SetDanger`
 
@@ -97,14 +100,14 @@ brightest) as the signs appear.
 
 ### `Update`
 
-While on: stops on a win, advances the timer, blinks the signs (only when they flip), and pulses the glows'
-width and alpha together.
+While on: advances the timer, blinks the signs (only when they flip), and pulses the glows' width and alpha
+together.
 
-1. **Not on?** Returns straight away, which is most frames.
-2. **Won?** Turns off. A win doesn't change lives, so the event can't catch it.
-3. **Blink:** the signs are on when `FloorToInt(blinkTimer / blinkInterval)` is even. `SetWarnings` is only
+1. **Not on?** Returns straight away, which is most frames, including every frame after a win (see
+   `HandleWin`).
+2. **Blink:** the signs are on when `FloorToInt(blinkTimer / blinkInterval)` is even. `SetWarnings` is only
    called when that flips.
-4. **Pulse:** `pulse = 0.5 + 0.5 × cos(π × blinkTimer / blinkInterval)` goes 1 → 0 → 1 over one full blink
+3. **Pulse:** `pulse = 0.5 + 0.5 × cos(π × blinkTimer / blinkInterval)` goes 1 → 0 → 1 over one full blink
    cycle. It drives both Lerps: width (as a fraction of the canvas width) and alpha. `color` is a **copy** of
    `overlayColor` (a value type), so changing its alpha doesn't change the field.
 
@@ -127,7 +130,7 @@ Shows or hides all four signs, and records which in `warningsOn`.
 
 ## Talks to
 
-- **GameManager**: gets PlayerHealth in `Awake`; reads `HasWon` every frame while on.
+- **GameManager**: gets PlayerHealth in `Awake`; subscribes to `OnWin`.
 - **PlayerHealth**: subscribes to `OnLivesChanged`; reads `CurrentLives` in `Start`.
 
 ## Gotchas

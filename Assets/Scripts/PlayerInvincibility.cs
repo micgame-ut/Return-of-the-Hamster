@@ -37,20 +37,34 @@ public class PlayerInvincibility : MonoBehaviour
         if (!wasInvincible) OnInvincibilityChanged?.Invoke(true);
     }
 
+    private void OnEnable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameOver += HandleLevelEnded;
+            GameManager.Instance.OnWin += HandleLevelEnded;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameOver -= HandleLevelEnded;
+            GameManager.Instance.OnWin -= HandleLevelEnded;
+        }
+    }
+
+    private void HandleLevelEnded()
+    {
+        if (!IsInvincible) return;
+        timer = 0f;
+        SetOverlay(false);
+        OnInvincibilityChanged?.Invoke(false);
+    }
+
     private void Update()
     {
-        GameManager gm = GameManager.Instance;
-        if (gm != null && (gm.IsGameOver || gm.HasWon))
-        {
-            if (IsInvincible)
-            {
-                timer = 0f;
-                SetOverlay(false);
-                OnInvincibilityChanged?.Invoke(false);
-            }
-            return;
-        }
-
         if (timer <= 0f) return;
 
         timer -= Time.deltaTime;

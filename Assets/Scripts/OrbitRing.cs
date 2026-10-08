@@ -26,6 +26,11 @@ public class OrbitRing : MonoBehaviour
     private Material createdMaterial;
     private LineRenderer ring;
     private readonly List<LineRenderer> arcs = new List<LineRenderer>();
+    private Vector3[] points; // filled and handed to each line in one SetPositions call
+    private Vector2 drawnCenter;
+    private float drawnRadius;
+    private float drawnZ;
+    private int drawnSegments = -1; // -1 so the ring always draws on the first frame
 
     private void Start()
     {
@@ -37,7 +42,7 @@ public class OrbitRing : MonoBehaviour
         }
 
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
-        shell = player != null ? player.GetComponent<PlayerShell>() : null;
+        shell = GameManager.Instance != null ? GameManager.Instance.PlayerShell : null;
         if (lineMaterial == null) lineMaterial = createdMaterial = new Material(Shader.Find("Sprites/Default"));
 
         ring = CreateLine("Orbit Ring", ringWidth, 0);
@@ -53,8 +58,18 @@ public class OrbitRing : MonoBehaviour
         float radius = player.CircleRadius;
         float z = player.transform.position.z;
 
-        // Redrawn every frame so circleRadius can still be tuned live.
-        SetArc(ring, center, radius, z, 0f, Mathf.PI * 2f, ringSegments, closed: true);
+        // The longest line (a full-circle arc) needs ringSegments + 1 points.
+        if (points == null || points.Length < ringSegments + 1) points = new Vector3[ringSegments + 1];
+
+        // Only redrawn when something changed, so circleRadius can still be tuned live.
+        if (center != drawnCenter || radius != drawnRadius || z != drawnZ || ringSegments != drawnSegments)
+        {
+            SetArc(ring, points, center, radius, z, 0f, Mathf.PI * 2f, ringSegments, closed: true);
+            drawnCenter = center;
+            drawnRadius = radius;
+            drawnZ = z;
+            drawnSegments = ringSegments;
+        }
 
         int used = 0;
         float playerReach = shell != null ? Mathf.Max(playerRadius, shell.HitRadius) : playerRadius;
@@ -88,7 +103,7 @@ public class OrbitRing : MonoBehaviour
 
             int segments = Mathf.Max(2, Mathf.CeilToInt(ringSegments * halfAngle / Mathf.PI));
             // Angles come from the real orbit; only the drawn radius is pushed outward.
-            SetArc(arc, center, radius + arcOffset, z, midAngle - halfAngle, midAngle + halfAngle, segments, closed: false);
+            SetArc(arc, points, center, radius + arcOffset, z, midAngle - halfAngle, midAngle + halfAngle, segments, closed: false);
         }
 
         // Hide leftover pooled arcs instead of destroying them, so waves don't churn garbage.
@@ -121,7 +136,7 @@ public class OrbitRing : MonoBehaviour
         return true;
     }
 
-    private static void SetArc(LineRenderer line, Vector2 center, float radius, float z,
+    private static void SetArc(LineRenderer line, Vector3[] points, Vector2 center, float radius, float z,
                                float fromAngle, float toAngle, int segments, bool closed)
     {
         // A closed loop repeats its first point itself, so it needs one fewer.
@@ -132,8 +147,9 @@ public class OrbitRing : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             float a = fromAngle + step * i;
-            line.SetPosition(i, new Vector3(center.x + Mathf.Cos(a) * radius, center.y + Mathf.Sin(a) * radius, z));
+            points[i] = new Vector3(center.x + Mathf.Cos(a) * radius, center.y + Mathf.Sin(a) * radius, z);
         }
+        line.SetPositions(points);
     }
 
     private LineRenderer CreateLine(string name, float width, int sortingOrder)

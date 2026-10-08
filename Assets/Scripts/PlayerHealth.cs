@@ -23,7 +23,6 @@ public class PlayerHealth : MonoBehaviour
         if (gm == null || gm.IsGameOver || gm.HasWon) return;
 
         CurrentLives--;
-        Debug.Log($"Lives left: {CurrentLives}");
         OnLivesChanged?.Invoke(CurrentLives);
 
         if (CurrentLives <= 0)
@@ -36,7 +35,6 @@ public class PlayerHealth : MonoBehaviour
         if (gm == null || gm.IsGameOver || gm.HasWon) return;
 
         CurrentLives = Mathf.Min(CurrentLives + 1, maxLives);
-        Debug.Log($"Lives left: {CurrentLives}");
         OnLivesChanged?.Invoke(CurrentLives);
     }
 }

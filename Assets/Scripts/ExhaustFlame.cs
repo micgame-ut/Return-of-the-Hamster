@@ -34,13 +34,15 @@ public class ExhaustFlame : MonoBehaviour
     private ParticleSystem.MainModule main;
     private ParticleSystem.EmissionModule emission;
     private ParticleSystem.ColorOverLifetimeModule colorOverLifetime;
-    private bool stopped;
+    private bool flameVisible; // last value given to flameRenderer.enabled
+    private float appliedLifetime = -1f; // -1 so the lifetime is applied on the first frame
 
     private void Awake()
     {
         movement = GetComponentInParent<PlayerMovement>();
         invincibility = GetComponentInParent<PlayerInvincibility>();
         flameRenderer = flame.GetComponent<ParticleSystemRenderer>();
+        flameVisible = flameRenderer.enabled;
 
         main = flame.main;
         emission = flame.emission;
@@ -53,28 +55,32 @@ public class ExhaustFlame : MonoBehaviour
     {
         if (movement != null) movement.OnSpeedBoost += HandleSpeedBoost;
         if (invincibility != null) invincibility.OnRainbowChanged += HandleRainbowChanged;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameOver += HandleLevelEnded;
+            GameManager.Instance.OnWin += HandleLevelEnded;
+        }
     }
 
     private void OnDisable()
     {
         if (movement != null) movement.OnSpeedBoost -= HandleSpeedBoost;
         if (invincibility != null) invincibility.OnRainbowChanged -= HandleRainbowChanged;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameOver -= HandleLevelEnded;
+            GameManager.Instance.OnWin -= HandleLevelEnded;
+        }
     }
 
     private void Update()
     {
-        GameManager gm = GameManager.Instance;
-        if (gm != null && (gm.IsGameOver || gm.HasWon))
+        bool visible = movement.MeshVisible;
+        if (visible != flameVisible)
         {
-            if (!stopped)
-            {
-                flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                stopped = true;
-            }
-            return;
+            flameRenderer.enabled = visible;
+            flameVisible = visible;
         }
-
-        flameRenderer.enabled = movement.MeshVisible;
 
         float t = PlayerMovement.Speed01;
         float length = Mathf.Lerp(minLength, maxLength, t);
@@ -83,7 +89,11 @@ public class ExhaustFlame : MonoBehaviour
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f) * 2f - 1f;
         width *= 1f + noise * flickerAmount;
 
-        main.startLifetime = flameLifetime;
+        if (flameLifetime != appliedLifetime)
+        {
+            main.startLifetime = flameLifetime;
+            appliedLifetime = flameLifetime;
+        }
         main.startSpeed = length / flameLifetime;
         main.startSize = width;
         emission.rateOverTime = Mathf.Lerp(minEmission, maxEmission, t);
@@ -99,5 +109,11 @@ public class ExhaustFlame : MonoBehaviour
     private void HandleRainbowChanged(bool on)
     {
         colorOverLifetime.color = on ? rainbowColor : normalColor;
+    }
+
+    private void HandleLevelEnded()
+    {
+        flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        enabled = false;
     }
 }
