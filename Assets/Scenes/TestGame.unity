@@ -494,6 +494,9 @@ MonoBehaviour:
   baseStreamSpeed: 0.01
   streamSpeedInfluence: 0.05
   glowEarthScale: 1.1
+  streamFadeTime: 1.5
+  streamIntensityCurve: 2
+  randomStartRange: 427
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,6 +553,7 @@ MonoBehaviour:
   order: 0
   loop: 1
   startDelay: 2
+  prewarmPerPattern: 1
 --- !u!1 &367037844
 GameObject:
   m_ObjectHideFlags: 0
@@ -2842,6 +2846,8 @@ GameObject:
   - component: {fileID: 1402038716}
   - component: {fileID: 1402038717}
   - component: {fileID: 1402038718}
+  - component: {fileID: 1402038719}
+  - component: {fileID: 1402038720}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -2936,6 +2942,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunStats
   hamsterName: Apollo
+--- !u!114 &1402038719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402038713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4def4a2c21f7c04b9bf2ff756e31dc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GraphicsQuality
+  lowQualityLevel: 0
+  highRaySteps: 24
+  lowRaySteps: 8
+--- !u!114 &1402038720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1402038713}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efc57d2780c03a54895f0d53496c1b48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EffectPool
+  template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}
+  prewarmEffects: 5
 --- !u!1 &1441542810
 GameObject:
   m_ObjectHideFlags: 0
@@ -2967,7 +3002,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_RenderShadows: 1
+  m_RenderShadows: 0
   m_RequiresDepthTextureOption: 2
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
@@ -3039,7 +3074,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 64
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -4117,6 +4152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81e9b29dacfe12d4d868b2d7788dac13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShake
+  shakeFrequency: 60
 --- !u!1 &1929026100
 GameObject:
   m_ObjectHideFlags: 0

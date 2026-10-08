@@ -27,6 +27,7 @@ it keeps going while the rest of the level stands still.
 | `holdTime` | 0.75 | Seconds the ship sits in front of the camera, shaking, before it explodes |
 | `timeToExplode` | 2 | Seconds from game over to the explosion. The approach takes `timeToExplode − holdTime` |
 | `maxShake` | 0.3 | How far the mesh jitters at the moment it explodes. It grows from 0 |
+| `shakeFrequency` | 60 (min 1) | New shake directions per second, so the shake looks the same at any frame rate |
 | `explosionPrefab` | none | The particle effect spawned at the explosion (`Player Explosion`) |
 | `explodeShakeDuration` | 0.4 | How long the camera shakes at the explosion |
 | `explodeShakeMagnitude` | 0.5 | How hard the camera shakes at the explosion |
@@ -72,9 +73,12 @@ frozen). Each frame:
   Because the approach is shorter than `timeToExplode`, `moveT` reaches 1 early and the ship holds there.
   If `holdTime` is `timeToExplode` or more, `approachTime` is 0 or less and `moveT` is set straight to 1
   instead of dividing by it (dividing by 0 would give `NaN` and break the position).
-- **Shake.** The mesh child's last offset is removed, and a new random one is added. Its size is
+- **Shake.** The mesh child's last offset is removed, and a new one is added. Its size is
   `maxShake × (elapsed / timeToExplode)`, so the shake grows as the explosion gets closer. Removing the
   old offset first keeps the jitter centered instead of wandering off (the same idea as CameraShake).
+  The **direction** is a new `Random.insideUnitSphere` only `shakeFrequency` times a second (local
+  `directionTimer` and `shakeDirection`), held in between, the same as CameraShake. Picking a new one every
+  frame made the shake buzzier on faster screens.
 
 The root moves and the mesh child shakes, so the two never fight.
 
@@ -90,7 +94,8 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 
 ### `DeathSequence`: explosion and finish
 
-1. Spawns `explosionPrefab` at the ship, if one is assigned.
+1. Spawns `explosionPrefab` at the ship, if one is assigned. This one isn't pooled (EffectPool): it only
+   happens once per level.
 2. Shakes the camera with `CameraShake.Shake`.
 3. Hides the ship by switching off the **mesh child**. The root stays active, because switching off the
    object this coroutine runs on would stop the coroutine.

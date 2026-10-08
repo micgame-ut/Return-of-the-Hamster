@@ -17,6 +17,7 @@ public class PlayerCamera : MonoBehaviour
     {
         float targetFOV = Mathf.Lerp(baseFOV, maxFOV, PlayerMovement.Speed01);
 
-        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFOV, fovLerpSpeed * Time.deltaTime);
+        // 1 - e^(-k·dt) eases toward the target the same at any frame rate.
+        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFOV, 1f - Mathf.Exp(-fovLerpSpeed * Time.deltaTime));
     }
 }

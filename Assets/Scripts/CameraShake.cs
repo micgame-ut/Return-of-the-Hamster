@@ -8,10 +8,14 @@ public class CameraShake : MonoBehaviour
 {
     private static CameraShake instance;
 
+    [SerializeField, Min(1f)] private float shakeFrequency = 60f;
+
     private float duration;
     private float timeLeft;
     private float magnitude;
     private Vector3 lastOffset;
+    private Vector3 shakeDirection;
+    private float directionTimer;
 
     private void Awake() => instance = this;
 
@@ -40,9 +44,17 @@ public class CameraShake : MonoBehaviour
 
         timeLeft -= Time.unscaledDeltaTime;
 
+        // A new direction shakeFrequency times a second, not every frame, so the shake looks the same at any frame rate.
+        directionTimer -= Time.unscaledDeltaTime;
+        if (directionTimer <= 0f)
+        {
+            shakeDirection = Random.insideUnitSphere;
+            directionTimer = 1f / shakeFrequency;
+        }
+
         // Fade the shake out over its duration instead of stopping abruptly.
         float strength = magnitude * Mathf.Clamp01(timeLeft / duration);
-        lastOffset = Random.insideUnitSphere * strength;
+        lastOffset = shakeDirection * strength;
         transform.localPosition += lastOffset;
 
         if (timeLeft <= 0f) magnitude = 0f;

@@ -56,6 +56,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NebulaVolume_d8c1afcfe22d4199bd0056ee3790b46e_NoiseTexture_3087300068_Texture3D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise_Texture:
+        m_Texture: {fileID: 11700000, guid: 5c861708e026a7d4291bb16929effb0e, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -86,6 +94,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _BAKED_NOISE: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -168,7 +177,7 @@ Material:
     - _Star_Twinkle: 0.8
     - _Streak_Softness: 0.8
     - _StreamCoverage: 0.5
-    - _StreamIntensity: 1
+    - _StreamIntensity: 0
     - _StreamNoise: 1
     - _StreamOffset: 0
     - _Stream_Brightness: 0.8

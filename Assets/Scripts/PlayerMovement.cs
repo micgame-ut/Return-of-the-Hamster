@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,7 +8,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Transform meshTransform;
 
     [Header("Movement")]
-    [SerializeField] private float mouseSensitivity = 0.1f;
+    [Tooltip("Orbit distance per pixel of mouse movement, in thousandths of a world unit. 5 = 0.005.")]
+    [SerializeField] private float mouseSensitivity = 1.7f;
 
     [Header("Orbit")]
     // Radius, center, and depth come from OrbitSettings, shared with the pattern builder
@@ -15,11 +17,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private bool faceCenter = true; // rotate so the ship's top points at the center
 
     [Header("Roll")]
-    [SerializeField] private float rotationSpeed = 100f;
+    [Tooltip("Degrees the mesh rolls per pixel of mouse movement.")]
+    [SerializeField] private float rotationSpeed = 1.7f;
     [SerializeField] private float rollDamping = 5f;
 
     [Header("Speed")]
-    [SerializeField] private float acceleration = 5f;
+    [Tooltip("Speed gained per pixel of upward mouse movement, in thousandths. 33 = 0.033.")]
+    [SerializeField] private float acceleration = 83f;
     [SerializeField] private float speedDecay = 2f;
     [SerializeField] private float maxSpeed = 10f;
     [SerializeField] private float topSpeedDegrade = 3f;
@@ -29,10 +33,14 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float boostForce = 5f;
     [SerializeField] private float boostDecay = 3f;
     [SerializeField] private float speedBoost = 3f;
+    [Tooltip("Seconds after the last sideways mouse movement that a click still gives a side boost.")]
+    [SerializeField] private float sideInputMemory = 0.1f;
 
     [Header("Hit")]
     [SerializeField] private float invulnerableTime = 1.5f; // seconds of no hits after being hit
     [SerializeField] private float hitBlinkInterval = 0.1f; // time between visibility flips
+
+    private const float SensitivityScale = 0.001f; // Mouse Sensitivity and Acceleration are entered in thousandths, so 5 means 0.005
 
     // Speed
     // Readable anywhere, but only PlayerMovement changes it; other scripts go
@@ -61,9 +69,13 @@ public class PlayerMovement : MonoBehaviour
 
     // Boost
     private float boostVelocity;
+    public event Action OnSpeedBoost;
+    private float lastSideDirection;
+    private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
 
     // Hit
     public bool IsInvulnerable => invulnerableTimer > 0f;
+    public bool MeshVisible { get; private set; } = true;
     private float invulnerableTimer;
     private Renderer[] meshRenderers;
 
@@ -118,45 +130,39 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        if (InputLocked) return;
-
-        Vector2 mouseDelta = moveInput * Time.deltaTime;
-
-        Roll(mouseDelta);
-        UpdateSpeed(mouseDelta);
-        UpdateInvulnerability();
-    }
-
-    void FixedUpdate()
-    {
         // Once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
         if (InputLocked) return;
 
-        Vector2 mouseDelta = moveInput * Time.fixedDeltaTime;
-
-        Movement(mouseDelta);
+        Roll();
+        UpdateSpeed();
+        Movement();
+        UpdateInvulnerability();
     }
 
-    private void Roll(Vector2 mouseDelta)
+    private void Roll()
     {
-        // If there is mouse input, use it for roll; otherwise, gradually return to zero roll
-        rollInput = moveInput.sqrMagnitude > 0f
-            ? mouseDelta
-            : Vector2.Lerp(rollInput, Vector2.zero, rollDamping * Time.deltaTime);
+        // If there is mouse input, roll with its speed (pixels per second); otherwise ease back to zero.
+        // The fade uses 1 - e^(-k·dt) so it eases out the same at any frame rate.
+        rollInput = moveInput.sqrMagnitude > 0f && Time.deltaTime > 0f
+            ? moveInput / Time.deltaTime
+            : Vector2.Lerp(rollInput, Vector2.zero, 1f - Mathf.Exp(-rollDamping * Time.deltaTime));
+
+        float degrees = rotationSpeed * Time.deltaTime;
 
         // Rotate only the visual mesh, not the collider/root
         // Pitch around the orbit tangent (root's local x) so forward input always tilts the nose toward the center
-        meshTransform.Rotate(transform.right, rollInput.y * rotationSpeed, Space.World);
+        meshTransform.Rotate(transform.right, rollInput.y * degrees, Space.World);
 
         // Roll around the mesh's own axis as the player moves around the circle
-        meshTransform.Rotate(0f, 0f, -rollInput.x * rotationSpeed, Space.Self);
+        meshTransform.Rotate(0f, 0f, -rollInput.x * degrees, Space.Self);
     }
 
-    private void Movement(Vector2 mouseDelta)
+    private void Movement()
     {
-        // Distance travelled along the circle this tick; positive = counter-clockwise
+        // Distance travelled along the circle this frame; positive = counter-clockwise
+        // The mouse delta is already distance per frame, so it isn't scaled by time; the boost is a speed, so it is.
         // Distance divided by radius = angle in radians, so we can add it to the orbitAngle directly.
-        float arc = (mouseDelta.x * mouseSensitivity) + (boostVelocity * Time.fixedDeltaTime);
+        float arc = (moveInput.x * mouseSensitivity * SensitivityScale) + (boostVelocity * Time.deltaTime);
         orbitAngle += arc / CircleRadius;
 
         // Offset is defined by the cosine (left/right) and sine (up/down) of the angle, multiplied by the radius to get world units
@@ -167,22 +173,22 @@ public class PlayerMovement : MonoBehaviour
         if (faceCenter)
             transform.rotation = Quaternion.Euler(0f, 0f, orbitAngle * Mathf.Rad2Deg + 90f);
 
-        // Boost fades out over time instead of cutting off instantly
-        boostVelocity = Mathf.Lerp(boostVelocity, 0f, boostDecay * Time.fixedDeltaTime);
+        // Boost fades out over time instead of cutting off instantly. 1 - e^(-k·dt) fades the same at any frame rate.
+        boostVelocity = Mathf.Lerp(boostVelocity, 0f, 1f - Mathf.Exp(-boostDecay * Time.deltaTime));
     }
 
-    private void UpdateSpeed(Vector2 mouseDelta)
+    private void UpdateSpeed()
     {
         bool nearMaxSpeed = InOverdrive;
 
         // Forward input after the level ends counts as no input, so the normal
         // decay still applies instead of speed being held in place.
-        bool hasInput = mouseDelta.y < 0f || (mouseDelta.y > 0f && CanAccelerate);
+        bool hasInput = moveInput.y < 0f || (moveInput.y > 0f && CanAccelerate);
 
         if (hasInput)
         {
-            // Speeds up on positive mouseDelta.y, slows down on negative
-            Speed += mouseDelta.y * acceleration;
+            // Speeds up on positive mouse y, slows down on negative. The mouse delta is already per frame, so no × time.
+            Speed += moveInput.y * acceleration * SensitivityScale;
         }
         else
         {
@@ -208,6 +214,12 @@ public class PlayerMovement : MonoBehaviour
     private void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
+
+        if (moveInput.x != 0f)
+        {
+            lastSideDirection = Mathf.Sign(moveInput.x);
+            lastSideInputTime = Time.time;
+        }
     }
 
     public bool TakeHit(float knockbackVelocity, float speedLoss)
@@ -231,11 +243,11 @@ public class PlayerMovement : MonoBehaviour
         invulnerableTimer -= Time.deltaTime;
 
         // Flip visibility every hitBlinkInterval, and always end visible.
-        bool visible = invulnerableTimer <= 0f ||
-                       Mathf.FloorToInt(invulnerableTimer / hitBlinkInterval) % 2 == 0;
+        MeshVisible = invulnerableTimer <= 0f ||
+                      Mathf.FloorToInt(invulnerableTimer / hitBlinkInterval) % 2 == 0;
 
         foreach (Renderer r in meshRenderers)
-            r.enabled = visible;
+            r.enabled = MeshVisible;
     }
 
     private void OnButton(InputValue value)
@@ -243,15 +255,16 @@ public class PlayerMovement : MonoBehaviour
         if (!value.isPressed || InputLocked)
             return;
 
-        if (moveInput.x != 0f)
+        if (Time.time - lastSideInputTime <= sideInputMemory)
         {
             // Boost around the circle in whichever direction the mouse was last moving horizontally
-            boostVelocity = Mathf.Sign(moveInput.x) * boostForce;
+            boostVelocity = lastSideDirection * boostForce;
         }
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
+            OnSpeedBoost?.Invoke();
         }
     }
 }

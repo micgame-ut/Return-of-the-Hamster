@@ -26,6 +26,7 @@ Everything Nebula Clouds has (Sky, Clouds: Shape, Dust, both palettes, Core Glow
 | | Far Distance | 6 | Where the ray stops |
 | | Absorption | 3 | How quickly cloud becomes opaque. Higher = thicker, more solid |
 | | Depth Haze | 0.6 | How much far clouds fade toward Space Color |
+| | Noise Texture | — | The baked `CloudNoise3D` 3D texture (from CloudNoiseBaker). **Promoted to final Shader**: it's set on the material, not a port on the Sub Graph node |
 | Stars | Star Density | 150 | How finely the sky is divided into star cells. Higher = more, smaller stars |
 | | Star Amount | 0.15 | Fraction of cells with a star or galaxy |
 | | Star Size | 0.12 | Dot size, as a fraction of a cell |
@@ -74,6 +75,21 @@ cloud.
 **Rule of thumb:** keep step length × Cloud Scale under about 0.5 (half a noise feature per step), or the
 clouds start to look grainy. Cost is about Ray Steps × (1 + Cloud Octaves) + 3 noise reads per pixel.
 
+**Each noise read is one texture sample.** The noise used to be calculated: hash the 8 corners of the cell the
+point is in, then blend them with 7 lerps, using `u`, the position inside the cell smoothed with
+`f × f × (3 − 2f)`. CloudNoiseBaker now saves those same hash values into a 64 × 64 × 64 texture (one texel per
+cell), and the shader reads it at `(cell + u + 0.5) ÷ 64`:
+
+- **+ 0.5:** texel centers sit in the middle of each texel, so cell 3's value is at 3.5.
+- **+ u:** the texture's Bilinear filter blends the 8 neighbouring texels by how far the point sits between
+  their centers. Reading at `cell + u` makes the hardware use exactly the smoothed weights the math used, so
+  the clouds look the same.
+- **Wrap every 64 cells:** positions are wrapped with `q − floor(q ÷ 64) × 64` to match the texture's size
+  (Repeat). That also keeps numbers small at large Offsets, so precision holds.
+
+Because the baked hash matches the old math, the clouds keep the look they were tuned with. Only the repeat
+changed (every 64 cells instead of 289), so the exact layout differs in places.
+
 ### 3. Shape and color
 
 The same as Nebula Clouds (`cloudMask`, `cloudColor`, `altColor`, `tintMask`, `paletteMix`, `dustMask`,
@@ -104,14 +120,22 @@ Drawn behind the clouds and hidden by them (× (1 − cloud cover)).
 ## Talks to
 
 - **Starry Sky Volume** (shader graph): uses this Sub Graph and passes in every input.
-- **SkyboxSpeedController** (indirectly): `_ScrollOffset` → Offset, and `_Core_Glow_Size`.
+- **SkyboxSpeedController** (indirectly): `_ScrollOffset` → Offset (starting at a random value each load), and
+  `_Core_Glow_Size`.
+- **GraphicsQuality** (indirectly): sets `_Ray_Steps` per quality level.
+- **CloudNoiseBaker** (Editor): makes the `CloudNoise3D` texture read through Noise Texture.
 
 ## Gotchas
 
 - **Near ≈ Far makes Ray Steps useless:** every step lands at the same point, so it behaves like a single
   flat shell. Spread Near and Far apart for depth and parallax.
-- **Cost:** by far the most expensive part of the sky. On the mini PC, lower Ray Steps (8–12) and Cloud
-  Octaves (1–2) first.
+- **Cost:** by far the most expensive part of the sky. Ray Steps is the main setting (GraphicsQuality sets
+  it per quality level). Cloud Octaves only matters when Cloud Detail is above 0: at Detail 0, every octave
+  after the first adds nothing but still costs a texture read.
+- **The 64 in the shader must match CloudNoiseBaker's `Size`.** Rebaking at another size without changing the
+  two `64.0`s in `NebulaVolumeNoise` gives wrong blending and seams.
+- **An empty Noise Texture slot reads as white.** Every noise read returns 1, so the sky turns into solid
+  fog. Check that `CloudNoise3D` is assigned on the material.
 - **Twinkle and blink need Time:** in the Scene view outside Play, they only animate with Always Refresh on.
 - **Stars near the cube's corners** are slightly larger and sparser (the grid stretches there).
 - **Don't regenerate this file.** Starry Sky Volume finds each input by its ID. Edit it in place.

@@ -48,7 +48,10 @@ though both feed into how fast the asteroid approaches.
 3. **`WarnThenMove`**: blinks for `warningTime` seconds with its collider off, then starts moving.
 4. **`Update`**: every frame it spins, updates the outline color, and (once moving) moves toward the
    camera.
-5. It's destroyed when the player **smashes** it, or when it gets far enough **behind the camera**.
+5. It **despawns** when the player **smashes** it, or when it gets far enough **behind the camera**:
+   `PatternCopy.Despawn` switches it off and puts it back at its spot in its pattern copy, ready to be
+   revealed again on the pattern's next use (object pooling). An asteroid that isn't in a pooled pattern is
+   destroyed as before.
 
 ### `Awake`: setup
 
@@ -127,8 +130,9 @@ renderer when that changes, not every frame.
 
    Because `sin(0)` is 0, the swing starts at the same angle the asteroid was placed at.
 5. **Place it.** `transform.position = position`.
-6. **Despawn.** Once it's more than `despawnBehindCamera` units behind the camera, it's destroyed. It's
-   flying away from the player at that point, so it can never come back into view.
+6. **Despawn.** Once it's more than `despawnBehindCamera` units behind the camera, it calls
+   `PatternCopy.Despawn(gameObject)`. It's flying away from the player at that point, so it can never come
+   back into view.
 
 ### `OnTriggerEnter`: touching the player
 
@@ -138,8 +142,9 @@ renderer when that changes, not every frame.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
 
-   Exploding spawns the template's `explosionPrefab`, shakes the camera, and destroys the asteroid, and
-   `Explode` adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe). Since this branch
+   Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
+   shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), and
+   despawns the asteroid with `PatternCopy.Despawn`. Since this branch
    comes first, an invincible player gets no knockback, speed loss or lost life.
 3. **Otherwise, hit the player.**
    - **Which way to push.** `OrbitTangent` is the counter-clockwise direction along the player's circle.
@@ -157,8 +162,8 @@ The asteroid isn't destroyed when it hits the player. It keeps flying past.
 ### The `Active` list
 
 `Active` is a **static** list of every asteroid that's currently switched on. Asteroids add themselves in
-`OnEnable` and remove themselves in `OnDisable`. `Destroy` also triggers `OnDisable`, so destroyed
-asteroids are removed too.
+`OnEnable` and remove themselves in `OnDisable`. Despawning switches the asteroid off (and `Destroy`
+also triggers `OnDisable`), so a despawned asteroid always leaves the list.
 
 OrbitRing loops over this list to draw danger arcs on the player's ring, without having to search the
 scene for asteroids every frame. The public properties exist for it:
@@ -191,6 +196,8 @@ PlayerInvincibility, that part is just false.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
 - **OrbitRing**: reads the `Active` list and the properties above.
+- **PatternCopy**: `Despawn` takes the asteroid back into its pattern copy instead of destroying it.
+- **EffectPool**: `Play` shows the explosion from a pool of reused effect copies.
 
 ## Gotchas
 
@@ -204,9 +211,13 @@ PlayerInvincibility, that part is just false.
 - **`destructible` is only read in `Awake`.** Ticking it on a live asteroid in Play mode lets it be smashed,
   but it won't get an outline.
 - **The glow needs Emission turned on** in the asteroid's material, or the blink is invisible.
-- **`OnEnable` runs twice per asteroid.** Instantiating a pattern switches its children on (running
-  `Awake` and `OnEnable`), then the spawner immediately switches them off again. Because of that,
-  `OnEnable` has to reset everything, which it does. Any new state added to the script should be reset there too.
+- **`OnEnable` runs every time it's revealed, and the asteroid is reused.** Creating a pattern copy switches
+  its children on once (running `Awake` and `OnEnable`) before the spawner switches them off, and with
+  pooling the same asteroid is revealed again on every later use of its pattern. So `OnEnable` has to reset
+  everything, which it does. Any new state added to the script should be reset there too. `Awake` runs only
+  once per copy, so per-copy setup like the outline material is done once.
+- **Never `Destroy` it in code; call `PatternCopy.Despawn`.** Destroying a pooled asteroid leaves a hole in
+  its pattern copy.
 - **Smashing works while invulnerable.** The smash check happens before `TakeHit`, so it ignores the
   player's invulnerability window. Smashing never costs a life.
 - **Non-destructible asteroids have no outline.** While the player is invincible, their arcs turn green,

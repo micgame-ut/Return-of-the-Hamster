@@ -60,8 +60,9 @@ between two asteroids stays between them in flight. ObjectSpawner reads it to ti
 - **`Awake`** finds the gameplay camera through GameManager, once.
 - **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
   and resets `distance` to 0.
-- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up, despawned, or its
-  pattern destroyed) goes through `Destroy`, which runs `OnDisable`.
+- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up or missed) goes through
+  `PatternCopy.Despawn`, which switches it off (running `OnDisable`) and puts it back at its spot in its
+  pattern copy for the pattern's next use. Outside a pooled pattern, `Despawn` destroys it as before.
 
 `Active` is shared by the whole class, the same as `AsteroidBehavior.Active`. GameManager reads it to know
 whether the field is clear before the level can be won.
@@ -80,7 +81,8 @@ Each frame, the same as a Linear asteroid:
    on, instead of making the power-up jump.
 2. **Spin** around the world's up axis at `template.powerUpSpinSpeed`.
 3. **Despawn.** Once it's `template.despawnBehindCamera` units past the camera, it's been missed, so it
-   destroys itself.
+   calls `PatternCopy.Despawn(gameObject)`. Its spin is undone too: going home restores its authored
+   rotation, so a reused power-up starts upright.
 
 Without a template it still moves, but doesn't spin or despawn. There's no warning blink, unlike
 asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by itself.
@@ -96,10 +98,14 @@ When something touches it:
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
    that does nothing (Health at full lives) still counts.
 4. **Apply the effect** with `ApplyEffect(player)`.
-5. **Feedback** from the template's Power-Up section: spawn `pickupEffectPrefab`, and shake the camera only
-   if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling `Shake` would restart the
-   timer of a shake already running.)
-6. **Destroy** the power-up.
+5. **Feedback** from the template's Power-Up section: play `pickupEffectPrefab` through `EffectPool.Play`,
+   and shake the camera only if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling
+   `Shake` would restart the timer of a shake already running.)
+6. **Despawn** the power-up with `PatternCopy.Despawn`.
+
+It runs once per pickup because the player only ever has **one** collider on (PlayerShell switches the body
+off while the shield is on). With two, a pickup healed twice, counted twice and, with pooling, played a
+second explosion at the power-up's home spot.
 
 ### `ApplyEffect`, `Heal` and `MakeInvincible`
 
@@ -119,7 +125,7 @@ past the max:
 **`MakeInvincible`** finds PlayerInvincibility on the player and calls `Activate(template.invincibleDuration)`.
 It does nothing if either the component or the template is missing (the duration comes from the template).
 
-The timer can't live in PowerUp, because the power-up destroys itself on the same frame it's picked up, so
+The timer can't live in PowerUp, because the power-up is switched off on the same frame it's picked up, so
 its `Update` would never count down. Instant effects like `Heal` can finish inside the effect method;
 effects that last over time hand off to a script on the player.
 
@@ -138,10 +144,14 @@ A second pickup while invincible resets the timer to the full duration rather th
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
 - **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
+- **PatternCopy**: `Despawn` takes it back into its pattern copy.
+- **EffectPool**: `Play` shows the pickup effect from the effect pool.
 
 ## Gotchas
 
 - **It must be a direct child of a pattern,** or the spawner won't reveal it on its own.
+- **It's reused.** Any new state must be reset in `OnEnable`, which runs on every reveal. Never `Destroy`
+  it in code; call `PatternCopy.Despawn`.
 - **The pickup effect must be assigned in the template** (`pickupEffectPrefab`), or there's no visual
   feedback.
 - **A new type needs its `case`.** A type with no case in `ApplyEffect` is counted as picked up but does
