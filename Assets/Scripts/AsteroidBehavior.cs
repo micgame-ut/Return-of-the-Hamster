@@ -209,7 +209,7 @@ public class AsteroidBehavior : MonoBehaviour
         if (cam != null && template != null &&
             transform.position.z < cam.position.z - template.despawnBehindCamera)
         {
-            Destroy(gameObject);
+            PatternCopy.Despawn(gameObject);
         }
     }
 
@@ -244,8 +244,7 @@ public class AsteroidBehavior : MonoBehaviour
     {
         if (template != null)
         {
-            if (template.explosionPrefab != null)
-                Instantiate(template.explosionPrefab, transform.position, Quaternion.identity);
+            EffectPool.Play(template.explosionPrefab, transform.position);
 
             CameraShake.Shake(template.shakeDuration, template.shakeMagnitude);
         }
@@ -253,6 +252,6 @@ public class AsteroidBehavior : MonoBehaviour
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
 
-        Destroy(gameObject);
+        PatternCopy.Despawn(gameObject);
     }
 }

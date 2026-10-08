@@ -45,10 +45,20 @@ Check an item off when it's done and tested in Play mode.
 
 ## Medium impact
 
-- [ ] **4. Object pooling for spawned objects.** [ObjectSpawner.cs](Assets/Scripts/ObjectSpawner.cs)
+- [x] **4. Object pooling for spawned objects.** [ObjectSpawner.cs](Assets/Scripts/ObjectSpawner.cs)
   `Instantiate`s a whole pattern each wave, and asteroids, power-ups, explosions, and pickup effects are all
   `Destroy`ed when done. That causes garbage collection and frame spikes. `AsteroidBehavior.OnEnable` already
   resets its state, so it's close to pool-ready.
+  Done: whole pattern copies are reused (`PatternCopy`, `prewarmPerPattern`), and effects are pooled
+  (`EffectPool` + `PooledEffect` on the Game Manager). Found and fixed along the way:
+  - **Double triggers:** the player had three colliders (body, shell, and an accidental one on the ship's
+    `ring`), so pickups healed/counted twice. The ring's collider was removed and PlayerShell now switches
+    the body off while the shell is on.
+  - **PatternGizmos** skips drawing in Play (persistent copies made the Editor crawl).
+  - **Frame-rate bugs:** the orbit moved in `FixedUpdate` (stutter at 180 Hz) and mouse input was scaled by
+    time (less response at higher frame rates). PlayerMovement now runs in `Update` with raw mouse deltas
+    (sensitivity/acceleration in thousandths), exact `1 − e^(−k·dt)` fades, a side-boost memory, and
+    PlayerCamera/CameraShake/PlayerDeath were made frame-rate independent too.
 - [ ] **5. Starfield particle copy.** [StarfieldStreamer.cs](Assets/Scripts/StarfieldStreamer.cs) `LateUpdate`
   copies up to 3000 particles out and back (`GetParticles` / `SetParticles`) almost every frame to kill stars
   past `despawnDistance` or inside the Earth. Options: set each star's lifetime so it dies at the despawn point,

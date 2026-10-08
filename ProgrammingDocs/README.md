@@ -17,6 +17,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
 | Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
 | DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
+| EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
@@ -24,6 +25,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |
+| PatternCopy.cs | [PatternCopy.md](PatternCopy.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
@@ -32,6 +34,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
+| PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |

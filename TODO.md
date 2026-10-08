@@ -48,7 +48,7 @@ Replaced the "player trail" idea. A trail wouldn't work: the player never moves 
 2. Open decisions: a comment on the `stopped` field (`// true once cleared for game over / win`), and a
    `[Min(0.01f)]` guard on `flameLifetime` (0 divides by zero).
 3. `PlayerMovement`: add `public event Action<float> OnSideBoost`, fired in the side-boost branch with
-   `Mathf.Sign(moveInput.x)`.
+   `lastSideDirection` (the side boost now remembers the last sideways direction for `sideInputMemory`).
 4. `RingSpin.cs` (new) on the Ring: `spinDuration` = 0.4 s for a full 360° around z, in the boost's direction;
    store the starting local rotation in `Awake` and spin on top of it; ignore side boosts while a spin is
    playing (the future boost cooldown will stop that anyway). Knockback doesn't go through `OnButton`, so it

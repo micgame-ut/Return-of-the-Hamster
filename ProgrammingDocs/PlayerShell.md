@@ -27,23 +27,29 @@ life. It responds to both changes in player lives and the invincibility pickup.
 | --- | --- | --- |
 | `shellMesh` | none | The visible shell, switched on and off as a whole GameObject |
 | `shellCollider` | none | The shell's hitbox, enabled and disabled on its own |
+| `bodyCollider` | none | The hamster's own hitbox. Switched off whenever the shell's hitbox is on |
 | `shieldMaterial` | none | `ShieldOverlayMat` |
 | `rainbowMaterial` | none | `RainbowOverlayMat` |
 
 ## How it works
 
-| Priority | Condition | Shell shows | Hitbox |
-| --- | --- | --- | --- |
-| 1 | Rainbow showing (invincible, including the flicker's "on" moments) | rainbow material | on |
-| 2 | Full health | shield material | on |
-| 3 | Otherwise | nothing | off |
+| Priority | Condition | Shell shows | Shell hitbox | Body hitbox |
+| --- | --- | --- | --- | --- |
+| 1 | Rainbow showing (invincible, including the flicker's "on" moments) | rainbow material | on | off |
+| 2 | Full health | shield material | on | off |
+| 3 | Otherwise | nothing | off | on |
+
+**Only one hitbox is on at a time.** The shell (radius 0.3) fully contains the body (radius 0.2), so while the
+shell is on, the body can't touch anything the shell isn't already touching. With both on, anything the hamster
+touched got `OnTriggerEnter` twice in the same physics step: a pickup healed twice, a smashed asteroid counted
+twice, and (with pooling) the second explosion played at the object's home spot.
 
 The hitbox follows `IsInvincible`, not the flicker, so during the flicker's "off" moments it stays on even
 when nothing is visible.
 
 ### `Refresh`
 
-Decides the hitbox (full health or invincible), whether the shell shows (rainbow or full health), and its
+Decides the hitbox (full health or invincible: shell on and body off, otherwise the reverse), whether the shell shows (rainbow or full health), and its
 material (rainbow first, otherwise shield). It reads three facts fresh every time:
 
 - **Full health?** `CurrentLives >= MaxLives`

@@ -13,7 +13,10 @@ the editor, it draws:
 That way you can see where each asteroid is relative to the circle the player can reach, and in what
 order they'll arrive.
 
-It only draws in the editor. In the game, it does nothing.
+It only draws in the editor, and **not in Play mode**: `OnDrawGizmos` returns straight away while
+`Application.isPlaying` is true. With object pooling, every pattern copy stays in the scene for the whole
+level, so drawing their rings and text labels on every Scene view redraw made the Editor crawl. In a build,
+it does nothing at all.
 
 It also passes on the orbit numbers (`OrbitRadius`, `OrbitCenter`) from `OrbitSettings` that the Pattern
 Builder uses to place asteroids. The builder itself is PatternGizmosEditor, which replaces this component's
@@ -118,6 +121,8 @@ radius of `OrbitRadius`. The label sits at the top of the ring.
 - **PowerUp**: checks each child for the component, to count power-ups in the labels.
 
 ## Gotchas
+
+- **No rings in Play mode.** To see a pattern's layout, open the prefab (or a scene with it) outside Play.
 
 - **The step order must match ObjectSpawner's.** The spawner sorts by distance from the camera. Sorting by
   lowest z only gives the same order because the camera is at a lower z than every asteroid. If the camera

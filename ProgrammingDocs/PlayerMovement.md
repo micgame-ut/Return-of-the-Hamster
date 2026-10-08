@@ -24,12 +24,12 @@ the same way you would handle a mouse.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `mouseSensitivity` | 0.1 | How far a horizontal mouse movement slides the ship around the circle |
+| `mouseSensitivity` | 1.7 | Orbit distance per pixel of horizontal mouse movement, **in thousandths** of a world unit (5 = 0.005). TestGame uses 5 |
 | `startAngle` | -90 | Where on the circle the ship starts, in degrees. -90 = bottom |
 | `faceCenter` | true | Rotates the ship so its top always points at the center |
-| `rotationSpeed` | 100 | How strongly input tilts/rolls the visual mesh |
+| `rotationSpeed` | 1.7 | Degrees the mesh tilts/rolls per pixel of mouse movement. TestGame uses 1.25 |
 | `rollDamping` | 5 | How fast the mesh settles back to level when input stops |
-| `acceleration` | 5 | How much forward/back input changes `Speed` |
+| `acceleration` | 83 | `Speed` gained per pixel of upward mouse movement, **in thousandths** (33 = 0.033). TestGame uses 12 |
 | `speedDecay` | 2 | How fast `Speed` drops per second with no input |
 | `maxSpeed` | 10 | The top speed |
 | `topSpeedDegrade` | 3 | The most extra drain per second in overdrive, reached at max speed. It ramps up from 0 at the start of overdrive |
@@ -37,6 +37,7 @@ the same way you would handle a mouse.
 | `boostForce` | 5 | Sideways boost strength (around the circle) |
 | `boostDecay` | 3 | How fast a sideways boost or knockback fades out |
 | `speedBoost` | 3 | How much `Speed` a forward boost adds |
+| `sideInputMemory` | 0.1 | Seconds after the last sideways mouse movement that a click still gives a side boost |
 | `invulnerableTime` | 1.5 | Seconds of no hits after being hit |
 | `hitBlinkInterval` | 0.1 | Seconds between blink flips while invulnerable |
 
@@ -46,13 +47,29 @@ asset, shared with the pattern builder so the two always match. The orbit's radi
 
 ## How it works
 
-### Update vs. FixedUpdate
+### Everything in `Update`, at any frame rate
 
-- **FixedUpdate** runs on the physics tick and handles the orbit position (`Movement`). Nothing here
-  uses physics forces. It runs on this tick so the ship moves at a steady rate and stays in sync with
-  the physics step, which is when asteroid trigger collisions are checked.
-- **Update** runs every frame and handles everything else: the mesh roll (visual only), `Speed`, and the
-  invulnerability blink.
+`Update` runs once per drawn frame and does it all, in order: `Roll`, `UpdateSpeed`, `Movement` (the orbit)
+and `UpdateInvulnerability`. The ship's Rigidbody is kinematic and its position is set directly, so there's
+no physics simulation that would need `FixedUpdate`.
+
+The orbit used to run in `FixedUpdate` (50 steps a second). On a 180 Hz screen that left the ship still on
+most frames (a stutter), and each step only used the latest frame's mouse delta, throwing the rest away.
+
+**Frame-rate independence.** The number of `Update` calls changes with the frame rate, so each value is
+handled by what kind it is:
+
+| Kind | Examples | How it's used |
+| --- | --- | --- |
+| An amount already per frame | the mouse delta (`moveInput`) | **As is.** The deltas of all frames add up to the real mouse movement, however many frames there are |
+| A rate (per second) | `boostVelocity`, `speedDecay`, the roll speed | **× `Time.deltaTime`** |
+| A fade toward zero | the boost, the roll | `Lerp(value, 0, 1 − e^(−k·dt))`. Plain `Lerp(…, k × dt)` fades slightly differently at different frame rates; `1 − e^(−k·dt)` compounds correctly |
+
+Example, a 360 px mouse sweep with sensitivity 5: at 60 fps that's 60 × 6 px, at 180 fps 180 × 2 px, both
+360 px × 0.005 = 1.8 units around the circle.
+
+`mouseSensitivity` and `acceleration` are entered **in thousandths** (the constant `SensitivityScale` = 0.001
+multiplies them), so the Inspector shows friendly numbers like 5 instead of 0.005.
 
 ### Game over and win (`InputLocked`)
 
@@ -62,14 +79,9 @@ first). Either way GameManager freezes time (`Time.timeScale = 0`). On a death, 
 the ship; on a win, the ship just stays put while the win screen is up. While it's true, PlayerMovement
 gets out of the way:
 
-- **`Update` returns straight away.** Roll, speed and the invulnerability blink all stop where they are.
-  This matters under the freeze: `Roll` eases back to level using `Time.deltaTime`, which is now 0, but
-  applies its rotation without it, so without the early return a ship that was mid-turn would spin
-  forever. The blink could also freeze with the ship hidden, which is why PlayerDeath switches the
-  renderers back on.
-- **`FixedUpdate` returns straight away,** so `Movement` stops putting the ship back on the ring while
-  PlayerDeath moves it. (Unity doesn't call `FixedUpdate` at all while time scale is 0. The check
-  documents the intent and covers any future non-zero freeze.)
+- **`Update` returns straight away.** Roll, speed, the orbit and the invulnerability blink all stop where
+  they are, so `Movement` stops putting the ship back on the ring while PlayerDeath moves it. The blink
+  could freeze with the ship hidden, which is why PlayerDeath switches the renderers back on.
 - **`OnButton` returns straight away,** so no boosts.
 
 The name stayed `InputLocked`, although it now stops movement as well as input.
@@ -80,10 +92,11 @@ Picture a clock hand pinned to the center of the screen. The hand is `CircleRadi
 sits on its tip. `orbitAngle` is the direction the hand points. The ship starts at -90°, which is
 6 o'clock (bottom of the screen).
 
-Every physics tick:
+Every frame:
 
-1. **How far to slide.** Horizontal mouse input (plus any boost/knockback) becomes a distance to travel
-   along the rim of the circle. This is `arc`. Positive = counter-clockwise.
+1. **How far to slide.** `arc = moveInput.x × mouseSensitivity × 0.001 + boostVelocity × Time.deltaTime`:
+   the horizontal mouse movement this frame (already a distance, so not scaled by time) plus the boost or
+   knockback (a speed, so scaled by time). Positive = counter-clockwise.
 2. **Turn distance into an angle.** `orbitAngle += arc / CircleRadius`. Angles are stored in radians, and a
    radian is defined as "the angle you turn when you travel one radius along the rim." So dividing the
    distance by the radius gives how much to turn. Because of this, the ship covers the same on-screen
@@ -104,8 +117,8 @@ Every physics tick:
    so the circle sits in the middle of the screen. The ship's z (depth) is left alone.
 4. **Face the center.** If `faceCenter` is on, the ship is rotated to match the clock hand's angle
    (+90° so the ship's top points inward, not sideways).
-5. **Fade the boost.** `boostVelocity` is eased toward zero, so boosts and knockbacks drift to a stop
-   instead of cutting off.
+5. **Fade the boost.** `boostVelocity` is eased toward zero with the exact fade (`1 − e^(−boostDecay·dt)`),
+   so boosts and knockbacks drift to a stop instead of cutting off, the same at any frame rate.
 
 `OrbitTangent` is the direction along the rim (counter-clockwise) at the ship's current spot. Other scripts
 use it to work out which way "along the circle" is, e.g. which way to knock the player.
@@ -120,7 +133,14 @@ Purely visual. Only the mesh rotates, never the root or collider.
 
 - Forward/back input pitches the nose toward/away from the center.
 - Left/right input rolls the mesh around its own axis.
-- With no input, the roll eases back to level (`rollDamping`).
+- With no input, the roll eases back to level (`rollDamping`, with the exact fade).
+
+The mouse is treated as a **speed** here: `rollInput = moveInput ÷ Time.deltaTime` (pixels per second), and
+each frame rotates by `rollInput × rotationSpeed × Time.deltaTime`. While moving, that's simply
+`rotationSpeed` degrees per pixel; after you stop, the fading "momentum" also turns the same amount at any
+frame rate. The `Time.deltaTime > 0` check avoids dividing by zero if time is ever frozen. At high frame
+rates the mouse sometimes reports zero for a frame mid-movement; roll briefly fades on those frames, which
+adds only a sliver of extra roll.
 
 ### Speed (`UpdateSpeed`)
 
@@ -131,7 +151,9 @@ scripts that want to change it have to go through a method like `TakeHit`, so al
 
 Every frame:
 
-- Forward/back mouse input adds to or removes from `Speed`.
+- Forward/back mouse input adds to or removes from `Speed`: `moveInput.y × acceleration × 0.001`. The mouse
+  delta is already per frame, so it isn't scaled by time. 360 px of upward movement at acceleration 33
+  gives 12 speed at any frame rate.
 - No input means `Speed` drains at a flat rate (`speedDecay`).
 - In **overdrive** (from `overdriveFraction` of max speed up), an extra drain is applied on top. It
   **ramps** across the overdrive band: `topSpeedDegrade × InverseLerp(OverdriveFraction, 1, Speed01)`.
@@ -180,10 +202,16 @@ everything else reacts to `Speed`:
 
 Pressing the button boosts, depending on the current input:
 
-- **Moving the mouse sideways:** boosts around the circle in that direction. This *sets* `boostVelocity`
-  to `boostForce`, so spamming it restarts the boost rather than stacking it.
-- **No sideways input:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). This one
-  does stack with each press. It does nothing once the level is complete.
+- **Moved the mouse sideways in the last `sideInputMemory` seconds:** boosts around the circle in that
+  direction (`lastSideDirection`). This *sets* `boostVelocity` to `boostForce`, so spamming it restarts the
+  boost rather than stacking it.
+- **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). This one does stack
+  with each press. It does nothing once the level is complete.
+
+`OnMove` records `lastSideDirection` (−1 or +1) and `lastSideInputTime` whenever the mouse moves sideways.
+The memory is needed because at high frame rates many frames report zero sideways movement even mid-sweep;
+checking only this frame's input turned some side boosts into forward boosts. `lastSideInputTime` starts at
+negative infinity, meaning "long ago", so the first 0.1 s of a level doesn't count as recent.
 
 After game over, the button does nothing at all (see `InputLocked`).
 
@@ -224,7 +252,7 @@ Side effects of doing it this way:
 
 - **GameManager**: gets the LevelTimer from it, and reads `IsGameOver` (through `InputLocked`) every
   frame and on the boost button
-- **OrbitSettings**: reads the orbit's radius and center every tick, and the player's depth in `Awake`
+- **OrbitSettings**: reads the orbit's radius and center every frame, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
@@ -238,6 +266,12 @@ Side effects of doing it this way:
 ## Gotchas
 
 - `Speed`, `MaxSpeed` are static: they are shared across the whole game and must be reset in `Awake`.
+- **Never scale the mouse delta by time.** It's already distance per frame; `× Time.deltaTime` makes the
+  game respond less the higher the frame rate. Rates get `× Time.deltaTime`, fades get `1 − e^(−k·dt)`.
+- **`mouseSensitivity` and `acceleration` are in thousandths.** Old-style values (0.3, 2) from before the
+  change would make the ship barely move. Check the prefab and any scene overrides.
+- The ship is moved in `Update`, not `FixedUpdate`. Its Rigidbody must stay kinematic; a simulated
+  Rigidbody would need its movement in `FixedUpdate` instead.
 - The player's z comes from `OrbitSettings`. Moving the player in the scene does nothing, because it moves
   itself back to the asset's `playerZ` when the game starts.
 - `meshTransform` must be assigned. `Roll` uses it without a null check.

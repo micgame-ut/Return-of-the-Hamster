@@ -7,6 +7,7 @@ public class PlayerShell : MonoBehaviour
 {
     [SerializeField] private GameObject shellMesh;
     [SerializeField] private Collider shellCollider;
+    [SerializeField] private Collider bodyCollider;
     [SerializeField] private Material shieldMaterial;
     [SerializeField] private Material rainbowMaterial;
 
@@ -62,7 +63,9 @@ public class PlayerShell : MonoBehaviour
         bool invincible = invincibility != null && invincibility.IsInvincible;
         bool rainbow = invincibility != null && invincibility.RainbowShowing;
 
-        if (shellCollider != null) shellCollider.enabled = fullHealth || invincible;
+        bool shielded = fullHealth || invincible;
+        if (shellCollider != null) shellCollider.enabled = shielded;
+        if (bodyCollider != null) bodyCollider.enabled = !shielded; // the shell covers the body, so only one collider can trigger
 
         if (shellMesh == null) return;
         shellMesh.SetActive(rainbow || fullHealth);

@@ -21,8 +21,11 @@ public class PatternGizmos : MonoBehaviour
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
+        // Only for building patterns: skipped in Play, where pooled copies would redraw every frame.
+        if (Application.isPlaying) return;
+
         // Draw in spawner space, so the pattern root's own offset is respected
-        // both in Prefab Mode (no parent) and in play (parented to the spawner).
+        // both in Prefab Mode (no parent) and when the pattern sits under the spawner in a scene.
         // The scope restores Handles' matrix and color for other gizmos afterwards.
         Matrix4x4 space = transform.parent != null ? transform.parent.localToWorldMatrix : Matrix4x4.identity;
         using var scope = new Handles.DrawingScope(space);

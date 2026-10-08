@@ -51,7 +51,7 @@ public class PowerUp : MonoBehaviour
 
         // Missed: once it's far enough behind the camera it can never be picked up.
         if (cam != null && transform.position.z < cam.position.z - template.despawnBehindCamera)
-            Destroy(gameObject);
+            PatternCopy.Despawn(gameObject);
     }
 
     private void Heal(PlayerMovement player)
@@ -94,13 +94,12 @@ public class PowerUp : MonoBehaviour
 
         if (template != null)
         {
-            if (template.pickupEffectPrefab != null)
-                Instantiate(template.pickupEffectPrefab, transform.position, Quaternion.identity);
+            EffectPool.Play(template.pickupEffectPrefab, transform.position);
 
             if (template.pickupShakeDuration > 0f)
                 CameraShake.Shake(template.pickupShakeDuration, template.pickupShakeMagnitude);
         }
 
-        Destroy(gameObject);
+        PatternCopy.Despawn(gameObject);
     }
 }
