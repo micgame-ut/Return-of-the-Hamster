@@ -59,10 +59,16 @@ Check an item off when it's done and tested in Play mode.
     time (less response at higher frame rates). PlayerMovement now runs in `Update` with raw mouse deltas
     (sensitivity/acceleration in thousandths), exact `1 − e^(−k·dt)` fades, a side-boost memory, and
     PlayerCamera/CameraShake/PlayerDeath were made frame-rate independent too.
-- [ ] **5. Starfield particle copy.** [StarfieldStreamer.cs](Assets/Scripts/StarfieldStreamer.cs) `LateUpdate`
+- [x] **5. Starfield particle copy.** [StarfieldStreamer.cs](Assets/Scripts/StarfieldStreamer.cs) `LateUpdate`
   copies up to 3000 particles out and back (`GetParticles` / `SetParticles`) almost every frame to kill stars
   past `despawnDistance` or inside the Earth. Options: set each star's lifetime so it dies at the despawn point,
   and use the particle Collision or Trigger module for the Earth.
+  Done: `LateUpdate` removed. Stars behind the camera now die at a Collision-module plane (Planes mode,
+  Lifetime Loss 1); the Earth check was dropped (the stars never reach the Earth; its collider was removed).
+  Also: stars now spawn in a ring (Circle shape, `fieldRadius` 300, `clearRadius` 20) with outward-only drift,
+  so none stream through the middle of the screen.
+  - Fixed a mistake from #3: Earth Camera's Culling Mask "Earth only" had hidden every star (they were on
+    Default). The stars now take the Camera Rig's layer, and the Camera Rig is on the Earth layer, since renamed **Background**.
 - [ ] **6. Property blocks break the SRP Batcher.** [AsteroidBehavior.cs](Assets/Scripts/AsteroidBehavior.cs)
   `SetGlow` and `UpdateOutline` use `MaterialPropertyBlock`s, which take each destructible or warning asteroid
   out of the SRP Batcher, so each one is a separate, slower draw call. Option: swap between shared materials
