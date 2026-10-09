@@ -20,6 +20,7 @@ public class DangerWarning : MonoBehaviour
     };
 
     private PlayerHealth health;
+    private PlayerTwins twins;
     private RectTransform canvasRect;
     private RectTransform[] warnings;
     private RawImage leftOverlay;
@@ -33,6 +34,7 @@ public class DangerWarning : MonoBehaviour
     {
         GameManager gm = GameManager.Instance;
         health = gm != null ? gm.PlayerHealth : null;
+        twins = gm != null ? gm.PlayerTwins : null;
         canvasRect = transform as RectTransform;
 
         gradient = CreateGradient();
@@ -66,17 +68,21 @@ public class DangerWarning : MonoBehaviour
     {
         if (health != null) health.OnLivesChanged += HandleLivesChanged;
         if (GameManager.Instance != null) GameManager.Instance.OnWin += HandleWin;
+        if (twins != null) twins.OnTwinChanged += HandleTwinChanged;
     }
 
     private void OnDisable()
     {
         if (health != null) health.OnLivesChanged -= HandleLivesChanged;
         if (GameManager.Instance != null) GameManager.Instance.OnWin -= HandleWin;
+        if (twins != null) twins.OnTwinChanged -= HandleTwinChanged;
         SetDanger(false);
     }
 
-    private void HandleLivesChanged(int lives) => SetDanger(lives == 1);
+    private bool Twinned => twins != null && twins.IsTwinned;
+    private void HandleLivesChanged(int lives) => SetDanger(lives == 1 && !Twinned);
     private void HandleWin() => SetDanger(false);
+    private void HandleTwinChanged(bool on) => SetDanger(!on && health != null && health.CurrentLives == 1);
 
     private void Update()
     {

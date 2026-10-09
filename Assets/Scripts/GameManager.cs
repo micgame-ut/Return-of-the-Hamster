@@ -19,6 +19,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private PlayerInvincibility playerInvincibility;
     [SerializeField] private PlayerShell playerShell;
+    [SerializeField] private PlayerTwins playerTwins;
     [SerializeField] private RunStats runStats;
     [SerializeField] private EndScreen endScreen;
     [SerializeField] private bool showOrbitRing = true;
@@ -31,6 +32,7 @@ public class GameManager : MonoBehaviour
     public PlayerHealth PlayerHealth => playerHealth;
     public PlayerInvincibility PlayerInvincibility => playerInvincibility;
     public PlayerShell PlayerShell => playerShell;
+    public PlayerTwins PlayerTwins => playerTwins;
     public RunStats RunStats => runStats;
     public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
@@ -64,6 +66,7 @@ public class GameManager : MonoBehaviour
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
         if (playerInvincibility == null && player != null) playerInvincibility = player.GetComponent<PlayerInvincibility>();
         if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
+        if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
     }
 
     private void Update()

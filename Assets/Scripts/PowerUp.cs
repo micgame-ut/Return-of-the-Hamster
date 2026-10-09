@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // A pickup that flies toward the camera like a Linear asteroid, using the
-// same SpawnableTemplate settings. Touching the player counts the pickup and
-// applies the effect for its type.
+// same SpawnableTemplate settings. Touching the player (or a twin copy) counts the
+// pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible }
+    public enum PowerUpType { Health, Invincible, Twin }
 
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [SerializeField] private float speed = 20f;
@@ -18,6 +18,7 @@ public class PowerUp : MonoBehaviour
     private PlayerMovement player;
     private PlayerHealth health;
     private PlayerInvincibility invincibility;
+    private PlayerTwins twins;
 
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
@@ -32,6 +33,7 @@ public class PowerUp : MonoBehaviour
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
+        twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
     }
 
     private void OnEnable()
@@ -62,12 +64,17 @@ public class PowerUp : MonoBehaviour
 
     private void Heal()
     {
-        if (health != null) health.GainLife();
+        if (health != null && (twins == null || !twins.IsTwinned)) health.GainLife();
     }
 
     private void MakeInvincible()
     {
         if (invincibility != null && template != null) invincibility.Activate(template.invincibleDuration);
+    }
+
+    private void AddTwin()
+    {
+        if (twins != null) twins.AddBody();
     }
 
     private void ApplyEffect()
@@ -80,14 +87,20 @@ public class PowerUp : MonoBehaviour
             case PowerUpType.Invincible:
                 MakeInvincible();
                 break;
+            case PowerUpType.Twin:
+                AddTwin();
+                break;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only react to the player. IsChildOf also covers the collider being
-        // on a child of the player object.
-        if (player == null || !other.transform.IsChildOf(player.transform)) return;
+        // Only react to the player or a twin copy. FindBody also covers the
+        // collider being on a child.
+        if (player == null) return;
+        Transform body = twins != null ? twins.FindBody(other.transform)
+                       : other.transform.IsChildOf(player.transform) ? player.transform : null;
+        if (body == null) return;
 
         GameManager gm = GameManager.Instance;
         if (gm != null && gm.HasWon) return;

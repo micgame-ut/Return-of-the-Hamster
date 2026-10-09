@@ -43,11 +43,17 @@ public class ExhaustFlame : MonoBehaviour
     private float boostTimer; // seconds left on the current stretch
     private Vector3[] dragPoints; // world position of each point, head first
     private Vector3[] innerPoints; // world position of each inner point, head first
+    private bool onPlayer; // false on a twin copy, which follows the player through GameManager
+    private bool snapNext; // set when the player jumps; the next Update places the points straight
 
     private void Awake()
     {
         movement = GetComponentInParent<PlayerMovement>();
         invincibility = GetComponentInParent<PlayerInvincibility>();
+        onPlayer = movement != null;
+        GameManager gm = GameManager.Instance;
+        if (movement == null && gm != null) movement = gm.Player;
+        if (invincibility == null && gm != null) invincibility = gm.PlayerInvincibility;
         coreVisible = core.enabled;
 
         core.positionCount = dragSegments;
@@ -65,6 +71,7 @@ public class ExhaustFlame : MonoBehaviour
     private void OnEnable()
     {
         if (movement != null) movement.OnSpeedBoost += HandleSpeedBoost;
+        if (onPlayer) movement.OnOrbitShifted += HandleOrbitShifted;
         if (invincibility != null) invincibility.OnRainbowChanged += HandleRainbowChanged;
         if (GameManager.Instance != null)
         {
@@ -76,6 +83,7 @@ public class ExhaustFlame : MonoBehaviour
     private void OnDisable()
     {
         if (movement != null) movement.OnSpeedBoost -= HandleSpeedBoost;
+        if (onPlayer) movement.OnOrbitShifted -= HandleOrbitShifted;
         if (invincibility != null) invincibility.OnRainbowChanged -= HandleRainbowChanged;
         if (GameManager.Instance != null)
         {
@@ -109,10 +117,11 @@ public class ExhaustFlame : MonoBehaviour
         width *= 1f + noise * Mathf.Lerp(maxFlicker, minFlicker, t);
         core.widthMultiplier = width;
         innerCore.widthMultiplier = width * innerWidthFraction;
-        FollowLine(dragPoints, length, 1f, false);
+        FollowLine(dragPoints, length, 1f, snapNext);
         core.SetPositions(dragPoints);
-        FollowLine(innerPoints, length, innerLengthFraction, false);
+        FollowLine(innerPoints, length, innerLengthFraction, snapNext);
         innerCore.SetPositions(innerPoints);
+        snapNext = false;
     }
 
     // Eases each point toward its spot on a straight line; points further back follow more lazily.
@@ -126,6 +135,8 @@ public class ExhaustFlame : MonoBehaviour
             points[i] = snap || tau <= 0f ? target : Vector3.Lerp(points[i], target, 1f - Mathf.Exp(-Time.deltaTime / tau));
         }
     }
+
+    private void HandleOrbitShifted() => snapNext = true;
 
     private void HandleSpeedBoost()
     {
