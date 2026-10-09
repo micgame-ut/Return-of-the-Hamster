@@ -86,6 +86,11 @@ Sign up to and leave `OnLivesChanged` and GameManager's `OnWin`; `OnDisable` als
 a disabled HUD can't leave the red up. The lives handler is `SetDanger(lives == 1)`. It uses the value
 passed in directly, because the decision depends on nothing else.
 
+**During the twin power-up** the warning is paused. `HandleLivesChanged` adds `&& !Twinned`, and
+`HandleTwinChanged` (subscribed to PlayerTwins' `OnTwinChanged`) turns it off when the twin starts and back to
+`CurrentLives == 1` when it ends. Lives don't change during the twin, so the warning comes back exactly as it
+was before the pickup.
+
 `HandleWin` is `SetDanger(false)`. A win doesn't change lives, so `OnLivesChanged` can't catch it. It only
 listens for a win: a game over already turns the warning off, because lives reach 0 on the same hit.
 
@@ -130,8 +135,9 @@ Shows or hides all four signs, and records which in `warningsOn`.
 
 ## Talks to
 
-- **GameManager**: gets PlayerHealth in `Awake`; subscribes to `OnWin`.
-- **PlayerHealth**: subscribes to `OnLivesChanged`; reads `CurrentLives` in `Start`.
+- **GameManager**: gets PlayerHealth and PlayerTwins in `Awake`; subscribes to `OnWin`.
+- **PlayerHealth**: subscribes to `OnLivesChanged`; reads `CurrentLives` in `Start` and when the twin ends.
+- **PlayerTwins**: subscribes to `OnTwinChanged`; reads `IsTwinned`. The warning stays off during the twin.
 
 ## Gotchas
 

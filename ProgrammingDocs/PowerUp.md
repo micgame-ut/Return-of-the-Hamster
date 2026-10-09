@@ -6,11 +6,12 @@ A pickup that works like an asteroid: it flies toward the camera (and the player
 collider touches it, does something. Each power-up type has its own effect. Every pickup also adds one to
 the power-ups stat in RunStats.
 
-There are two types:
+There are three types:
 
-- **Health** gives the player a life back, up to their max.
+- **Health** gives the player a life back, up to their max. During the twin power-up it gives nothing.
 - **Invincible** makes the player invincible for a few seconds: every asteroid they touch is busted, and a
   rainbow overlay shows on the ship. The timer and overlay live in PlayerInvincibility on the player.
+- **Twin** adds a copy of the player on the orbit (see PlayerTwins). A twin copy can also pick power-ups up.
 
 ## Where it lives
 
@@ -92,8 +93,9 @@ asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by it
 
 When something touches it:
 
-1. **Is it the player?** `other.transform.IsChildOf(player.transform)` is true when what it touched is the
-   player or anywhere under it. Anything else, or no cached player, is ignored.
+1. **Is it the player or a twin copy?** PlayerTwins' `FindBody(other.transform)` returns the body that was
+   touched (using `IsChildOf`, so colliders on children count), or null. Without a PlayerTwins, it falls back
+   to `other.transform.IsChildOf(player.transform)`. Anything else, or no cached player, is ignored.
 2. **Is the level already won?** It reads `GameManager.Instance`. If `HasWon` is set, it ignores the
    touch, and the power-up flies on through the ship without being used up.
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
@@ -108,7 +110,7 @@ It runs once per pickup because the player only ever has **one** collider on (Pl
 off while the shield is on). With two, a pickup healed twice, counted twice and, with pooling, played a
 second explosion at the power-up's home spot.
 
-### `ApplyEffect`, `Heal` and `MakeInvincible`
+### `ApplyEffect`, `Heal`, `MakeInvincible` and `AddTwin`
 
 `ApplyEffect()` runs the effect method for this power-up's `type`. The effect methods take no
 parameters: whatever they need from the player was already cached from GameManager in `Awake`. A new
@@ -122,6 +124,7 @@ past the max:
 | 1 | 2 | yes |
 | 2 | 3 | yes |
 | 3 (max) | 3 | yes (used up and wasted) |
+| any, while twinned | unchanged | yes (used up and wasted) |
 
 **`MakeInvincible`** calls `Activate(template.invincibleDuration)` on the cached PlayerInvincibility.
 It does nothing if either the component or the template is missing (the duration comes from the template).
@@ -132,18 +135,23 @@ effects that last over time hand off to a script on the player.
 
 A second pickup while invincible resets the timer to the full duration rather than adding to it.
 
+**`AddTwin`** calls `AddBody()` on the cached PlayerTwins, which adds a copy and re-spaces the bodies (up to
+`maxBodies`; past that it does nothing).
+
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab`, the pickup shake settings and `invincibleDuration`.
-- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth` and `PlayerInvincibility` in
-  `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility` and
+  `PlayerTwins` in `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
 - **PlayerMovement**: checks whether what touched the power-up is the player, and reads its static `Speed`.
 - **PlayerHealth**: calls `GainLife()` (Health type).
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
+- **PlayerTwins**: `FindBody` decides whether the player or a twin copy touched it; calls `AddBody()` (Twin
+  type); reads `IsTwinned` so Health gives no life during the twin.
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
 - **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
 - **PatternCopy**: `Despawn` takes it back into its pattern copy.

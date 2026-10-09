@@ -550,7 +550,9 @@ MonoBehaviour:
     delayAfter: 2
   - pattern: {fileID: 1426364939829335137, guid: 2066104ffad8a124d837e1e213fbd8f0, type: 3}
     delayAfter: 2
-  order: 0
+  - pattern: {fileID: 1426364939829335137, guid: 22a9f072a7ee4044b81365fa0e8bbb19, type: 3}
+    delayAfter: 2
+  order: 1
   loop: 1
   startDelay: 2
   prewarmPerPattern: 1
@@ -2851,6 +2853,7 @@ MonoBehaviour:
   playerHealth: {fileID: 0}
   playerInvincibility: {fileID: 0}
   playerShell: {fileID: 0}
+  playerTwins: {fileID: 0}
   runStats: {fileID: 0}
   endScreen: {fileID: 1540957282}
   showOrbitRing: 0

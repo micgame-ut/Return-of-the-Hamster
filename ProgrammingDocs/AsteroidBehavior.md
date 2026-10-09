@@ -140,19 +140,24 @@ renderer when that changes, not every frame.
    `PatternCopy.Despawn(gameObject)`. It's flying away from the player at that point, so it can never come
    back into view.
 
-### `OnTriggerEnter`: touching the player
+### `OnTriggerEnter`: touching the player (or a twin copy)
 
-1. **Is it the player?** `other.transform.IsChildOf(player.transform)` is true when the collider it
-   touched is the player or anywhere under it, so it still works if the player's collider is on a child.
-   `player` is the one cached from GameManager in `Awake`. Anything else, or no player at all, is ignored.
+1. **Is it the player or a twin copy?** PlayerTwins' `FindBody(other.transform)` returns the body that was
+   touched: the player, a copy, or null. It uses `IsChildOf`, so it still works if a collider is on a child.
+   A hit on the copy the player jumped onto in this same frame counts as the player. Without a PlayerTwins,
+   it falls back to `other.transform.IsChildOf(player.transform)`. Anything else, or no player at all, is
+   ignored.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
 
    Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
    shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), and
    despawns the asteroid with `PatternCopy.Despawn`. Since this branch
-   comes first, an invincible player gets no knockback, speed loss or lost life.
-3. **Otherwise, hit the player.**
+   comes first, an invincible player gets no knockback, speed loss or lost life. Twin copies smash
+   asteroids the same way.
+3. **Twinned?** If PlayerTwins `IsTwinned`, it calls `LoseBody(body)`: that body blows up and one body is
+   removed, with no knockback, speed loss or lost life (see PlayerTwins).
+4. **Otherwise, hit the player.**
    - **Which way to push.** `OrbitTangent` is the counter-clockwise direction along the player's circle.
      The **dot product** of (player position − asteroid position) with that direction tells you whether
      the player is ahead of the asteroid (positive) or behind it (negative) along the circle. The player
@@ -195,7 +200,8 @@ PlayerInvincibility, that part is just false.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
   arc are green and touching it explodes it.
-- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth` and `PlayerInvincibility` in `Awake`, and `RunStats` when an
+- **PlayerTwins**: `FindBody` on every contact; `LoseBody` on a hit during the twin; reads `IsTwinned`.
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility` and `PlayerTwins` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the

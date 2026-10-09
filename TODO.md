@@ -6,21 +6,20 @@ one snippet at a time (section 3).
 
 ## Twin power-up
 
-A new power-up that **duplicates the player on the opposite side of the orbit**. On the **next hit** (when the
-player would take damage), **one of the two is destroyed** and the user **keeps control of the one left
-alive**.
+**Built and tested** (branch `twin-powerup`). Each Twin pickup adds a copy of the player, spaced evenly around
+the orbit (up to 4 bodies), easing into place. Copies mirror everything (movement, boosts, roll, speed, flame,
+invincibility shell). A hit during the twin destroys one body and lives don't change; when the player itself is
+hit, it takes over the nearest copy's spot (`ShiftOrbit`) and that copy is removed. The danger warning and the
+full-health shield pause during the twin. Health gives no life while twinned. A same-frame hit on the copy the
+player just jumped onto counts as a normal hit.
 
-Questions to settle with the user first:
+New: `PlayerTwins.cs` (on the player), `TwinCopy.cs` (on the `Twin Copy` prefab), `Twin PowerUp` prefab.
+Changed: PlayerMovement (`OrbitAngle`, `MeshTransform`, `ShiftOrbit`, `OnOrbitShifted`), PlayerShell (shell
+state + `OnShellChanged`, paused while twinned), GameManager (`PlayerTwins`), AsteroidBehavior, PowerUp (`Twin`
+type), DangerWarning, ExhaustFlame (works on copies, snaps after a jump).
 
-- Does the twin mirror the player's movement at +180° around the circle? Does it copy boosts and roll?
-- On a hit: is the twin that was hit the one destroyed? Does the hit still cost a life, or does the twin act
-  as the shield?
-- How does it combine with invincibility (and its max-speed lock), the shield shell, and Health?
-- Does it last until the next hit, or also have a time limit? What does the twin look like?
-
-Code that currently assumes a single player and will need checking: `GameManager.Player`, `OrbitRing`
-(danger arcs), `AsteroidBehavior` (collision, `TakeHit`), `PlayerDeath`, `RunStats`, `PlayerCamera`,
-`PlayerShell`. Power-ups are defined in `SpawnableTemplate` and applied in `PowerUp`.
+**Docs:** `PlayerTwins.md` and `TwinCopy.md` written, with
+README rows; existing scripts' docs updated.
 
 ## Exhaust flame + Ring spin (in progress)
 

@@ -123,6 +123,15 @@ Every frame:
 `OrbitTangent` is the direction along the rim (counter-clockwise) at the ship's current spot. Other scripts
 use it to work out which way "along the circle" is, e.g. which way to knock the player.
 
+Steps 3 and 4 live in their own method, **`PlaceOnOrbit`**, so `ShiftOrbit` (below) can place the ship the
+same way.
+
+**For the twin power-up:** `OrbitAngle` (read only) and `MeshTransform` let TwinCopy sit at an offset from the
+player's angle and copy the mesh's roll. **`ShiftOrbit(radians)`** turns the player around the orbit at once
+and places it straight away, without touching speed, boosts or roll. PlayerTwins uses it when the player is
+hit during the twin, to take over the nearest copy's spot. It then raises **`OnOrbitShifted`**, which
+ExhaustFlame uses to snap its drag points instead of sweeping them across the screen.
+
 `CircleRadius` and `OrbitCenter` are read from `OrbitSettings` every time they're used, so changing the
 asset in Play mode takes effect straight away. In `Awake`, the player also moves itself to the asset's
 `playerZ`. That's done in `Awake` so any other script's `Start` already sees the right depth.
@@ -206,7 +215,8 @@ Pressing the button boosts, depending on the current input:
   direction (`lastSideDirection`). This *sets* `boostVelocity` to `boostForce`, so spamming it restarts the
   boost rather than stacking it.
 - **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). This one does stack
-  with each press. It does nothing once the level is complete.
+  with each press. It does nothing once the level is complete. It raises **`OnSpeedBoost`**, which
+  ExhaustFlame uses to stretch the flame.
 
 `OnMove` records `lastSideDirection` (−1 or +1) and `lastSideInputTime` whenever the mouse moves sideways.
 The memory is needed because at high frame rates many frames report zero sideways movement even mid-sweep;
@@ -234,7 +244,7 @@ Called by `AsteroidBehavior` when the player hits an asteroid they are too slow 
 While the invulnerability timer is running, the ship's renderers flash on and off every
 `hitBlinkInterval` seconds. It divides the time left by the interval and rounds down, so the result
 counts 0, 1, 2, 3... and the ship is visible on even counts and hidden on odd ones. It always ends
-visible.
+visible. The current state is public as **`MeshVisible`**, so ExhaustFlame can blink the flame in step.
 
 Only the renderers are hidden. The collider stays active, so collisions still happen: the asteroid's
 `OnTriggerEnter` fires and it calls `TakeHit` like normal. `TakeHit` checks `IsInvulnerable` first and
@@ -258,7 +268,11 @@ Side effects of doing it this way:
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
 - **RunStats**: reads `InOverdrive` every frame (through GameManager's `Player`) to time overdrive
-- **PowerUp**: passes this component to its effect methods, which find other player components from it
+- **PowerUp**: checks whether what touched it is the player (through GameManager's `Player`)
+- **TwinCopy**: reads `OrbitAngle`, `OrbitCenter`, `CircleRadius` and `MeshTransform` every frame to follow the player
+- **PlayerTwins**: calls `ShiftOrbit` when the player is hit during the twin
+- **ExhaustFlame**: reads `Speed01` and `MeshVisible`; subscribes to `OnSpeedBoost` and (on the player's own
+  flame) `OnOrbitShifted`
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
 - **Anything reading `Speed`**: see the table above

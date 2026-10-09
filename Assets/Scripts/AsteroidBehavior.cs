@@ -37,6 +37,7 @@ public class AsteroidBehavior : MonoBehaviour
     private PlayerInvincibility invincibility;
     private PlayerMovement player;
     private PlayerHealth health;
+    private PlayerTwins twins;
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -76,6 +77,7 @@ public class AsteroidBehavior : MonoBehaviour
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
+        twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -221,13 +223,20 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only react to the player. IsChildOf also covers the collider being
-        // on a child of the player object.
-        if (player == null || !other.transform.IsChildOf(player.transform)) return;
+        // Only react to the player or a twin copy. FindBody also covers the
+        // collider being on a child, and says which body was touched.
+        if (player == null) return;
+        Transform body = twins != null ? twins.FindBody(other.transform)
+                       : other.transform.IsChildOf(player.transform) ? player.transform : null;
+        if (body == null) return;
 
         if (CanBreak)
         {
             Explode();
+        }
+        else if (twins != null && twins.IsTwinned)
+        {
+            twins.LoseBody(body);
         }
         else if (template != null)
         {

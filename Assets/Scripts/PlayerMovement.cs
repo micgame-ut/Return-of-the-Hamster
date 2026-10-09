@@ -64,12 +64,17 @@ public class PlayerMovement : MonoBehaviour
     public Vector2 OrbitCenter => orbit.OrbitCenter;
     public float CircleRadius => orbit.OrbitRadius;
 
+    // For TwinCopy: copies sit at an offset from this angle and copy the mesh's roll.
+    public float OrbitAngle => orbitAngle;
+    public Transform MeshTransform => meshTransform;
+
     // Roll
     private Vector2 rollInput;
 
     // Boost
     private float boostVelocity;
     public event Action OnSpeedBoost;
+    public event Action OnOrbitShifted;
     private float lastSideDirection;
     private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
 
@@ -164,7 +169,14 @@ public class PlayerMovement : MonoBehaviour
         // Distance divided by radius = angle in radians, so we can add it to the orbitAngle directly.
         float arc = (moveInput.x * mouseSensitivity * SensitivityScale) + (boostVelocity * Time.deltaTime);
         orbitAngle += arc / CircleRadius;
+        PlaceOnOrbit();
 
+        // Boost fades out over time instead of cutting off instantly. 1 - e^(-k·dt) fades the same at any frame rate.
+        boostVelocity = Mathf.Lerp(boostVelocity, 0f, 1f - Mathf.Exp(-boostDecay * Time.deltaTime));
+    }
+
+    private void PlaceOnOrbit()
+    {
         // Offset is defined by the cosine (left/right) and sine (up/down) of the angle, multiplied by the radius to get world units
         Vector2 offset = new Vector2(Mathf.Cos(orbitAngle), Mathf.Sin(orbitAngle)) * CircleRadius;
         Vector2 center = OrbitCenter;
@@ -172,9 +184,14 @@ public class PlayerMovement : MonoBehaviour
 
         if (faceCenter)
             transform.rotation = Quaternion.Euler(0f, 0f, orbitAngle * Mathf.Rad2Deg + 90f);
+    }
 
-        // Boost fades out over time instead of cutting off instantly. 1 - e^(-k·dt) fades the same at any frame rate.
-        boostVelocity = Mathf.Lerp(boostVelocity, 0f, 1f - Mathf.Exp(-boostDecay * Time.deltaTime));
+    // Jumps the player around the orbit at once (PlayerTwins), keeping speed and boosts.
+    public void ShiftOrbit(float radians)
+    {
+        orbitAngle += radians;
+        PlaceOnOrbit();
+        OnOrbitShifted?.Invoke();
     }
 
     private void UpdateSpeed()

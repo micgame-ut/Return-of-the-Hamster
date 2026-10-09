@@ -35,12 +35,14 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
+| PlayerTwins.cs | [PlayerTwins.md](PlayerTwins.md) | Done |
 | PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
+| TwinCopy.cs | [TwinCopy.md](TwinCopy.md) | Done |
 
 ## Shaders
 

@@ -52,16 +52,22 @@ when nothing is visible.
 Decides the hitbox (full health or invincible: shell on and body off, otherwise the reverse), whether the shell shows (rainbow or full health), and its
 material (rainbow first, otherwise shield). It reads three facts fresh every time:
 
-- **Full health?** `CurrentLives >= MaxLives`
+- **Full health?** `CurrentLives >= MaxLives`, **and not twinned** (`PlayerTwins.IsTwinned`). During the twin
+  power-up the full-health shield is paused, so it's off even at full lives. Invincibility's rainbow still shows.
 - **Invincible?** `IsInvincible` (false without a PlayerInvincibility)
 - **Rainbow showing?** `RainbowShowing` (false without a PlayerInvincibility)
 
-The hitbox is set before the mesh check, so a missing `shellMesh` doesn't stop it working. The material is
-swapped with `sharedMaterial` (singular), which doesn't make a copy.
+The hitbox is set before the mesh, and the mesh steps are skipped if there's no `shellMesh`, so a missing mesh
+doesn't stop the hitbox working. The material is swapped with `sharedMaterial` (singular), which doesn't make
+a copy.
+
+**For twin copies:** `Refresh` stores the hitbox choice in **`Shielded`**, and **`ShellShowing`** and
+**`ShellMaterial`** read the mesh and renderer live. As its **last** step it raises **`OnShellChanged`**, so
+every TwinCopy can copy the final state (shell shown, material, which collider is on) in the same frame.
 
 ### `Awake`
 
-Grabs the components: PlayerHealth, PlayerInvincibility, and the shell's renderer. The renderer search
+Grabs the components: PlayerHealth, PlayerInvincibility, PlayerTwins, and the shell's renderer. The renderer search
 uses `GetComponentInChildren<Renderer>(true)`, where `true` includes inactive objects, in case `ShellMesh`
 starts switched off. `Awake` only **finds** components, which is safe because components exist as soon as
 the object loads. It doesn't **read** their data, which might not be set yet.
@@ -73,7 +79,8 @@ and Unity doesn't guarantee which `Awake` runs first, so reading lives any earli
 
 ### `OnEnable` / `OnDisable` and the handlers
 
-Sign up to and leave the three events: `OnLivesChanged`, `OnInvincibilityChanged` and `OnRainbowChanged`.
+Sign up to and leave the four events: `OnLivesChanged`, `OnInvincibilityChanged`, `OnRainbowChanged`, and
+PlayerTwins' `OnTwinChanged` (which reuses `HandleStateChanged`, since it's also an `Action<bool>`).
 The handlers just call `Refresh`. They ignore the value passed in, because `Refresh` needs all three facts
 every time and re-reads them itself. They still take a parameter (`int lives`, `bool on`) because a method
 has to match the event's type (`Action<int>`, `Action<bool>`) to sign up.
@@ -131,8 +138,12 @@ nothing), so it reads as light shining over the ship.
 - **PlayerHealth**: subscribes to `OnLivesChanged`; reads `CurrentLives` and `MaxLives`.
 - **PlayerInvincibility**: subscribes to `OnInvincibilityChanged` and `OnRainbowChanged`; reads
   `IsInvincible` and `RainbowShowing`.
-- **AsteroidBehavior**: not directly. Asteroids find the player with `GetComponentInParent<PlayerMovement>()`,
-  so the shell's collider counts as the player with no asteroid changes.
+- **PlayerTwins**: subscribes to `OnTwinChanged`; reads `IsTwinned` to pause the full-health shield.
+- **TwinCopy**: subscribes to `OnShellChanged` and reads `Shielded`, `ShellShowing` and `ShellMaterial` to
+  mirror the shell on each copy.
+- **AsteroidBehavior**: not directly. Asteroids check whether a collider belongs to the player with
+  `IsChildOf` (through PlayerTwins' `FindBody`), so the shell's collider counts as the player with no
+  asteroid changes.
 - **OrbitRing**: reads `HitRadius` once per frame to widen the arcs.
 
 ## Gotchas

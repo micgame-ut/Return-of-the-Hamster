@@ -22,6 +22,8 @@ core** inside it.
     Particles/Unlit, Transparent, Additive, no Base Map), a Width curve drawn as the taper's *shape* (1 at the
     head, near 0 at the tail), and the inner one at **Order in Layer 1** so it draws on top.
   - **PlayerMovement** and **PlayerInvincibility** on a parent (the player), found with `GetComponentInParent`.
+    On a **twin copy** (the `Twin Copy` prefab) there's no player above it, so it gets both from GameManager
+    instead, and the copy's flame follows the player's speed, boost, rainbow and blink.
   - **HDR** on the URP asset (on for PC High and PC Low) and **Bloom** on the Global Volume, for the glow.
 
 ## Inspector settings
@@ -51,7 +53,9 @@ with Bloom. They replace the LineRenderers' own Color setting, which the script 
 
 ### `Awake`: initializing both lines
 
-Finds PlayerMovement and PlayerInvincibility on the player, then sets up each line once:
+Finds PlayerMovement and PlayerInvincibility on the player above it. If there isn't one (a twin copy), it gets
+them from GameManager. `onPlayer` remembers which case it was, and is set **before** the fallback, since
+afterwards `movement` is never null. Then it sets up each line once:
 
 1. **Point count:** both lines get `dragSegments` points, and an array of the same size (`dragPoints`,
    `innerPoints`) that's created once and reused every frame.
@@ -69,6 +73,7 @@ four events, and `OnDisable` unsubscribes from them so nothing calls into a disa
 | Event | From | Handler |
 | --- | --- | --- |
 | `OnSpeedBoost` | PlayerMovement | `HandleSpeedBoost` |
+| `OnOrbitShifted` | PlayerMovement (only the player's own flame, `onPlayer`) | `HandleOrbitShifted` |
 | `OnRainbowChanged` | PlayerInvincibility | `HandleRainbowChanged` |
 | `OnGameOver` / `OnWin` | GameManager | `HandleLevelEnded` |
 
@@ -101,7 +106,8 @@ Reads the player's speed and blink state, and works out each line's size. The be
 
 5. **Width onto the lines:** the outer line's `widthMultiplier` is `width`, the inner line's is
    `width × innerWidthFraction`. The multiplier scales the whole Width curve, so the taper keeps its shape.
-6. **Points:** `FollowLine` for each line, then one `SetPositions` call per line.
+6. **Points:** `FollowLine` for each line, then one `SetPositions` call per line. If `snapNext` is set (the
+   player just jumped), the points are placed straight instead of eased, then `snapNext` is cleared.
 
 ### `FollowLine`: the drag, for both lines
 
@@ -125,6 +131,14 @@ units behind 0.1 s after a sudden 1-unit move.
 Because an inner point at fraction 0.6 of the inner line gets the same target and catch-up time as an outer
 point at 0.6 of the outer line, **the inner core traces the outer flame's curve exactly** and stays inside it.
 
+### `HandleOrbitShifted`
+
+When the player jumps around the orbit during the twin power-up (PlayerMovement's `ShiftOrbit`), the drag
+points would otherwise sweep across the ring to the new spot. The handler sets `snapNext`, and the next
+`Update` places the points straight. The jump happens during physics, before `Update` in the same frame, so
+it snaps before anything is drawn. Only the player's own flame subscribes: a copy stays put when the player
+jumps, so its flame keeps its curve.
+
 ### `HandleSpeedBoost`
 
 Makes the flame react to a forward boost: restarts `boostTimer` at `boostDuration`, so the stretch starts again
@@ -144,9 +158,11 @@ unsubscribes from the events.
 
 ## Talks to
 
-- **PlayerMovement**: reads the static `Speed01` and `MeshVisible` every frame; subscribes to `OnSpeedBoost`.
+- **PlayerMovement**: reads the static `Speed01` and `MeshVisible` every frame; subscribes to `OnSpeedBoost`,
+  and (player's flame only) `OnOrbitShifted`.
 - **PlayerInvincibility**: subscribes to `OnRainbowChanged`.
-- **GameManager**: subscribes to `OnGameOver` and `OnWin`.
+- **GameManager**: subscribes to `OnGameOver` and `OnWin`. On a twin copy, gets `Player` and
+  `PlayerInvincibility` in `Awake`.
 
 ## Gotchas
 
