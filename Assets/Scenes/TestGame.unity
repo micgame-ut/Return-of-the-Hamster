@@ -2850,6 +2850,7 @@ MonoBehaviour:
   levelTimer: {fileID: 0}
   playerHealth: {fileID: 0}
   playerInvincibility: {fileID: 0}
+  playerShell: {fileID: 0}
   runStats: {fileID: 0}
   endScreen: {fileID: 1540957282}
   showOrbitRing: 0

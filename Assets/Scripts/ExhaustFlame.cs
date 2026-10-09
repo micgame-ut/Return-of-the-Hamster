@@ -1,54 +1,65 @@
 using UnityEngine;
 
-// Exhaust flame behind the player: longer, faster and narrower with speed,
-// spurts on a forward boost, rainbow while invincible.
+// Exhaust flame behind the player: a glowing line that gets longer and narrower
+// with speed, stretches on a forward boost, drags behind as the player moves
+// around the orbit, and turns rainbow while invincible.
 public class ExhaustFlame : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private ParticleSystem flame;
+    [SerializeField] private LineRenderer core;
+    [SerializeField] private LineRenderer innerCore;
 
     [Header("Speed Scaling")]
     [SerializeField] private float minLength = 0.5f;   // at Speed01 = 0
     [SerializeField] private float maxLength = 2.5f;   // at Speed01 = 1
     [SerializeField] private float minWidth = 0.2f;    // at Speed01 = 1 (narrowest)
     [SerializeField] private float maxWidth = 0.5f;    // at Speed01 = 0 (widest)
-    [SerializeField] private float flameLifetime = 0.2f;
-    [SerializeField] private float minEmission = 20f;
-    [SerializeField] private float maxEmission = 80f;
 
     [Header("Sputter")]
-    [SerializeField, Range(0f, 1f)] private float flickerAmount = 0.15f;
+    [SerializeField, Range(0f, 1f)] private float minFlicker = 0.15f; // at Speed01 = 1 (steadiest)
+    [SerializeField, Range(0f, 1f)] private float maxFlicker = 0.4f;  // at Speed01 = 0 (most sputter)
     [SerializeField] private float flickerSpeed = 10f;
 
     [Header("Boost")]
-    [SerializeField] private int boostBurstCount = 30;
-    [SerializeField] private float boostSizeMultiplier = 2f;
+    [SerializeField] private float boostLengthMultiplier = 1.5f; // line length at the instant of a boost (1.5 = 50% longer)
+    [SerializeField] private float boostDuration = 0.3f;         // seconds for the stretch to ease back to normal
+
+    [Header("Drag")]
+    [SerializeField] private float dragIntensity = 0.1f;   // seconds the tail takes to catch up; 0 = straight line
+    [SerializeField, Min(2)] private int dragSegments = 8; // points along the line; more = smoother curve
+
+    [Header("Inner Core")]
+    [SerializeField, Range(0f, 1f)] private float innerWidthFraction = 0.35f;  // of the outer line's width
+    [SerializeField, Range(0f, 1f)] private float innerLengthFraction = 0.6f;  // of the outer line's length
+    [SerializeField, GradientUsage(true)] private Gradient innerColor;         // stays the same while invincible
 
     [Header("Colors")]
-    [SerializeField] private Gradient normalColor;
-    [SerializeField] private Gradient rainbowColor;
+    [SerializeField, GradientUsage(true)] private Gradient normalColor;
+    [SerializeField, GradientUsage(true)] private Gradient rainbowColor;
 
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;
-    private ParticleSystemRenderer flameRenderer;
-    private ParticleSystem.MainModule main;
-    private ParticleSystem.EmissionModule emission;
-    private ParticleSystem.ColorOverLifetimeModule colorOverLifetime;
-    private bool flameVisible; // last value given to flameRenderer.enabled
-    private float appliedLifetime = -1f; // -1 so the lifetime is applied on the first frame
+    private bool coreVisible; // last value given to both lines' enabled
+    private float boostTimer; // seconds left on the current stretch
+    private Vector3[] dragPoints; // world position of each point, head first
+    private Vector3[] innerPoints; // world position of each inner point, head first
 
     private void Awake()
     {
         movement = GetComponentInParent<PlayerMovement>();
         invincibility = GetComponentInParent<PlayerInvincibility>();
-        flameRenderer = flame.GetComponent<ParticleSystemRenderer>();
-        flameVisible = flameRenderer.enabled;
+        coreVisible = core.enabled;
 
-        main = flame.main;
-        emission = flame.emission;
-        colorOverLifetime = flame.colorOverLifetime;
-        colorOverLifetime.enabled = true;
-        colorOverLifetime.color = normalColor;
+        core.positionCount = dragSegments;
+        dragPoints = new Vector3[dragSegments];
+        FollowLine(dragPoints, minLength, 1f, true);
+        core.colorGradient = normalColor;
+
+        innerCore.positionCount = dragSegments;
+        innerPoints = new Vector3[dragSegments];
+        FollowLine(innerPoints, minLength, innerLengthFraction, true);
+        innerCore.colorGradient = innerColor;
+        innerCore.enabled = coreVisible;
     }
 
     private void OnEnable()
@@ -76,44 +87,60 @@ public class ExhaustFlame : MonoBehaviour
     private void Update()
     {
         bool visible = movement.MeshVisible;
-        if (visible != flameVisible)
+        if (visible != coreVisible)
         {
-            flameRenderer.enabled = visible;
-            flameVisible = visible;
+            core.enabled = visible;
+            innerCore.enabled = visible;
+            coreVisible = visible;
+        }
+
+        float stretch = 1f;
+        if (boostTimer > 0f)
+        {
+            boostTimer -= Time.deltaTime;
+            stretch = Mathf.Lerp(1f, boostLengthMultiplier, boostTimer / boostDuration);
         }
 
         float t = PlayerMovement.Speed01;
-        float length = Mathf.Lerp(minLength, maxLength, t);
+        float length = Mathf.Lerp(minLength, maxLength, t) * stretch;
         float width = Mathf.Lerp(maxWidth, minWidth, t);
 
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f) * 2f - 1f;
-        width *= 1f + noise * flickerAmount;
+        width *= 1f + noise * Mathf.Lerp(maxFlicker, minFlicker, t);
+        core.widthMultiplier = width;
+        innerCore.widthMultiplier = width * innerWidthFraction;
+        FollowLine(dragPoints, length, 1f, false);
+        core.SetPositions(dragPoints);
+        FollowLine(innerPoints, length, innerLengthFraction, false);
+        innerCore.SetPositions(innerPoints);
+    }
 
-        if (flameLifetime != appliedLifetime)
+    // Eases each point toward its spot on a straight line; points further back follow more lazily.
+    private void FollowLine(Vector3[] points, float lineLength, float lengthFraction, bool snap)
+    {
+        for (int i = 0; i < points.Length; i++)
         {
-            main.startLifetime = flameLifetime;
-            appliedLifetime = flameLifetime;
+            float f = i / (points.Length - 1f) * lengthFraction;
+            Vector3 target = core.transform.TransformPoint(Vector3.forward * lineLength * f);
+            float tau = dragIntensity * f;
+            points[i] = snap || tau <= 0f ? target : Vector3.Lerp(points[i], target, 1f - Mathf.Exp(-Time.deltaTime / tau));
         }
-        main.startSpeed = length / flameLifetime;
-        main.startSize = width;
-        emission.rateOverTime = Mathf.Lerp(minEmission, maxEmission, t);
     }
 
     private void HandleSpeedBoost()
     {
-        ParticleSystem.EmitParams burst = new ParticleSystem.EmitParams();
-        burst.startSize = main.startSize.constant * boostSizeMultiplier;
-        flame.Emit(burst, boostBurstCount);
+        boostTimer = boostDuration;
     }
 
     private void HandleRainbowChanged(bool on)
     {
-        colorOverLifetime.color = on ? rainbowColor : normalColor;
+        core.colorGradient = on ? rainbowColor : normalColor;
     }
 
     private void HandleLevelEnded()
     {
-        flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        core.enabled = false;
+        innerCore.enabled = false;
         enabled = false;
     }
 }

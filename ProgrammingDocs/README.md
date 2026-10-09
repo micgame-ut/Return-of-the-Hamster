@@ -19,6 +19,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
 | EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
+| ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
