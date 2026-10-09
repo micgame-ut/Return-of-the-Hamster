@@ -15,6 +15,9 @@ public class PowerUp : MonoBehaviour
     private Vector3 origin;
     private float distance;
     private Transform cam;
+    private PlayerMovement player;
+    private PlayerHealth health;
+    private PlayerInvincibility invincibility;
 
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
@@ -26,6 +29,9 @@ public class PowerUp : MonoBehaviour
     {
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
+        player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+        health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
+        invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
     }
 
     private void OnEnable()
@@ -54,35 +60,34 @@ public class PowerUp : MonoBehaviour
             PatternCopy.Despawn(gameObject);
     }
 
-    private void Heal(PlayerMovement player)
+    private void Heal()
     {
-        PlayerHealth health = player.GetComponent<PlayerHealth>();
         if (health != null) health.GainLife();
     }
 
-    private void MakeInvincible(PlayerMovement player)
+    private void MakeInvincible()
     {
-        PlayerInvincibility invincibility = player.GetComponent<PlayerInvincibility>();
         if (invincibility != null && template != null) invincibility.Activate(template.invincibleDuration);
     }
 
-    private void ApplyEffect(PlayerMovement player)
+    private void ApplyEffect()
     {
         switch (type)
         {
             case PowerUpType.Health:
-                Heal(player);
+                Heal();
                 break;
             case PowerUpType.Invincible:
-                MakeInvincible(player);
+                MakeInvincible();
                 break;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
-        if (player == null) return;
+        // Only react to the player. IsChildOf also covers the collider being
+        // on a child of the player object.
+        if (player == null || !other.transform.IsChildOf(player.transform)) return;
 
         GameManager gm = GameManager.Instance;
         if (gm != null && gm.HasWon) return;
@@ -90,7 +95,7 @@ public class PowerUp : MonoBehaviour
         RunStats stats = gm != null ? gm.RunStats : null;
         if (stats != null) stats.AddPowerUpPickedUp();
 
-        ApplyEffect(player);
+        ApplyEffect();
 
         if (template != null)
         {

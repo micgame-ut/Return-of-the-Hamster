@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Single place for scene-wide references and the level's end state (game over
@@ -17,6 +18,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private LevelTimer levelTimer;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private PlayerInvincibility playerInvincibility;
+    [SerializeField] private PlayerShell playerShell;
     [SerializeField] private RunStats runStats;
     [SerializeField] private EndScreen endScreen;
     [SerializeField] private bool showOrbitRing = true;
@@ -28,10 +30,13 @@ public class GameManager : MonoBehaviour
     public LevelTimer LevelTimer => levelTimer;
     public PlayerHealth PlayerHealth => playerHealth;
     public PlayerInvincibility PlayerInvincibility => playerInvincibility;
+    public PlayerShell PlayerShell => playerShell;
     public RunStats RunStats => runStats;
     public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
+    public event Action OnGameOver;
+    public event Action OnWin;
 
     // Won once the earth has arrived and nothing spawned is still flying.
     // A boss fight would add its own condition here.
@@ -58,6 +63,7 @@ public class GameManager : MonoBehaviour
         // Player scripts sit on the player object, so look there instead.
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();
         if (playerInvincibility == null && player != null) playerInvincibility = player.GetComponent<PlayerInvincibility>();
+        if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
     }
 
     private void Update()
@@ -72,7 +78,7 @@ public class GameManager : MonoBehaviour
         IsGameOver = true;
         Time.timeScale = 0f;
         if (runStats != null) runStats.RecordDeath();
-        Debug.Log("Game over");
+        OnGameOver?.Invoke();
     }
 
     public void Win()
@@ -83,6 +89,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
         if (runStats != null) runStats.RecordWin();
         if (endScreen != null) endScreen.ShowWin();
+        OnWin?.Invoke();
     }
 
     public void DeathSequenceFinished()

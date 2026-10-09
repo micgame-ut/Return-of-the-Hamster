@@ -93,20 +93,25 @@ so PowerUp can call it.
 A pickup during the flicker turns the rainbow back on straight away, and the flicker stops because the
 timer is no longer inside `warningTime`.
 
+### `OnEnable` / `OnDisable` and `HandleLevelEnded`
+
+It subscribes `HandleLevelEnded` to both GameManager events, `OnGameOver` and `OnWin`, in `OnEnable`, and
+unsubscribes in `OnDisable`. Both events pass no value, so one method can handle both.
+
+If it's still invincible when the level ends, `HandleLevelEnded` sets `timer` to 0, turns the rainbow off
+and raises `OnInvincibilityChanged(false)`. This is needed because `GameOver()` and `Win()` set
+`Time.timeScale` to 0, so `Time.deltaTime` is 0 and the countdown would never finish, leaving the rainbow
+stuck on.
+
 ### `Update`
 
-Checks for game over or a win first (and switches everything off), then counts the timer down, handles the
-timer running out, and handles the warning flicker.
+Counts the timer down, handles the timer running out, and handles the warning flicker.
 
-1. **Game over or won?** If it's still invincible, it sets `timer` to 0, turns the rainbow off and raises
-   `OnInvincibilityChanged(false)`, once. This has to come first: `GameOver()` and `Win()` set
-   `Time.timeScale` to 0, so `Time.deltaTime` is 0 and the countdown would never finish, leaving the
-   rainbow stuck on.
-2. **Not active?** Returns. The timer may be slightly below 0 after it ran out (say −0.01), which counts as
+1. **Not active?** Returns. The timer may be slightly below 0 after it ran out (say −0.01), which counts as
    not active.
-3. **Count down.** If that takes the timer to 0 or below, it turns the rainbow off, raises
+2. **Count down.** If that takes the timer to 0 or below, it turns the rainbow off, raises
    `OnInvincibilityChanged(false)`, and returns.
-4. **Flicker.** The rainbow is on if there's more than `warningTime` left. Otherwise it uses the same
+3. **Flicker.** The rainbow is on if there's more than `warningTime` left. Otherwise it uses the same
    formula as PlayerMovement's hit blink: on when `Mathf.FloorToInt(timer / warningBlinkInterval)` is even.
 
 With `warningTime` 1 and `warningBlinkInterval` 0.25:
@@ -136,7 +141,7 @@ visuals, and this script only announces state. The rainbow shader is documented 
 - **OrbitRing**: not directly; it reads `CanBreak`, so every danger arc turns green while invincible.
 - **PlayerMovement**: reads `LocksMaxSpeed` every frame (it finds this component in `Awake`) to hold the
   player at max speed.
-- **GameManager**: reads `IsGameOver` and `HasWon` every frame. GameManager also keeps a reference to this
+- **GameManager**: subscribes to `OnGameOver` and `OnWin`. GameManager also keeps a reference to this
   component (auto-filled from the player), which is how asteroids find it.
 
 ## Gotchas

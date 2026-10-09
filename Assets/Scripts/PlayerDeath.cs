@@ -23,18 +23,17 @@ public class PlayerDeath : MonoBehaviour
     [SerializeField] private float explodeShakeMagnitude = 0.5f;
     [SerializeField] private float endDelay = 1.5f;          // seconds after exploding before DeathSequenceFinished
 
-    private bool started;
-
-    private void Update()
+    private void OnEnable()
     {
-        if (started) return;
-
-        GameManager gm = GameManager.Instance;
-        if (gm == null || !gm.IsGameOver) return;
-
-        started = true;
-        StartCoroutine(DeathSequence());
+        if (GameManager.Instance != null) GameManager.Instance.OnGameOver += HandleGameOver;
     }
+
+    private void OnDisable()
+    {
+        if (GameManager.Instance != null) GameManager.Instance.OnGameOver -= HandleGameOver;
+    }
+
+    private void HandleGameOver() => StartCoroutine(DeathSequence());
 
     private IEnumerator DeathSequence()
     {

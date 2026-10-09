@@ -59,34 +59,48 @@ Check an item off when it's done and tested in Play mode.
     time (less response at higher frame rates). PlayerMovement now runs in `Update` with raw mouse deltas
     (sensitivity/acceleration in thousandths), exact `1 − e^(−k·dt)` fades, a side-boost memory, and
     PlayerCamera/CameraShake/PlayerDeath were made frame-rate independent too.
-- [ ] **5. Starfield particle copy.** [StarfieldStreamer.cs](Assets/Scripts/StarfieldStreamer.cs) `LateUpdate`
+- [x] **5. Starfield particle copy.** [StarfieldStreamer.cs](Assets/Scripts/StarfieldStreamer.cs) `LateUpdate`
   copies up to 3000 particles out and back (`GetParticles` / `SetParticles`) almost every frame to kill stars
   past `despawnDistance` or inside the Earth. Options: set each star's lifetime so it dies at the despawn point,
   and use the particle Collision or Trigger module for the Earth.
-- [ ] **6. Property blocks break the SRP Batcher.** [AsteroidBehavior.cs](Assets/Scripts/AsteroidBehavior.cs)
+  Done: `LateUpdate` removed. Stars behind the camera now die at a Collision-module plane (Planes mode,
+  Lifetime Loss 1); the Earth check was dropped (the stars never reach the Earth; its collider was removed).
+  Also: stars now spawn in a ring (Circle shape, `fieldRadius` 300, `clearRadius` 20) with outward-only drift,
+  so none stream through the middle of the screen.
+  - Fixed a mistake from #3: Earth Camera's Culling Mask "Earth only" had hidden every star (they were on
+    Default). The stars now take the Camera Rig's layer, and the Camera Rig is on the Earth layer, since renamed **Background**.
+- [x] **6. Property blocks break the SRP Batcher.** [AsteroidBehavior.cs](Assets/Scripts/AsteroidBehavior.cs)
   `SetGlow` and `UpdateOutline` use `MaterialPropertyBlock`s, which take each destructible or warning asteroid
   out of the SRP Batcher, so each one is a separate, slower draw call. Option: swap between shared materials
   instead. Check in the Frame Debugger whether it matters at real asteroid counts.
-- [ ] **7. Danger glow rebuilds the canvas.** [DangerWarning.cs](Assets/Scripts/DangerWarning.cs) `Update`
+  Measured, skipped: the Frame Debugger showed no asteroid draws outside an SRP Batch during a busy wave, so
+  swapping materials would add complexity for no gain.
+- [x] **7. Danger glow rebuilds the canvas.** [DangerWarning.cs](Assets/Scripts/DangerWarning.cs) `Update`
   changes `sizeDelta` and `color` every frame, which rebuilds the whole canvas it's on. Options: give the
   overlays their own nested Canvas, or animate `localScale` instead of `sizeDelta`.
+  Measured, skipped: the Profiler showed the canvas rebuild at 1 life costs too little to be worth changing.
 
 ## Low impact
 
-- [ ] **8. Cache the blink wait.** `AsteroidBehavior.WarnThenMove` creates a `new WaitForSeconds` on every
-  blink (every 0.1 s per warning asteroid). Create it once in `Awake`.
-- [ ] **9. `OrbitRing` line updates.** Calls `SetPosition` 96+ times a frame for the ring. Use one
+- [x] **8. Cache the blink wait.** `AsteroidBehavior.WarnThenMove` creates a `new WaitForSeconds` on every
+  blink (every 0.1 s per warning asteroid). Create it once in `Awake`. Done: `blinkWait` is made in `Awake`
+  and reused by every blink.
+- [x] **9. `OrbitRing` line updates.** Calls `SetPosition` 96+ times a frame for the ring. Use one
   `SetPositions` call with a cached array, and only redraw the ring when its radius or center changes.
-- [ ] **10. Events instead of polling for game over / win.** `PlayerDeath`, `PlayerInvincibility`,
+  Done: `SetArc` fills a shared `points` array and makes one `SetPositions` call per line, and the ring only
+  redraws when its center, radius, z, or `ringSegments` changes. Danger arcs still redraw every frame.
+- [x] **10. Events instead of polling for game over / win.** `PlayerDeath`, `PlayerInvincibility`,
   `ExhaustFlame`, and `DangerWarning` check `GameManager` in `Update` every frame. An `OnGameOver` / `OnWin`
   event on `GameManager` (like `PlayerHealth.OnLivesChanged`) would replace that. Mostly a design cleanup.
-- [ ] **11. Repeated lookups on hit.** `OnTriggerEnter` in `AsteroidBehavior` and `PowerUp` calls
+- [x] **11. Repeated lookups on hit.** `OnTriggerEnter` in `AsteroidBehavior` and `PowerUp` calls
   `GetComponentInParent` and `GetComponent<PlayerHealth>()` on every hit, though `GameManager` already holds
-  the player and `PlayerHealth`.
-- [ ] **12. `Debug.Log` in builds.** `PlayerHealth` and `GameManager` log on every life change and on game
+  the player and `PlayerHealth`. Done: both cache the player and its components from GameManager in `Awake`
+  and check contacts with `IsChildOf`; GameManager now also exposes `PlayerShell` (used by OrbitRing). The
+  rule for getting player components is now in AGENTS.md section 5.
+- [x] **12. `Debug.Log` in builds.** `PlayerHealth` and `GameManager` log on every life change and on game
   over. Logs still run in a build and are slower than they look.
-- [ ] **13. `ExhaustFlame` per-frame sets.** `Update` sets `startLifetime` and `flameRenderer.enabled` every
-  frame even when nothing changed.
+- [x] **13. `ExhaustFlame` per-frame sets.** `Update` sets `startLifetime` and `flameRenderer.enabled` every
+  frame even when nothing changed. Done: both are only set when their value changes (`flameVisible`, `appliedLifetime`).
 
 ## Already fine
 

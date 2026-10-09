@@ -65,26 +65,22 @@ public class DangerWarning : MonoBehaviour
     private void OnEnable()
     {
         if (health != null) health.OnLivesChanged += HandleLivesChanged;
+        if (GameManager.Instance != null) GameManager.Instance.OnWin += HandleWin;
     }
 
     private void OnDisable()
     {
         if (health != null) health.OnLivesChanged -= HandleLivesChanged;
+        if (GameManager.Instance != null) GameManager.Instance.OnWin -= HandleWin;
         SetDanger(false);
     }
 
     private void HandleLivesChanged(int lives) => SetDanger(lives == 1);
+    private void HandleWin() => SetDanger(false);
 
     private void Update()
     {
         if (!active) return;
-
-        GameManager gm = GameManager.Instance;
-        if (gm != null && gm.HasWon)
-        {
-            SetDanger(false);
-            return;
-        }
 
         blinkTimer += Time.deltaTime;
 

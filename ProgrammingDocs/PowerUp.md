@@ -57,7 +57,8 @@ between two asteroids stays between them in flight. ObjectSpawner reads it to ti
 
 ### `Awake` and `OnEnable`
 
-- **`Awake`** finds the gameplay camera through GameManager, once.
+- **`Awake`** gets the gameplay camera, the player's PlayerMovement, PlayerHealth and PlayerInvincibility
+  from GameManager, once.
 - **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
   and resets `distance` to 0.
 - **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up or missed) goes through
@@ -91,13 +92,13 @@ asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by it
 
 When something touches it:
 
-1. **Is it the player?** It looks for `PlayerMovement` on what it touched or its parents. If none is found,
-   it ignores it.
+1. **Is it the player?** `other.transform.IsChildOf(player.transform)` is true when what it touched is the
+   player or anywhere under it. Anything else, or no cached player, is ignored.
 2. **Is the level already won?** It reads `GameManager.Instance`. If `HasWon` is set, it ignores the
    touch, and the power-up flies on through the ship without being used up.
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
    that does nothing (Health at full lives) still counts.
-4. **Apply the effect** with `ApplyEffect(player)`.
+4. **Apply the effect** with `ApplyEffect()`.
 5. **Feedback** from the template's Power-Up section: play `pickupEffectPrefab` through `EffectPool.Play`,
    and shake the camera only if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling
    `Shake` would restart the timer of a shake already running.)
@@ -109,11 +110,11 @@ second explosion at the power-up's home spot.
 
 ### `ApplyEffect`, `Heal` and `MakeInvincible`
 
-`ApplyEffect(player)` runs the effect method for this power-up's `type`. Every effect method takes the
-player that picked it up (`PlayerMovement player`), so it can get whatever it needs from the player's
-object.
+`ApplyEffect()` runs the effect method for this power-up's `type`. The effect methods take no
+parameters: whatever they need from the player was already cached from GameManager in `Awake`. A new
+effect that needs another player component gets it the same way (expose it on GameManager if it isn't yet).
 
-**`Heal`** finds PlayerHealth on the player and calls `GainLife()`, which adds one life but never goes
+**`Heal`** calls `GainLife()` on the cached PlayerHealth, which adds one life but never goes
 past the max:
 
 | Lives before | After | Counted? |
@@ -122,7 +123,7 @@ past the max:
 | 2 | 3 | yes |
 | 3 (max) | 3 | yes (used up and wasted) |
 
-**`MakeInvincible`** finds PlayerInvincibility on the player and calls `Activate(template.invincibleDuration)`.
+**`MakeInvincible`** calls `Activate(template.invincibleDuration)` on the cached PlayerInvincibility.
 It does nothing if either the component or the template is missing (the duration comes from the template).
 
 The timer can't live in PowerUp, because the power-up is switched off on the same frame it's picked up, so
@@ -136,10 +137,11 @@ A second pickup while invincible resets the timer to the full duration rather th
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab`, the pickup shake settings and `invincibleDuration`.
-- **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it. GameManager
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth` and `PlayerInvincibility` in
+  `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
-- **PlayerMovement**: finds it on whatever touched the power-up, and reads its static `Speed`.
+- **PlayerMovement**: checks whether what touched the power-up is the player, and reads its static `Speed`.
 - **PlayerHealth**: calls `GainLife()` (Health type).
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.

@@ -60,7 +60,7 @@ broken at speed, never call it.
 1. Assigns `GameManager.Instance` to a local variable, `gm`.
 2. If `gm` is null, the game is over, or the player has won, it exits the method immediately. The null
    check comes first so `||` stops before reading anything from a null reference.
-3. Otherwise it takes one life away from `CurrentLives` and logs how many lives are left in the Console.
+3. Otherwise it takes one life away from `CurrentLives` and raises `OnLivesChanged` with the new count.
 4. If `CurrentLives` is 0 or less, it calls `gm.GameOver()`. `<= 0` rather than `== 0` means game over
    still fires if lives ever went below 0.
 
@@ -75,7 +75,7 @@ broken at speed, never call it.
 
 Called by a Health power-up when it's picked up. It has the same guard as `LoseLife` (no GameManager, game
 over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(CurrentLives + 1, maxLives)`.
-`Mathf.Min` returns the smaller of the two, so lives never go past the max, and logs the result.
+`Mathf.Min` returns the smaller of the two, so lives never go past the max, and raises `OnLivesChanged` with the result.
 
 | Lives before | After |
 | --- | --- |
@@ -87,8 +87,7 @@ over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(Curr
 
 - **GameManager**: reads `IsGameOver` and `HasWon`, and calls `GameOver()` when lives run out.
   GameManager also keeps a `PlayerHealth` reference, filled in from the player object if unassigned.
-- **AsteroidBehavior**: calls `LoseLife()` on a counted hit, finding this component with
-  `player.GetComponent<PlayerHealth>()`.
+- **AsteroidBehavior**: calls `LoseLife()` on a counted hit, using GameManager's `PlayerHealth`.
 - **PowerUp**: calls `GainLife()` from its Health effect, found the same way.
 - **PlayerShell**: subscribes to `OnLivesChanged`, and reads `CurrentLives` and `MaxLives` to show the shield
   at full health.
@@ -96,8 +95,8 @@ over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(Curr
 
 ## Gotchas
 
-- It must be on the **same object as `PlayerMovement`**. `AsteroidBehavior` only looks there, and if it
-  isn't found, hits still knock the player back but never cost a life, with no error.
+- It must be on the **same object as `PlayerMovement`** (or assigned on GameManager). GameManager only
+  looks there, and if it isn't found, hits still knock the player back but never cost a life, with no error.
 - Setting `maxLives` to 0 starts the player with no lives, but game over only happens on the first hit
-  (which logs `Lives left: -1`).
+  (which takes lives to -1).
 - After the level is won, hits still knock the player back but don't cost lives.

@@ -110,6 +110,11 @@ When a new feature comes up, do this first, before explaining the logic (section
    reference to `GameManager`, a cooldown timer, or a limit), name it, explain why it's needed, and ask
    whether it can be added.
 3. **Agree on names, types, and default values** before writing code.
+4. **Getting the player's components.** A script on the player (or a child of it) finds the player's
+   other components itself, with `GetComponent` or `GetComponentInParent`, once in `Awake`. A script
+   anywhere else gets them from `GameManager` (for example `GameManager.Instance.PlayerHealth`), once in
+   `Awake` or `Start`, including the player itself for "did this hit the player?" checks. If `GameManager`
+   doesn't expose the one it needs yet, add it there.
 
 ## 6. Checking understanding
 
