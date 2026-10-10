@@ -68,6 +68,27 @@ Questions to settle with the user first: cooldown length, whether both boost typ
 the cooldown is shown (HUD, on the player, the trail above), what the boost effect looks like, and whether
 boosting should interact with overdrive.
 
+## Score system
+
+Stages (test each before the next): 1) `Score` on Game Manager, time score
+(`Progress × levelTime × pointsPerSecond`) + HUD (`D6`); 2) asteroids destroyed + combos;
+3) wave complete + perfect wave bonus; 4) close calls; 5) score multiplier power-up;
+6) overdrive bonus. Speed multiplier (×1 to `maxSpeedMultiplier` 2 via `Speed01`) applies to
+every gain except the time score. Score resets each level; gains stop after game over / win.
+
+**Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
+`GameManager.Score`. Doc: `Score.md`.
+
+**Score popups (build with stage 2):** `Score` fires an event after the `AddPoints` guard; a new
+`ScorePopups` script shows `+amount` from its own pool (prewarm 5), using a TMP prefab. Rises ~1.5 units
+over 0.8 s while fading, screen-up, stays where it appeared, stacked (not merged), above the body that
+earned it (so `AddPoints` needs a position). Bigger amounts look bigger (scale vs tiers to decide). Shows
+base and multiplier like `+15x2` (the speed multiplier is continuous, so decide how to show e.g. ×1.37).
+The HUD score grows slightly on each gain. Overdrive gets its own running-tally popup, emphasized on exit.
+
+Later: per-level leaderboard ranked by score, with a details view (hamster name + RunStats
+snapshot at that moment).
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

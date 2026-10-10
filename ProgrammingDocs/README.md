@@ -39,6 +39,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
+| Score.cs | [Score.md](Score.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |

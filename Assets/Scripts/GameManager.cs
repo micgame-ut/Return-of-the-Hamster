@@ -21,6 +21,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerShell playerShell;
     [SerializeField] private PlayerTwins playerTwins;
     [SerializeField] private RunStats runStats;
+    [SerializeField] private Score score;
     [SerializeField] private EndScreen endScreen;
     [SerializeField] private bool showOrbitRing = true;
 
@@ -34,6 +35,7 @@ public class GameManager : MonoBehaviour
     public PlayerShell PlayerShell => playerShell;
     public PlayerTwins PlayerTwins => playerTwins;
     public RunStats RunStats => runStats;
+    public Score Score => score;
     public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
@@ -61,6 +63,7 @@ public class GameManager : MonoBehaviour
         // Level-wide scripts normally sit on this same object, so fill them in if unassigned.
         if (levelTimer == null) levelTimer = GetComponent<LevelTimer>();
         if (runStats == null) runStats = GetComponent<RunStats>();
+        if (score == null) score = GetComponent<Score>();
 
         // Player scripts sit on the player object, so look there instead.
         if (playerHealth == null && player != null) playerHealth = player.GetComponent<PlayerHealth>();

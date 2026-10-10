@@ -14,6 +14,7 @@ public class LevelTimer : MonoBehaviour
     // 0 at level start, 1 when the earth has arrived
     public float Progress { get; private set; }
     public bool IsComplete => Progress >= 1f;
+    public float LevelTime => levelTime;
 
     private Transform earth;
     private Vector3 origin;
