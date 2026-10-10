@@ -6,7 +6,7 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier }
 
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [SerializeField] private float speed = 20f;
@@ -19,6 +19,7 @@ public class PowerUp : MonoBehaviour
     private PlayerHealth health;
     private PlayerInvincibility invincibility;
     private PlayerTwins twins;
+    private Score score;
 
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
@@ -34,6 +35,7 @@ public class PowerUp : MonoBehaviour
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
+        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
     }
 
     private void OnEnable()
@@ -77,6 +79,11 @@ public class PowerUp : MonoBehaviour
         if (twins != null) twins.AddBody();
     }
 
+    private void AddScoreMultiplier()
+    {
+        if (score != null) score.AddMultiplierPowerUp();
+    }
+
     private void ApplyEffect()
     {
         switch (type)
@@ -89,6 +96,9 @@ public class PowerUp : MonoBehaviour
                 break;
             case PowerUpType.Twin:
                 AddTwin();
+                break;
+            case PowerUpType.ScoreMultiplier:
+                AddScoreMultiplier();
                 break;
         }
     }

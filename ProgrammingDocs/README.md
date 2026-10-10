@@ -24,6 +24,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| MultiplierDisplay.cs | [MultiplierDisplay.md](MultiplierDisplay.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -18,10 +19,15 @@ public class Score : MonoBehaviour
     [SerializeField] private string waveClearLabel = "WAVE CLEAR";
     [SerializeField] private float closeCallPoints = 50f;
     [SerializeField] private string closeCallLabel = "CLOSE CALL";
+    [SerializeField] private float powerUpBonus = 2f;
+    [SerializeField] private float powerUpDuration = 10f;
 
     public float Total { get; private set; }
     public int LivesLostCount { get; private set; }
-    public event Action<float, float, Vector3, string> OnPointsAdded; // base points, speed multiplier, world position, label (null for none)
+    public int ActivePowerUps => powerUpTimers.Count;
+    public float NextPowerUpFraction => powerUpTimers.Count > 0 ? powerUpTimers[0] / powerUpDuration : 0f;
+    public float PowerUpMultiplier => powerUpBonus * ActivePowerUps;
+    public event Action<float, float, Vector3, string> OnPointsAdded; // base points, total multiplier, world position, label (null for none)
 
     private float eventPoints;
     private int shownPoints = -1;
@@ -30,6 +36,7 @@ public class Score : MonoBehaviour
     private float comboTimer;
     private float comboBonus;
     private float pulseTimer;
+    private readonly List<float> powerUpTimers = new List<float>();
     private PlayerMovement player;
     private PlayerHealth health;
 
@@ -65,6 +72,12 @@ public class Score : MonoBehaviour
                 scoreText.rectTransform.localScale = Vector3.one * Mathf.Lerp(1f, pulseScale, pulseTimer / pulseDuration);
         }
 
+        for (int i = powerUpTimers.Count - 1; i >= 0; i--)
+        {
+            powerUpTimers[i] -= Time.deltaTime;
+            if (powerUpTimers[i] <= 0f) powerUpTimers.RemoveAt(i);
+        }
+
         float timePoints = timer.Progress * timer.LevelTime * pointsPerSecond;
         Total = timePoints + eventPoints;
 
@@ -90,7 +103,8 @@ public class Score : MonoBehaviour
     public void AddPoints(float amount, Vector3 position, string label = null)
     {
         float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
-        Award(amount, speedMultiplier, position, label);
+        float multiplier = speedMultiplier + PowerUpMultiplier;
+        Award(amount, multiplier, position, label);
     }
 
     public void AddBonusPoints(float amount, Vector3 position, string label)
@@ -122,6 +136,11 @@ public class Score : MonoBehaviour
     public void AddCloseCall(Vector3 position)
     {
         ComboKill(closeCallPoints, position, closeCallLabel);
+    }
+
+    public void AddMultiplierPowerUp()
+    {
+        powerUpTimers.Add(powerUpDuration);
     }
 
     private void ComboKill(float points, Vector3 position, string label)

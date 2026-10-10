@@ -105,7 +105,13 @@ hitbox edge, `PlayerShell.Reach`; yellow gizmo when selected; `NearestGap` over 
 once it's past touching range (`AsteroidBehavior.TrackCloseCall`): never touched + a threat (`!CanBreak`) +
 gap in range → `Score.AddCloseCall` (`closeCallPoints` 50, `CLOSE CALL` label), a combo kill with the speed
 multiplier. Doc: `CloseCallZone.md`.
-**Next: stage 5, score multiplier power-up.**
+
+**Stage 5 done and tested:** `PowerUpType.ScoreMultiplier` (added at the end of the enum) → 
+`Score.AddMultiplierPowerUp()`. Each pickup is its own 10 s timer (`powerUpDuration`) in a list; each active
+one adds +2 (`powerUpBonus`), **added** to the speed multiplier (speed ×2 + one pickup = ×4), no cap. Only
+smashes and close calls (`AddPoints`); waves skip it. New `MultiplierDisplay` on the HUD canvas shows `x2`/`x4`
+and a bar for the pickup that runs out next (FIFO, element 0). Doc: `MultiplierDisplay.md`.
+**Next: stage 6, overdrive bonus + tally popup.**
 
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.

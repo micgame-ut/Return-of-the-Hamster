@@ -31,6 +31,8 @@ score starts at 0 in every level.
 | `waveClearLabel` | WAVE CLEAR | Popup label for any other wave clear |
 | `closeCallPoints` | 50 | Base points for a close call, before the combo bonus and speed multiplier |
 | `closeCallLabel` | CLOSE CALL | Popup label for a close call |
+| `powerUpBonus` | 2 | Added to the multiplier for each active score power-up |
+| `powerUpDuration` | 10 | Seconds each score power-up lasts. Each pickup has its own timer |
 
 ## How it works
 
@@ -89,6 +91,10 @@ The text snaps big when points land and shrinks back. Unscaled time lets it fini
 freeze. Lerp clamps a slightly negative timer to 0, so the last frame always sets the scale to exactly 1.
 The scale is set fresh each frame, not multiplied, so it can't drift over many pulses.
 
+**Score power-up timers next, also above the early `return`.** Each timer in `powerUpTimers` counts down by
+`Time.deltaTime` (so they pause during the game-over freeze), and expired ones are removed. The loop runs
+backward because `RemoveAt` shifts the later elements down.
+
 Then it recalculates the score every frame: the time part from the level timer's progress, plus the event points.
 
 If the whole number (rounded down with `Mathf.FloorToInt`) has changed since last frame, it updates the
@@ -101,7 +107,8 @@ frame. `shownPoints` starts at -1, a value the score can never be, so the very f
 There are two public ways in, and both go through one private `Award`, so the shared steps are only
 written once:
 
-- **`AddPoints(amount, position, label = null)`**: works out the speed multiplier and calls `Award`. The
+- **`AddPoints(amount, position, label = null)`**: works out the total multiplier (speed multiplier +
+  `PowerUpMultiplier`, see "Score power-ups" below) and calls `Award`. The
   label is an **optional parameter**: callers can leave it out, and it's `null` (no label). Used for
   asteroid smashes and close calls (through `ComboKill`).
 - **`AddBonusPoints(amount, position, label)`**: calls `Award` with ×1 and a label, so speed never changes
@@ -159,6 +166,29 @@ defaults and a 100-point asteroid (speed ×1):
 
 There's no cap, so long chains (an invincibility run) keep growing.
 
+### Score power-ups
+
+`powerUpTimers` is a list with one entry per active score power-up: its seconds remaining.
+`AddMultiplierPowerUp()` (called by PowerUp on pickup) adds a full `powerUpDuration`. Each pickup has its own
+timer, so overlapping pickups stack and drop off one at a time.
+
+- **`ActivePowerUps`**: how many are running.
+- **`PowerUpMultiplier`**: `powerUpBonus × ActivePowerUps`, the power-up part of the multiplier. It's
+  **added** to the speed multiplier, not multiplied, and only applies through `AddPoints` (smashes and close
+  calls). Waves skip it.
+- **`NextPowerUpFraction`**: element 0's time left ÷ `powerUpDuration`, for MultiplierDisplay's bar.
+  Every pickup starts with the same duration, so the oldest (element 0) always runs out next: first in,
+  first out.
+
+| Speed multiplier | Active pickups | Total multiplier |
+| --- | --- | --- |
+| ×1 | 0 | ×1 |
+| ×1 | 1 | ×3 |
+| ×2 | 1 | ×4 |
+| ×2 | 2 | ×6 |
+
+Two pickups 5 s apart: ×+2 for 5 s, then ×+4 for 5 s, then ×+2 for 5 s, then nothing.
+
 ### `AddWaveClear`
 
 Called by ObjectSpawner when a wave clears, with the amount and whether it was perfect. ObjectSpawner works
@@ -191,6 +221,9 @@ running, so the HUD always shows the real final score.
 - **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears. The overdrive bonus
   will add points later (see TODO.md).
 - **ScorePopups**: subscribes to `OnPointsAdded` to show a popup for each gain.
+- **PowerUp**: calls `AddMultiplierPowerUp()` when a ScoreMultiplier power-up is picked up.
+- **MultiplierDisplay**: reads `ActivePowerUps`, `PowerUpMultiplier` and `NextPowerUpFraction` for the HUD
+  indicator.
 
 ## Gotchas
 
@@ -210,5 +243,7 @@ running, so the HUD always shows the real final score.
   and only losing a life ends the combo.
 - **The combo keeps counting after the level ends.** `AddComboKill` still grows `comboCount` and
   `comboBonus` after game over or a win, but `AddPoints` ignores the points, so nothing is scored.
+- **Changing `powerUpDuration` during Play mode** can leave element 0 not being the next to run out, so
+  the HUD bar may briefly follow the wrong pickup until the older ones expire.
 - **Past 999,999 the HUD shows 7 digits.** `D6` is a minimum width, not a limit.
 - **Nothing is saved.** The score lives on this scene's Score object, so a reload starts at 0.
