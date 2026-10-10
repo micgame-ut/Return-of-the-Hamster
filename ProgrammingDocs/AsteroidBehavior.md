@@ -154,7 +154,9 @@ renderer when that changes, not every frame.
    Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
    shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), adds
    `scorePoints` with `Score.AddComboKill` (null-safe; Score adds the combo bonus and applies the speed
-   multiplier), and despawns the asteroid with `PatternCopy.Despawn`. Since this branch
+   multiplier), and despawns the asteroid with `PatternCopy.Despawn`. `Explode` takes the touching body's
+   position and passes it to Score, so the score popup appears above the body that smashed it (the player
+   or a twin copy), not above the asteroid. Since this branch
    comes first, an invincible player gets no knockback, speed loss or lost life. Twin copies smash
    asteroids the same way.
 3. **Twinned?** If PlayerTwins `IsTwinned`, it calls `LoseBody(body)`: that body blows up and one body is
@@ -206,7 +208,7 @@ PlayerInvincibility, that part is just false.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins` and `Score` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
-- **Score**: calls `AddComboKill(scorePoints)` on a smash.
+- **Score**: calls `AddComboKill(scorePoints, bodyPosition)` on a smash.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
 - **OrbitRing**: reads the `Active` list and the properties above.

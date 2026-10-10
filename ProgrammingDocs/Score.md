@@ -24,6 +24,8 @@ chains of kills. The score starts at 0 in every level.
 | `comboStepBonus` | 50 | How much the combo bonus grows after the first kill |
 | `comboStepGrowth` | 0.5 | How much bigger each later step is, as a fraction of `comboStepBonus` (0.5 → steps of 50, 75, 100…). 0 makes every step the same |
 | `scoreText` | (none) | The HUD text the score is written to, as six zero-padded digits (`000046`). Can be left empty: the score still counts, it just isn't shown |
+| `pulseScale` | 1.15 | How big the HUD score snaps to when points are added through `AddPoints`. 1 turns the pulse off |
+| `pulseDuration` | 0.15 | Seconds to shrink back to normal size after a pulse |
 
 ## How it works
 
@@ -65,6 +67,12 @@ is skipped if its reference is missing.
 `BreakCombo` when it runs out. This has to come before the HUD lines, because their early `return` leaves
 `Update` on most frames, which would almost stop the countdown.
 
+**HUD pulse next, for the same reason.** While `pulseTimer` is above 0, it counts down by
+`Time.unscaledDeltaTime` and sets the HUD text's scale to `Lerp(1, pulseScale, pulseTimer ÷ pulseDuration)`.
+The text snaps big when points land and shrinks back. Unscaled time lets it finish during the game-over
+freeze. Lerp clamps a slightly negative timer to 0, so the last frame always sets the scale to exactly 1.
+The scale is set fresh each frame, not multiplied, so it can't drift over many pulses.
+
 Then it recalculates the score every frame: the time part from the level timer's progress, plus the event points.
 
 If the whole number (rounded down with `Mathf.FloorToInt`) has changed since last frame, it updates the
@@ -74,9 +82,14 @@ frame. `shownPoints` starts at -1, a value the score can never be, so the very f
 
 ### `AddPoints`
 
-The method other scripts call to add points. It ignores calls after game over or a win. Otherwise it
-multiplies the amount by the speed multiplier and adds the result to `eventPoints`. Keeping the guard and
-the multiplier here means no caller can forget either one.
+The method other scripts call to add points, with the world position they came from. It ignores calls
+after game over or a win. Otherwise it multiplies the amount by the speed multiplier, adds the result to
+`eventPoints`, raises **`OnPointsAdded(amount, multiplier, position)`**, and starts the HUD pulse. Keeping
+the guard and the multiplier here means no caller can forget either one.
+
+`OnPointsAdded` is an `Action<float, float, Vector3>`: the base points and the multiplier are passed
+separately so ScorePopups can show both (`+325x2.0`) and still work out the final amount. It's raised
+after the guard, so no popups appear after the level ends.
 
 The speed multiplier is `Mathf.Lerp(1, maxSpeedMultiplier, PlayerMovement.Speed01)`, worked out on each
 call, so it's fixed at the speed the player had at that moment. With a 10-point asteroid and the default
@@ -93,9 +106,9 @@ automatically get a bigger multiplier.
 
 ### `AddComboKill`: asteroid smashes and the combo
 
-Called by AsteroidBehavior with the asteroid's `scorePoints`. It:
+Called by AsteroidBehavior with the asteroid's `scorePoints` and the position of the body that smashed it. It:
 
-1. Adds `points + comboBonus` through `AddPoints`, so the guard and the speed multiplier apply to the
+1. Adds `points + comboBonus` through `AddPoints` (passing the position on), so the guard and the speed multiplier apply to the
    bonus too.
 2. Grows `comboBonus` by this step: `comboStepBonus × (1 + comboStepGrowth × comboCount)`, using the count
    before this kill.
@@ -134,8 +147,9 @@ running, so the HUD always shows the real final score.
 - **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier; subscribes to
   `OnHit` to end the combo.
 - **PlayerTwins**: subscribes to `OnBodyLost` to end the combo.
-- **AsteroidBehavior**: calls `AddComboKill(scorePoints)` when an asteroid is smashed. Waves, close calls
-  and the overdrive bonus will call `AddPoints` (see TODO.md).
+- **AsteroidBehavior**: calls `AddComboKill(scorePoints, bodyPosition)` when an asteroid is smashed.
+  Waves, close calls and the overdrive bonus will call `AddPoints` (see TODO.md).
+- **ScorePopups**: subscribes to `OnPointsAdded` to show a popup for each gain.
 
 ## Gotchas
 

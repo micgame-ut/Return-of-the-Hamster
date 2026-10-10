@@ -235,7 +235,7 @@ public class AsteroidBehavior : MonoBehaviour
 
         if (CanBreak)
         {
-            Explode();
+            Explode(body.position);
         }
         else if (twins != null && twins.IsTwinned)
         {
@@ -256,7 +256,7 @@ public class AsteroidBehavior : MonoBehaviour
         }
     }
 
-    private void Explode()
+    private void Explode(Vector3 bodyPosition)
     {
         if (template != null)
         {
@@ -267,7 +267,7 @@ public class AsteroidBehavior : MonoBehaviour
 
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
-        if (score != null) score.AddComboKill(scorePoints);
+        if (score != null) score.AddComboKill(scorePoints, bodyPosition);
 
         PatternCopy.Despawn(gameObject);
     }

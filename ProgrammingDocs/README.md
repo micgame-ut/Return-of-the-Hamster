@@ -40,6 +40,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | Score.cs | [Score.md](Score.md) | Done |
+| ScorePopups.cs | [ScorePopups.md](ScorePopups.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |

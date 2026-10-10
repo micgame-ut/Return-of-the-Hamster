@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -11,8 +12,11 @@ public class Score : MonoBehaviour
     [SerializeField] private float comboStepBonus = 50f;
     [SerializeField] private float comboStepGrowth = 0.5f;
     [SerializeField] private TMP_Text scoreText;
+    [SerializeField] private float pulseScale = 1.15f;
+    [SerializeField] private float pulseDuration = 0.15f;
 
     public float Total { get; private set; }
+    public event Action<float, float, Vector3> OnPointsAdded; // base points, speed multiplier, world position
 
     private float eventPoints;
     private int shownPoints = -1;
@@ -20,6 +24,7 @@ public class Score : MonoBehaviour
     private int comboCount;
     private float comboTimer;
     private float comboBonus;
+    private float pulseTimer;
     private PlayerMovement player;
     private PlayerTwins twins;
 
@@ -50,6 +55,13 @@ public class Score : MonoBehaviour
             if (comboTimer <= 0f) BreakCombo();
         }
 
+        if (pulseTimer > 0f)
+        {
+            pulseTimer -= Time.unscaledDeltaTime;
+            if (scoreText != null)
+                scoreText.rectTransform.localScale = Vector3.one * Mathf.Lerp(1f, pulseScale, pulseTimer / pulseDuration);
+        }
+
         float timePoints = timer.Progress * timer.LevelTime * pointsPerSecond;
         Total = timePoints + eventPoints;
 
@@ -66,18 +78,20 @@ public class Score : MonoBehaviour
         comboBonus = 0f;
     }
 
-    public void AddPoints(float amount)
+    public void AddPoints(float amount, Vector3 position)
     {
         GameManager gm = GameManager.Instance;
         if (gm.IsGameOver || gm.HasWon) return;
 
         float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
         eventPoints += amount * speedMultiplier;
+        OnPointsAdded?.Invoke(amount, speedMultiplier, position);
+        pulseTimer = pulseDuration;
     }
 
-    public void AddComboKill(float points)
+    public void AddComboKill(float points, Vector3 position)
     {
-        AddPoints(points + comboBonus);
+        AddPoints(points + comboBonus, position);
         comboBonus += comboStepBonus * (1f + comboStepGrowth * comboCount);
         comboCount++;
         comboTimer = comboWindow;

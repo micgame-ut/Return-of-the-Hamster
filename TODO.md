@@ -84,17 +84,21 @@ every gain except the time score. Score resets each level; gains stop after game
 called from `AsteroidBehavior.Explode()`, (base + bonus) × speed multiplier. New events
 `PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` end the combo (Score subscribes in OnEnable/OnDisable;
 stage 3's perfect wave will reuse them). Known edge case: `comboWindow` 0 means the combo never expires
-(in Score.md Gotchas). Docs updated. **Next: 2c popups.**
+(in Score.md Gotchas). Docs updated.
+
+**Stage 2c done and tested:** `Score.OnPointsAdded(points, multiplier, position)`; `AddPoints` /
+`AddComboKill` take a position (the smashing body's, from `AsteroidBehavior.Explode`). New `ScorePopups`
+on the HUD canvas: screen-space UI popups from a pool, rise and fade with unscaled time, size scales
+smoothly with the final gain, multiplier shown to one decimal only above ×1.5. HUD score pulse in Score
+(`pulseScale` 1.15, `pulseDuration` 0.15, snaps up then shrinks). Doc: `ScorePopups.md`.
+**Next: stage 3, wave complete + perfect wave bonus.**
 
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.
 
-**Score popups (build with stage 2):** `Score` fires an event after the `AddPoints` guard; a new
-`ScorePopups` script shows `+amount` from its own pool (prewarm 5), using a TMP prefab. Rises ~1.5 units
-over 0.8 s while fading, screen-up, stays where it appeared, stacked (not merged), above the body that
-earned it (so `AddPoints` needs a position). Bigger amounts look bigger (scale vs tiers to decide). Shows
-base and multiplier like `+15x2` (the speed multiplier is continuous, so decide how to show e.g. ×1.37).
-The HUD score grows slightly on each gain. Overdrive gets its own running-tally popup, emphasized on exit.
+**Overdrive tally popup (stage 6):** overdrive gains won't use the normal popup. A separate popup shows a
+running tally while in overdrive, emphasized when the player leaves it. May reuse ScorePopups' placement
+and fade; Score needs a way to add overdrive points without raising `OnPointsAdded` (or its own event).
 
 Later: per-level leaderboard ranked by score, with a details view (hamster name + RunStats
 snapshot at that moment).

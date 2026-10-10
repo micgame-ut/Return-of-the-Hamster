@@ -3104,6 +3104,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Score
   pointsPerSecond: 10
   maxSpeedMultiplier: 2
+  comboWindow: 1.5
+  comboStepBonus: 50
+  comboStepGrowth: 0.5
   scoreText: {fileID: 231214188}
 --- !u!1 &1441542810
 GameObject:
@@ -3998,6 +4001,7 @@ GameObject:
   - component: {fileID: 1716721908}
   - component: {fileID: 1716721907}
   - component: {fileID: 1716721906}
+  - component: {fileID: 1716721911}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -4108,6 +4112,27 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1716721911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1716721905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 852affdbc9f249f4c8fb648a441a8a92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScorePopups
+  popupPrefab: {fileID: 8428736290119793274, guid: ae2d230b32a4569479718988571b50cf, type: 3}
+  prewarmCount: 5
+  startOffset: 40
+  riseDistance: 80
+  lifetime: 0.8
+  minScale: 1
+  maxScale: 2
+  pointsForMaxScale: 1000
+  showMultiplierAbove: 1.5
 --- !u!1 &1870508954
 GameObject:
   m_ObjectHideFlags: 0
