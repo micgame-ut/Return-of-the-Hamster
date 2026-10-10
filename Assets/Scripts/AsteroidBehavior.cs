@@ -20,6 +20,7 @@ public class AsteroidBehavior : MonoBehaviour
     [Header("Destruction")]
     [SerializeField] private bool destructible = false;
     [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
+    [SerializeField] private int scorePoints = 10; // base points when broken, before the speed multiplier
 
     [Header("Template")]
     [SerializeField] private SpawnableTemplate template;
@@ -38,6 +39,7 @@ public class AsteroidBehavior : MonoBehaviour
     private PlayerMovement player;
     private PlayerHealth health;
     private PlayerTwins twins;
+    private Score score;
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -78,6 +80,7 @@ public class AsteroidBehavior : MonoBehaviour
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
+        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -264,6 +267,7 @@ public class AsteroidBehavior : MonoBehaviour
 
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
+        if (score != null) score.AddPoints(scorePoints);
 
         PatternCopy.Despawn(gameObject);
     }

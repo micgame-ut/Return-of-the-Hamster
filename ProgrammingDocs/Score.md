@@ -18,6 +18,7 @@ points that grow with the level timer's progress, and event points that other sc
 | Field | Default | What it changes |
 | --- | --- | --- |
 | `pointsPerSecond` | 1 | Time points per second of `levelTime`. A full level gives `levelTime × pointsPerSecond` time points, however fast the player flies |
+| `maxSpeedMultiplier` | 2 | What points from `AddPoints` are multiplied by at max speed. At speed 0 it's ×1, and in between it rises in a straight line. Doesn't affect the time score |
 | `scoreText` | (none) | The HUD text the score is written to, as six zero-padded digits (`000046`). Can be left empty: the score still counts, it just isn't shown |
 
 ## How it works
@@ -58,8 +59,22 @@ frame. `shownPoints` starts at -1, a value the score can never be, so the very f
 
 ### `AddPoints`
 
-The method other scripts call to add points. It ignores calls after game over or a win, and otherwise adds
-the amount to `eventPoints`. Keeping the guard here means no caller can forget it.
+The method other scripts call to add points. It ignores calls after game over or a win. Otherwise it
+multiplies the amount by the speed multiplier and adds the result to `eventPoints`. Keeping the guard and
+the multiplier here means no caller can forget either one.
+
+The speed multiplier is `Mathf.Lerp(1, maxSpeedMultiplier, PlayerMovement.Speed01)`, worked out on each
+call, so it's fixed at the speed the player had at that moment. With a 10-point asteroid and the default
+`maxSpeedMultiplier` of 2:
+
+| Speed when it's smashed | `Speed01` | Multiplier | Points added |
+| --- | --- | --- | --- |
+| 0 (invincible smash) | 0 | ×1 | 10 |
+| 5 | 0.5 | ×1.5 | 15 |
+| 10 (max) | 1 | ×2 | 20 |
+
+A destructible asteroid can only be smashed at its `destroySpeed` or faster, so harder asteroids
+automatically get a bigger multiplier.
 
 ### When the level ends
 
@@ -72,7 +87,9 @@ running, so the HUD always shows the real final score.
 - **GameManager**: gets `LevelTimer` in `Awake`; reads `IsGameOver` and `HasWon` in `AddPoints`.
   GameManager finds Score with `GetComponent` and exposes it as `Score`.
 - **LevelTimer**: reads `Progress` and `LevelTime` every frame.
-- Nothing calls `AddPoints` yet. Asteroids, waves, close calls and the overdrive bonus will (see TODO.md).
+- **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier.
+- **AsteroidBehavior**: calls `AddPoints(scorePoints)` when an asteroid is smashed. Waves, close calls and
+  the overdrive bonus will call it too (see TODO.md).
 
 ## Gotchas
 
@@ -86,5 +103,7 @@ running, so the HUD always shows the real final score.
   future leaderboard) should round the same way so it matches what the player saw.
 - **Points added after game over in the same frame are lost.** If something calls `AddPoints` after
   `GameOver()` or `Win()` has run, it's ignored, even in the same frame.
+- **`maxSpeedMultiplier` below 1 punishes speed.** At 0.5, a player at max speed gets half the points of a
+  slow one.
 - **Past 999,999 the HUD shows 7 digits.** `D6` is a minimum width, not a limit.
 - **Nothing is saved.** The score lives on this scene's Score object, so a reload starts at 0.

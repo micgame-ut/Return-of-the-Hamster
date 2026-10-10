@@ -76,6 +76,11 @@ Stages (test each before the next): 1) `Score` on Game Manager, time score
 6) overdrive bonus. Speed multiplier (×1 to `maxSpeedMultiplier` 2 via `Speed01`) applies to
 every gain except the time score. Score resets each level; gains stop after game over / win.
 
+**Stage 2a done and tested:** per-prefab `scorePoints` on AsteroidBehavior, speed multiplier
+(`maxSpeedMultiplier`) inside `AddPoints`. Next: 2b combo (`comboWindow` 1.5 s, flat `comboStepBonus` 5 per step,
+no cap, (base + bonus) × speed multiplier, combo lives in Score; a hit or losing a twin copy ends it), then
+2c popups.
+
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.
 

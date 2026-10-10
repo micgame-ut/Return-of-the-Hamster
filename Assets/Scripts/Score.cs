@@ -6,6 +6,7 @@ using UnityEngine;
 public class Score : MonoBehaviour
 {
     [SerializeField] private float pointsPerSecond = 1f;
+    [SerializeField] private float maxSpeedMultiplier = 2f;
     [SerializeField] private TMP_Text scoreText;
 
     public float Total { get; private set; }
@@ -36,6 +37,7 @@ public class Score : MonoBehaviour
         GameManager gm = GameManager.Instance;
         if (gm.IsGameOver || gm.HasWon) return;
 
-        eventPoints += amount;
+        float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
+        eventPoints += amount * speedMultiplier;
     }
 }
