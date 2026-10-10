@@ -16,6 +16,8 @@ public class Score : MonoBehaviour
     [SerializeField] private float pulseDuration = 0.15f;
     [SerializeField] private string perfectWaveLabel = "PERFECT WAVE";
     [SerializeField] private string waveClearLabel = "WAVE CLEAR";
+    [SerializeField] private float closeCallPoints = 50f;
+    [SerializeField] private string closeCallLabel = "CLOSE CALL";
 
     public float Total { get; private set; }
     public int LivesLostCount { get; private set; }
@@ -85,10 +87,10 @@ public class Score : MonoBehaviour
         comboBonus = 0f;
     }
 
-    public void AddPoints(float amount, Vector3 position)
+    public void AddPoints(float amount, Vector3 position, string label = null)
     {
         float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
-        Award(amount, speedMultiplier, position, null);
+        Award(amount, speedMultiplier, position, label);
     }
 
     public void AddBonusPoints(float amount, Vector3 position, string label)
@@ -114,7 +116,17 @@ public class Score : MonoBehaviour
 
     public void AddComboKill(float points, Vector3 position)
     {
-        AddPoints(points + comboBonus, position);
+        ComboKill(points, position, null);
+    }
+
+    public void AddCloseCall(Vector3 position)
+    {
+        ComboKill(closeCallPoints, position, closeCallLabel);
+    }
+
+    private void ComboKill(float points, Vector3 position, string label)
+    {
+        AddPoints(points + comboBonus, position, label);
         comboBonus += comboStepBonus * (1f + comboStepGrowth * comboCount);
         comboCount++;
         comboTimer = comboWindow;

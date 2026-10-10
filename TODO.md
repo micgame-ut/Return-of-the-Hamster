@@ -98,7 +98,14 @@ started revealing; cut short by the earth = half `clearPoints`, never perfect. N
 `WAVE CLEAR +300`; Inspector strings on Score). Rule change: **only losing a life** breaks the combo or a
 perfect wave (new `PlayerHealth.OnLifeLost`; `PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` removed),
 so twin hits don't count. Docs updated.
-**Next: stage 4, close calls.**
+
+**Stage 4 done and tested:** new `CloseCallZone` on the player (`closeCallDistance` 1.5 past the active
+hitbox edge, `PlayerShell.Reach`; yellow gizmo when selected; `NearestGap` over the player and
+`PlayerTwins.Copies`). Each asteroid measures once on the frame it crosses the player's depth and judges
+once it's past touching range (`AsteroidBehavior.TrackCloseCall`): never touched + a threat (`!CanBreak`) +
+gap in range → `Score.AddCloseCall` (`closeCallPoints` 50, `CLOSE CALL` label), a combo kill with the speed
+multiplier. Doc: `CloseCallZone.md`.
+**Next: stage 5, score multiplier power-up.**
 
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.

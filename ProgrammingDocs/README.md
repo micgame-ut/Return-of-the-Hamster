@@ -15,6 +15,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| CloseCallZone.cs | [CloseCallZone.md](CloseCallZone.md) | Done |
 | Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
 | DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
 | EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |

@@ -29,6 +29,8 @@ score starts at 0 in every level.
 | `pulseDuration` | 0.15 | Seconds to shrink back to normal size after a pulse |
 | `perfectWaveLabel` | PERFECT WAVE | Popup label for a wave cleared with no life lost. Empty shows just the number |
 | `waveClearLabel` | WAVE CLEAR | Popup label for any other wave clear |
+| `closeCallPoints` | 50 | Base points for a close call, before the combo bonus and speed multiplier |
+| `closeCallLabel` | CLOSE CALL | Popup label for a close call |
 
 ## How it works
 
@@ -99,8 +101,9 @@ frame. `shownPoints` starts at -1, a value the score can never be, so the very f
 There are two public ways in, and both go through one private `Award`, so the shared steps are only
 written once:
 
-- **`AddPoints(amount, position)`**: works out the speed multiplier and calls `Award` with no label. Used
-  for asteroids (through `AddComboKill`), and later close calls.
+- **`AddPoints(amount, position, label = null)`**: works out the speed multiplier and calls `Award`. The
+  label is an **optional parameter**: callers can leave it out, and it's `null` (no label). Used for
+  asteroid smashes and close calls (through `ComboKill`).
 - **`AddBonusPoints(amount, position, label)`**: calls `Award` with ×1 and a label, so speed never changes
   it. Used for waves (through `AddWaveClear`).
 - **`Award(amount, multiplier, position, label)`**: ignores calls after game over or a win. Otherwise it
@@ -125,12 +128,20 @@ call, so it's fixed at the speed the player had at that moment. With a 10-point 
 A destructible asteroid can only be smashed at its `destroySpeed` or faster, so harder asteroids
 automatically get a bigger multiplier.
 
-### `AddComboKill`: asteroid smashes and the combo
+### `AddComboKill`, `AddCloseCall` and `ComboKill`: the combo
 
-Called by AsteroidBehavior with the asteroid's `scorePoints` and the position of the body that smashed it. It:
+Two public entry points share one private `ComboKill(points, position, label)`:
 
-1. Adds `points + comboBonus` through `AddPoints` (passing the position on), so the guard and the speed multiplier apply to the
-   bonus too.
+- **`AddComboKill(points, position)`**: called by AsteroidBehavior on a smash, with the asteroid's
+  `scorePoints` and the position of the body that smashed it. No label.
+- **`AddCloseCall(position)`**: called by AsteroidBehavior on a close call, with the position of the body it
+  nearly hit. Uses `closeCallPoints` and `closeCallLabel`, so a close call counts as a combo kill: it gets
+  the bonus, advances the count, and resets the timer.
+
+`ComboKill`:
+
+1. Adds `points + comboBonus` through `AddPoints` (passing the position and label on), so the guard and the
+   speed multiplier apply to the bonus too.
 2. Grows `comboBonus` by this step: `comboStepBonus × (1 + comboStepGrowth × comboCount)`, using the count
    before this kill.
 3. Adds one to `comboCount`.
@@ -175,9 +186,10 @@ running, so the HUD always shows the real final score.
 - **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier, and the player's
   position in `AddWaveClear`.
 - **PlayerHealth**: subscribes to `OnLifeLost` to end the combo and count lives lost.
-- **AsteroidBehavior**: calls `AddComboKill(scorePoints, bodyPosition)` when an asteroid is smashed.
-- **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears. Close calls and
-  the overdrive bonus will add points later (see TODO.md).
+- **AsteroidBehavior**: calls `AddComboKill(scorePoints, bodyPosition)` when an asteroid is smashed, and
+  `AddCloseCall(bodyPosition)` on a close call.
+- **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears. The overdrive bonus
+  will add points later (see TODO.md).
 - **ScorePopups**: subscribes to `OnPointsAdded` to show a popup for each gain.
 
 ## Gotchas

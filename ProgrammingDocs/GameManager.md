@@ -37,6 +37,7 @@ the matching end screen. It doesn't stop other scripts itself. It announces the 
 | `playerInvincibility` | PlayerInvincibility | The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the `player` object |
 | `playerShell` | PlayerShell | The player's shield shell and its hitbox. Can be left empty if PlayerShell is on the `player` object |
 | `playerTwins` | PlayerTwins | The twin power-up on the player. Can be left empty if PlayerTwins is on the `player` object |
+| `closeCallZone` | CloseCallZone | The close-call range on the player. Can be left empty if CloseCallZone is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
 | `score` | Score | This level's score and its HUD counter. Can be left empty if Score is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
@@ -76,7 +77,7 @@ or `Start` runs, `Instance` is ready.
    runs first (`-100`), so time is normal before any other script runs.
 4. **Fill in the LevelTimer, RunStats and Score.** If any was left empty, it looks for one on the same
    GameObject with `GetComponent`.
-5. **Fill in the PlayerHealth, PlayerInvincibility, PlayerShell and PlayerTwins.** If any was left empty and `player` is
+5. **Fill in the PlayerHealth, PlayerInvincibility, PlayerShell, PlayerTwins and CloseCallZone.** If any was left empty and `player` is
    assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
    another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
@@ -170,7 +171,7 @@ anything. Other scripts read from it or call it:
 | **ExhaustFlame** | subscribes to `OnGameOver` and `OnWin`; on a twin copy, gets `Player` and `PlayerInvincibility` | `Awake`; at game over or win |
 | **TwinCopy** | `Player`, `PlayerShell` | `Awake` |
 | **DangerWarning** | gets `PlayerHealth` and `PlayerTwins`; subscribes to `OnWin` | `Awake`; on a win |
-| **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
+| **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`, `CloseCallZone`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
 | **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |

@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerInvincibility playerInvincibility;
     [SerializeField] private PlayerShell playerShell;
     [SerializeField] private PlayerTwins playerTwins;
+    [SerializeField] private CloseCallZone closeCallZone;
     [SerializeField] private RunStats runStats;
     [SerializeField] private Score score;
     [SerializeField] private EndScreen endScreen;
@@ -34,6 +35,7 @@ public class GameManager : MonoBehaviour
     public PlayerInvincibility PlayerInvincibility => playerInvincibility;
     public PlayerShell PlayerShell => playerShell;
     public PlayerTwins PlayerTwins => playerTwins;
+    public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
     public bool ShowOrbitRing => showOrbitRing;
@@ -70,6 +72,7 @@ public class GameManager : MonoBehaviour
         if (playerInvincibility == null && player != null) playerInvincibility = player.GetComponent<PlayerInvincibility>();
         if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
         if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
+        if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
     }
 
     private void Update()

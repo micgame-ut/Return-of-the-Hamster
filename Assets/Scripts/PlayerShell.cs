@@ -18,9 +18,13 @@ public class PlayerShell : MonoBehaviour
     private Renderer shellRenderer;
 
     // XY footprint of the shell's hitbox for OrbitRing; 0 while it's off.
-    public float HitRadius => shellCollider != null && shellCollider.enabled
-        ? Mathf.Max(shellCollider.bounds.extents.x, shellCollider.bounds.extents.y)
-        : 0f;
+    public float HitRadius => Extent(shellCollider);
+
+    // XY footprint of whichever hitbox is on (body or shell), for close calls.
+    public float Reach => Mathf.Max(Extent(bodyCollider), Extent(shellCollider));
+
+    private static float Extent(Collider c) =>
+        c != null && c.enabled ? Mathf.Max(c.bounds.extents.x, c.bounds.extents.y) : 0f;
 
     // Shell state for TwinCopy to mirror; OnShellChanged fires after every Refresh.
     public event Action OnShellChanged;

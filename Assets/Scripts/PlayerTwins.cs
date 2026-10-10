@@ -21,6 +21,7 @@ public class PlayerTwins : MonoBehaviour
     private int jumpFrame = -1;
 
     public bool IsTwinned => copies.Count > 0;
+    public IReadOnlyList<TwinCopy> Copies => copies;
     public event Action<bool> OnTwinChanged; // true when the twin starts, false when the last copy is gone
 
     private void Awake()

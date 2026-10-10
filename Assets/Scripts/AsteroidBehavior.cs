@@ -40,6 +40,13 @@ public class AsteroidBehavior : MonoBehaviour
     private PlayerHealth health;
     private PlayerTwins twins;
     private Score score;
+    private CloseCallZone closeCalls;
+    private bool passedPlayer;      // has crossed the player's depth and been measured
+    private bool closeCallJudged;   // the close call has been decided, so stop checking
+    private bool hitPlayer;         // touched the player or a twin copy this flight
+    private float closeCallGap;     // gap to the nearest body when it crossed
+    private Vector3 closeCallBody;  // that body's position, for the popup
+    private bool closeCallThreat;   // couldn't be broken when it crossed
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -81,6 +88,7 @@ public class AsteroidBehavior : MonoBehaviour
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+        closeCalls = GameManager.Instance != null ? GameManager.Instance.CloseCallZone : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -107,6 +115,9 @@ public class AsteroidBehavior : MonoBehaviour
         distance = 0f;
         isMoving = false;
         outlineState = -1; // force the outline color to refresh
+        passedPlayer = false;
+        closeCallJudged = false;
+        hitPlayer = false;
 
         // Each asteroid spins around its own random axis.
         spinAxis = Random.onUnitSphere;
@@ -214,6 +225,7 @@ public class AsteroidBehavior : MonoBehaviour
         }
 
         transform.position = position;
+        if (closeCalls != null && player != null && !closeCallJudged) TrackCloseCall();
 
         // Asteroids fly toward -Z, so once one is far enough behind the camera it
         // can never come back into view.
@@ -224,6 +236,26 @@ public class AsteroidBehavior : MonoBehaviour
         }
     }
 
+    // Measures the gap once, on the frame it crosses the player's depth, then judges
+    // once it's too far past to still touch.
+    private void TrackCloseCall()
+    {
+        float depth = transform.position.z - player.transform.position.z;
+        if (!passedPlayer)
+        {
+            if (depth > 0f) return;
+            passedPlayer = true;
+            closeCallGap = closeCalls.NearestGap(transform.position, HitRadius, out closeCallBody);
+            closeCallThreat = !CanBreak;
+        }
+
+        if (depth > -(HitRadius + closeCalls.Reach)) return;
+        closeCallJudged = true;
+
+        if (!hitPlayer && closeCallThreat && closeCallGap > 0f && closeCallGap <= closeCalls.Distance && score != null)
+            score.AddCloseCall(closeCallBody);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         // Only react to the player or a twin copy. FindBody also covers the
@@ -232,6 +264,7 @@ public class AsteroidBehavior : MonoBehaviour
         Transform body = twins != null ? twins.FindBody(other.transform)
                        : other.transform.IsChildOf(player.transform) ? player.transform : null;
         if (body == null) return;
+        hitPlayer = true;
 
         if (CanBreak)
         {
