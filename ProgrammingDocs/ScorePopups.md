@@ -56,7 +56,7 @@ up with it.
 ### `OnEnable` / `OnDisable`
 
 Subscribes `Show` to `Score.OnPointsAdded`, and unsubscribes it. `Show`'s parameters
-`(float, float, Vector3)` match the event's `Action<float, float, Vector3>`. With no Score, both are skipped
+`(float, float, Vector3, string)` match the event's `Action<float, float, Vector3, string>`. With no Score, both are skipped
 and no popups show.
 
 ### `Show`
@@ -69,7 +69,9 @@ Called by the event, right when Score adds points. It:
    second step handles the Canvas Scaler. `start` is that point plus `startOffset` up, and `age` is 0.
 3. Sets the text: `+` and the points rounded to a whole number, plus `x` and the multiplier to one decimal
    if the multiplier is above `showMultiplierAbove`. The check uses the exact multiplier, so ×1.50 shows
-   no multiplier while ×1.53 shows `x1.5`.
+   no multiplier while ×1.53 shows `x1.5`. If there's a label, it goes in front (`PERFECT WAVE +500`).
+   `string.IsNullOrEmpty` treats both `null` (asteroids pass no label) and `""` (a label cleared in the
+   Inspector) as no label, so there's never a stray space in front of the number.
 4. Sets the size: `Lerp(minScale, maxScale, points × multiplier ÷ pointsForMaxScale)`, capped at `maxScale`.
 5. Places it, sets full opacity (a reused popup was faded out), switches it on, and adds it to `active`.
 
@@ -95,8 +97,9 @@ slid into the removed slot.
 
 ## Talks to
 
-- **Score**: subscribes to `OnPointsAdded`. Score raises it from `AddPoints` (after the game-over guard), so
-  every gain makes a popup and nothing appears after the level ends.
+- **Score**: subscribes to `OnPointsAdded`. Score raises it for every gain (after the game-over guard), so
+  every gain makes a popup and nothing appears after the level ends. Wave clears come with a label and a
+  ×1 multiplier, so they never show an `x` part.
 - **GameManager**: gets `GameplayCamera` and `Score` in `Awake`.
 - **AsteroidBehavior**: no direct link, but it passes the smashing body's position through Score, which is
   why popups appear above the body that earned them.
@@ -112,4 +115,6 @@ slid into the removed slot.
   ×1.50. To change that, compare the rounded value instead.
 - **The prefab's pivot matters.** Scaling and placement happen around it, so a non-center pivot makes big
   popups grow off to one side.
+- **Labels make popups much wider.** If `PERFECT WAVE +500` wraps onto two lines, widen the prefab's Rect
+  Transform or turn off Wrapping.
 - **Overdrive won't use these popups.** It will get its own running-tally popup (stage 6 in TODO.md).

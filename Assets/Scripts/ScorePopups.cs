@@ -77,7 +77,7 @@ public class ScorePopups : MonoBehaviour
         return new Popup { text = text };
     }
 
-    private void Show(float points, float multiplier, Vector3 worldPosition)
+    private void Show(float points, float multiplier, Vector3 worldPosition, string label)
     {
         Popup popup = free.Count > 0 ? free.Pop() : CreatePopup();
 
@@ -87,7 +87,8 @@ public class ScorePopups : MonoBehaviour
         popup.age = 0f;
 
         int whole = Mathf.RoundToInt(points);
-        popup.text.text = multiplier > showMultiplierAbove ? $"+{whole}x{multiplier:0.0}" : $"+{whole}";
+        string value = multiplier > showMultiplierAbove ? $"+{whole}x{multiplier:0.0}" : $"+{whole}";
+        popup.text.text = string.IsNullOrEmpty(label) ? value : $"{label} {value}";
         popup.text.rectTransform.localScale = Vector3.one * Mathf.Lerp(minScale, maxScale, points * multiplier / pointsForMaxScale);
         popup.text.rectTransform.localPosition = popup.start;
         popup.text.alpha = 1f;

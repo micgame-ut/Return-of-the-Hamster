@@ -81,9 +81,8 @@ every gain except the time score. Score resets each level; gains stop after game
 
 **Stage 2b done and tested:** combo in Score (`comboWindow` 1.5, `comboStepBonus` 50,
 `comboStepGrowth` 0.5: steps of 50, 75, 100… so kill bonuses 0, 50, 125, 225, no cap), `AddComboKill(points)`
-called from `AsteroidBehavior.Explode()`, (base + bonus) × speed multiplier. New events
-`PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` end the combo (Score subscribes in OnEnable/OnDisable;
-stage 3's perfect wave will reuse them). Known edge case: `comboWindow` 0 means the combo never expires
+called from `AsteroidBehavior.Explode()`, (base + bonus) × speed multiplier. Only losing a life ends it
+(changed in stage 3, see below). Known edge case: `comboWindow` 0 means the combo never expires
 (in Score.md Gotchas). Docs updated.
 
 **Stage 2c done and tested:** `Score.OnPointsAdded(points, multiplier, position)`; `AddPoints` /
@@ -91,7 +90,15 @@ stage 3's perfect wave will reuse them). Known edge case: `comboWindow` 0 means 
 on the HUD canvas: screen-space UI popups from a pool, rise and fade with unscaled time, size scales
 smoothly with the final gain, multiplier shown to one decimal only above ×1.5. HUD score pulse in Score
 (`pulseScale` 1.15, `pulseDuration` 0.15, snaps up then shrinks). Doc: `ScorePopups.md`.
-**Next: stage 3, wave complete + perfect wave bonus.**
+
+**Stage 3 done and tested:** per-wave `clearPoints` 300 / `perfectBonus` 200 on ObjectSpawner's `Wave`.
+A wave clears when its PatternCopy is released; perfect = `Score.LivesLostCount` unchanged since the wave
+started revealing; cut short by the earth = half `clearPoints`, never perfect. No speed multiplier
+(`Score.AddBonusPoints`, shared private `Award`). Popups carry a label (`PERFECT WAVE +500`,
+`WAVE CLEAR +300`; Inspector strings on Score). Rule change: **only losing a life** breaks the combo or a
+perfect wave (new `PlayerHealth.OnLifeLost`; `PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` removed),
+so twin hits don't count. Docs updated.
+**Next: stage 4, close calls.**
 
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.

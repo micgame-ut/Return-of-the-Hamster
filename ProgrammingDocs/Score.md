@@ -5,7 +5,8 @@
 Keeps track of the player's score for this level and shows it on the HUD. The score has two parts: time
 points that grow with the level timer's progress, and event points that other scripts add with
 `AddPoints`. Asteroid smashes go through `AddComboKill`, which adds a growing combo bonus for quick
-chains of kills. The score starts at 0 in every level.
+chains of kills. Wave clears go through `AddWaveClear`, which adds unmultiplied, labelled points. The
+score starts at 0 in every level.
 
 ## Where it lives
 
@@ -26,6 +27,8 @@ chains of kills. The score starts at 0 in every level.
 | `scoreText` | (none) | The HUD text the score is written to, as six zero-padded digits (`000046`). Can be left empty: the score still counts, it just isn't shown |
 | `pulseScale` | 1.15 | How big the HUD score snaps to when points are added through `AddPoints`. 1 turns the pulse off |
 | `pulseDuration` | 0.15 | Seconds to shrink back to normal size after a pulse |
+| `perfectWaveLabel` | PERFECT WAVE | Popup label for a wave cleared with no life lost. Empty shows just the number |
+| `waveClearLabel` | WAVE CLEAR | Popup label for any other wave clear |
 
 ## How it works
 
@@ -51,15 +54,26 @@ With `levelTime` 60 and `pointsPerSecond` 0.5, dying at `Progress` 0.7 with 25 e
 ### `Awake`
 
 Finds the LevelTimer through GameManager and stores it in the `timer` field, so `Update` doesn't have to
-look it up every frame. It also stores the player (`PlayerMovement`) and `PlayerTwins`, for the hit events.
-This is safe in `Awake` because GameManager runs first (`[DefaultExecutionOrder(-100)]`).
+look it up every frame. It also stores the player (`PlayerMovement`, for the wave popup's position) and
+`PlayerHealth` (for losing a life). This is safe in `Awake` because GameManager runs first
+(`[DefaultExecutionOrder(-100)]`).
 
 ### `OnEnable` / `OnDisable`
 
-Subscribe `BreakCombo` to `PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost`, and unsubscribe again. So a
-hit that counts, or losing a body during the twin, ends the combo. Unsubscribing in `OnDisable` keeps the
-events from calling a disabled or destroyed Score, and stops a re-enable from subscribing twice. Each one
-is skipped if its reference is missing.
+Subscribe `HandleLifeLost` to `PlayerHealth.OnLifeLost`, and unsubscribe again. Unsubscribing in
+`OnDisable` keeps the event from calling a disabled or destroyed Score, and stops a re-enable from
+subscribing twice. It's skipped if there's no PlayerHealth.
+
+### `HandleLifeLost` and `LivesLostCount`
+
+The rule: **only losing a life** ends the combo or spoils a wave. A twin copy being hit, or the player being
+hit while twinned, costs no life, so it doesn't count. `HandleLifeLost` adds one to `LivesLostCount` and
+calls `BreakCombo`.
+
+`LivesLostCount` is public to read and only ever goes up during a level. ObjectSpawner notes it when a wave
+starts and compares it when the wave clears: the same number means no life was lost during that wave. The
+count isn't in `BreakCombo` because `BreakCombo` also runs when the combo timer runs out, which would count a
+timeout as a lost life.
 
 ### `Update`
 
@@ -80,16 +94,23 @@ HUD text with `ToString("D6")`. Only writing when the number changes avoids maki
 frame. `shownPoints` starts at -1, a value the score can never be, so the very first frame always writes
 `000000` over the text's placeholder.
 
-### `AddPoints`
+### `AddPoints`, `AddBonusPoints` and `Award`
 
-The method other scripts call to add points, with the world position they came from. It ignores calls
-after game over or a win. Otherwise it multiplies the amount by the speed multiplier, adds the result to
-`eventPoints`, raises **`OnPointsAdded(amount, multiplier, position)`**, and starts the HUD pulse. Keeping
-the guard and the multiplier here means no caller can forget either one.
+There are two public ways in, and both go through one private `Award`, so the shared steps are only
+written once:
 
-`OnPointsAdded` is an `Action<float, float, Vector3>`: the base points and the multiplier are passed
-separately so ScorePopups can show both (`+325x2.0`) and still work out the final amount. It's raised
-after the guard, so no popups appear after the level ends.
+- **`AddPoints(amount, position)`**: works out the speed multiplier and calls `Award` with no label. Used
+  for asteroids (through `AddComboKill`), and later close calls.
+- **`AddBonusPoints(amount, position, label)`**: calls `Award` with ×1 and a label, so speed never changes
+  it. Used for waves (through `AddWaveClear`).
+- **`Award(amount, multiplier, position, label)`**: ignores calls after game over or a win. Otherwise it
+  adds `amount × multiplier` to `eventPoints`, raises **`OnPointsAdded`**, and starts the HUD pulse. It's
+  `private`, so other scripts can't pass a made-up multiplier.
+
+`OnPointsAdded` is an `Action<float, float, Vector3, string>`: base points, multiplier, position, and a
+label (`null` for none). The points and multiplier are passed separately so ScorePopups can show both
+(`+325x2.0`) and still work out the final amount. It's raised after the guard, so no popups appear after the
+level ends.
 
 The speed multiplier is `Mathf.Lerp(1, maxSpeedMultiplier, PlayerMovement.Speed01)`, worked out on each
 call, so it's fixed at the speed the player had at that moment. With a 10-point asteroid and the default
@@ -127,9 +148,16 @@ defaults and a 100-point asteroid (speed ×1):
 
 There's no cap, so long chains (an invincibility run) keep growing.
 
+### `AddWaveClear`
+
+Called by ObjectSpawner when a wave clears, with the amount and whether it was perfect. ObjectSpawner works
+out the amount (full + bonus, full, or half when cut short). Score decides the presentation: the label
+(`perfectWaveLabel` or `waveClearLabel`) and the position (above the player, or the world origin with no
+player). It goes through `AddBonusPoints`, so there's no speed multiplier.
+
 ### `BreakCombo`
 
-Sets `comboCount` and `comboBonus` back to 0. Called by the hit events and when the combo timer runs out.
+Sets `comboCount` and `comboBonus` back to 0. Called by `HandleLifeLost` and when the combo timer runs out.
 It doesn't need to reset `comboTimer`: the next kill sets it again, and with the count at 0 any leftover
 time changes nothing.
 
@@ -141,14 +169,15 @@ running, so the HUD always shows the real final score.
 
 ## Talks to
 
-- **GameManager**: gets `LevelTimer`, `Player` and `PlayerTwins` in `Awake`; reads `IsGameOver` and
-  `HasWon` in `AddPoints`. GameManager finds Score with `GetComponent` and exposes it as `Score`.
+- **GameManager**: gets `LevelTimer`, `Player` and `PlayerHealth` in `Awake`; reads `IsGameOver` and
+  `HasWon` in `Award`. GameManager finds Score with `GetComponent` and exposes it as `Score`.
 - **LevelTimer**: reads `Progress` and `LevelTime` every frame.
-- **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier; subscribes to
-  `OnHit` to end the combo.
-- **PlayerTwins**: subscribes to `OnBodyLost` to end the combo.
+- **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier, and the player's
+  position in `AddWaveClear`.
+- **PlayerHealth**: subscribes to `OnLifeLost` to end the combo and count lives lost.
 - **AsteroidBehavior**: calls `AddComboKill(scorePoints, bodyPosition)` when an asteroid is smashed.
-  Waves, close calls and the overdrive bonus will call `AddPoints` (see TODO.md).
+- **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears. Close calls and
+  the overdrive bonus will add points later (see TODO.md).
 - **ScorePopups**: subscribes to `OnPointsAdded` to show a popup for each gain.
 
 ## Gotchas
@@ -166,7 +195,7 @@ running, so the HUD always shows the real final score.
 - **`maxSpeedMultiplier` below 1 punishes speed.** At 0.5, a player at max speed gets half the points of a
   slow one.
 - **`comboWindow` of 0 means the combo never runs out.** The timer is set to 0, so the countdown never runs,
-  and only a hit ends the combo.
+  and only losing a life ends the combo.
 - **The combo keeps counting after the level ends.** `AddComboKill` still grows `comboCount` and
   `comboBonus` after game over or a win, but `AddPoints` ignores the points, so nothing is scored.
 - **Past 999,999 the HUD shows 7 digits.** `D6` is a minimum width, not a limit.

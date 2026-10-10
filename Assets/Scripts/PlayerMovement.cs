@@ -81,7 +81,6 @@ public class PlayerMovement : MonoBehaviour
     // Hit
     public bool IsInvulnerable => invulnerableTimer > 0f;
     public bool MeshVisible { get; private set; } = true;
-    public event Action OnHit;
     private float invulnerableTimer;
     private Renderer[] meshRenderers;
 
@@ -251,7 +250,6 @@ public class PlayerMovement : MonoBehaviour
         Speed = Mathf.Clamp(Speed - speedLoss, 0f, maxSpeed);
 
         invulnerableTimer = invulnerableTime;
-        OnHit?.Invoke();
         return true;
     }
 

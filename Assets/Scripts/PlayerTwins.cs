@@ -22,7 +22,6 @@ public class PlayerTwins : MonoBehaviour
 
     public bool IsTwinned => copies.Count > 0;
     public event Action<bool> OnTwinChanged; // true when the twin starts, false when the last copy is gone
-    public event Action OnBodyLost; // a body was hit and removed during the twin
 
     private void Awake()
     {
@@ -66,7 +65,6 @@ public class PlayerTwins : MonoBehaviour
 
         copies.Remove(lost);
         Destroy(lost.gameObject);
-        OnBodyLost?.Invoke();
 
         if (IsTwinned) Respace();
         else OnTwinChanged?.Invoke(false);

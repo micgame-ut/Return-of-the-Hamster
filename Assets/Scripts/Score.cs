@@ -14,9 +14,12 @@ public class Score : MonoBehaviour
     [SerializeField] private TMP_Text scoreText;
     [SerializeField] private float pulseScale = 1.15f;
     [SerializeField] private float pulseDuration = 0.15f;
+    [SerializeField] private string perfectWaveLabel = "PERFECT WAVE";
+    [SerializeField] private string waveClearLabel = "WAVE CLEAR";
 
     public float Total { get; private set; }
-    public event Action<float, float, Vector3> OnPointsAdded; // base points, speed multiplier, world position
+    public int LivesLostCount { get; private set; }
+    public event Action<float, float, Vector3, string> OnPointsAdded; // base points, speed multiplier, world position, label (null for none)
 
     private float eventPoints;
     private int shownPoints = -1;
@@ -26,25 +29,23 @@ public class Score : MonoBehaviour
     private float comboBonus;
     private float pulseTimer;
     private PlayerMovement player;
-    private PlayerTwins twins;
+    private PlayerHealth health;
 
     private void Awake()
     {
         timer = GameManager.Instance.LevelTimer;
         player = GameManager.Instance.Player;
-        twins = GameManager.Instance.PlayerTwins;
+        health = GameManager.Instance.PlayerHealth;
     }
 
     private void OnEnable()
     {
-        if (player != null) player.OnHit += BreakCombo;
-        if (twins != null) twins.OnBodyLost += BreakCombo;
+        if (health != null) health.OnLifeLost += HandleLifeLost;
     }
 
     private void OnDisable()
     {
-        if (player != null) player.OnHit -= BreakCombo;
-        if (twins != null) twins.OnBodyLost -= BreakCombo;
+        if (health != null) health.OnLifeLost -= HandleLifeLost;
     }
 
     private void Update()
@@ -72,6 +73,12 @@ public class Score : MonoBehaviour
         scoreText.text = whole.ToString("D6");
     }
 
+    private void HandleLifeLost()
+    {
+        LivesLostCount++;
+        BreakCombo();
+    }
+
     private void BreakCombo()
     {
         comboCount = 0;
@@ -80,12 +87,28 @@ public class Score : MonoBehaviour
 
     public void AddPoints(float amount, Vector3 position)
     {
+        float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
+        Award(amount, speedMultiplier, position, null);
+    }
+
+    public void AddBonusPoints(float amount, Vector3 position, string label)
+    {
+        Award(amount, 1f, position, label);
+    }
+
+    public void AddWaveClear(float points, bool perfect)
+    {
+        Vector3 position = player != null ? player.transform.position : Vector3.zero;
+        AddBonusPoints(points, position, perfect ? perfectWaveLabel : waveClearLabel);
+    }
+
+    private void Award(float amount, float multiplier, Vector3 position, string label)
+    {
         GameManager gm = GameManager.Instance;
         if (gm.IsGameOver || gm.HasWon) return;
 
-        float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
-        eventPoints += amount * speedMultiplier;
-        OnPointsAdded?.Invoke(amount, speedMultiplier, position);
+        eventPoints += amount * multiplier;
+        OnPointsAdded?.Invoke(amount, multiplier, position, label);
         pulseTimer = pulseDuration;
     }
 

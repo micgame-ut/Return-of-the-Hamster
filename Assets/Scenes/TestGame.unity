@@ -681,14 +681,24 @@ MonoBehaviour:
   waves:
   - pattern: {fileID: 1426364939829335137, guid: a13cc7ea95908a4498f3cebb2f54adfc, type: 3}
     delayAfter: 2
+    clearPoints: 100
+    perfectBonus: 0
   - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
     delayAfter: 2
+    clearPoints: 300
+    perfectBonus: 200
   - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
     delayAfter: 2
+    clearPoints: 300
+    perfectBonus: 200
   - pattern: {fileID: 1426364939829335137, guid: 2066104ffad8a124d837e1e213fbd8f0, type: 3}
     delayAfter: 2
+    clearPoints: 100
+    perfectBonus: 0
   - pattern: {fileID: 1426364939829335137, guid: 22a9f072a7ee4044b81365fa0e8bbb19, type: 3}
     delayAfter: 2
+    clearPoints: 100
+    perfectBonus: 0
   order: 1
   loop: 1
   startDelay: 2
@@ -3108,6 +3118,10 @@ MonoBehaviour:
   comboStepBonus: 50
   comboStepGrowth: 0.5
   scoreText: {fileID: 231214188}
+  pulseScale: 1.15
+  pulseDuration: 0.15
+  perfectWaveLabel: PERFECT WAVE
+  waveClearLabel: WAVE CLEAR
 --- !u!1 &1441542810
 GameObject:
   m_ObjectHideFlags: 0

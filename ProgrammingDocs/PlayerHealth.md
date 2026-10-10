@@ -43,6 +43,14 @@ frame.
 - `GainLife` raises it even at max lives, when nothing changed. Listeners handle a repeat safely.
 - `Awake` doesn't raise it. Listeners read `CurrentLives` themselves in `Start`, after every `Awake` has run.
 
+### `OnLifeLost`
+
+A second event (`Action`, no value) raised by `LoseLife` only, right after `OnLivesChanged`. It says exactly
+"a life was just lost", so listeners don't have to compare the new count with the old one to tell a loss
+from a `GainLife`. Score listens to end the combo and to count lives lost for perfect waves. Because it
+comes after `LoseLife`'s guard, it never fires after game over or a win. On the last life it fires before
+`GameOver()`.
+
 These are instance members, not static, so a reloaded scene gets a new `PlayerHealth` that starts over
 at `maxLives` without any manual reset.
 
@@ -60,7 +68,8 @@ broken at speed, never call it.
 1. Assigns `GameManager.Instance` to a local variable, `gm`.
 2. If `gm` is null, the game is over, or the player has won, it exits the method immediately. The null
    check comes first so `||` stops before reading anything from a null reference.
-3. Otherwise it takes one life away from `CurrentLives` and raises `OnLivesChanged` with the new count.
+3. Otherwise it takes one life away from `CurrentLives`, raises `OnLivesChanged` with the new count, then
+   raises `OnLifeLost`.
 4. If `CurrentLives` is 0 or less, it calls `gm.GameOver()`. `<= 0` rather than `== 0` means game over
    still fires if lives ever went below 0.
 
@@ -92,6 +101,7 @@ over, or won means it does nothing), then sets `CurrentLives` to `Mathf.Min(Curr
 - **PlayerShell**: subscribes to `OnLivesChanged`, and reads `CurrentLives` and `MaxLives` to show the shield
   at full health.
 - **DangerWarning**: subscribes to `OnLivesChanged` (through GameManager's reference) to show the warning at 1 life.
+- **Score**: subscribes to `OnLifeLost` (through GameManager's reference) to end the combo and count lives lost.
 
 ## Gotchas
 
