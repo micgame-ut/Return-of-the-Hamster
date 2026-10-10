@@ -267,7 +267,7 @@ public class AsteroidBehavior : MonoBehaviour
 
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
-        if (score != null) score.AddPoints(scorePoints);
+        if (score != null) score.AddComboKill(scorePoints);
 
         PatternCopy.Despawn(gameObject);
     }

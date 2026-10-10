@@ -33,7 +33,7 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
 | `destructible` | false | Whether the player can smash it by being fast enough. Also gives it the outline |
 | `destroySpeed` | 5 | The player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
-| `scorePoints` | 10 | Base points for smashing it, before Score's speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
+| `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
 | `template` | none | The shared SpawnableTemplate asset |
 
 Note that `speed` here is the asteroid's own speed. It's unrelated to the player's `PlayerMovement.Speed`,
@@ -153,7 +153,8 @@ renderer when that changes, not every frame.
 
    Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
    shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), adds
-   `scorePoints` with `Score.AddPoints` (null-safe; Score applies the speed multiplier), and despawns the asteroid with `PatternCopy.Despawn`. Since this branch
+   `scorePoints` with `Score.AddComboKill` (null-safe; Score adds the combo bonus and applies the speed
+   multiplier), and despawns the asteroid with `PatternCopy.Despawn`. Since this branch
    comes first, an invincible player gets no knockback, speed loss or lost life. Twin copies smash
    asteroids the same way.
 3. **Twinned?** If PlayerTwins `IsTwinned`, it calls `LoseBody(body)`: that body blows up and one body is
@@ -205,7 +206,7 @@ PlayerInvincibility, that part is just false.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins` and `Score` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
-- **Score**: calls `AddPoints(scorePoints)` on a smash.
+- **Score**: calls `AddComboKill(scorePoints)` on a smash.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
 - **OrbitRing**: reads the `Active` list and the properties above.

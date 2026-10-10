@@ -95,7 +95,9 @@ Called by AsteroidBehavior when a body is hit while twinned.
 3. **Pick the copy to remove:** the player was hit → `JumpToNearestCopy()`; a copy was hit → that copy
    (`copies.Find`, another lambda).
 4. Play `destroyEffect` and the camera shake at `where`.
-5. Remove the copy from the list and destroy it.
+5. Remove the copy from the list and destroy it, then raise **`OnBodyLost`**. It fires whether the hit body
+   was a copy or the player, and before `OnTwinChanged(false)` on the last copy. Score listens to end the
+   combo.
 6. Copies left → `Respace()`. None → `OnTwinChanged(false)`.
 
 ### `JumpToNearestCopy`: the player was hit
@@ -127,6 +129,7 @@ shortest signed gap (−180° to 180°), and `Abs` drops the direction. A copy a
 - **PowerUp**: calls `FindBody` on contact, `AddBody` for the Twin type, and reads `IsTwinned` (Health gives
   nothing while twinned).
 - **DangerWarning** and **PlayerShell**: subscribe to `OnTwinChanged`, read `IsTwinned`.
+- **Score**: subscribes to `OnBodyLost` to end the combo.
 - **GameManager**: exposes it as `PlayerTwins` for scripts not on the player.
 
 ## Gotchas

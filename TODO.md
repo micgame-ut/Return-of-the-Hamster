@@ -77,9 +77,14 @@ Stages (test each before the next): 1) `Score` on Game Manager, time score
 every gain except the time score. Score resets each level; gains stop after game over / win.
 
 **Stage 2a done and tested:** per-prefab `scorePoints` on AsteroidBehavior, speed multiplier
-(`maxSpeedMultiplier`) inside `AddPoints`. Next: 2b combo (`comboWindow` 1.5 s, flat `comboStepBonus` 5 per step,
-no cap, (base + bonus) × speed multiplier, combo lives in Score; a hit or losing a twin copy ends it), then
-2c popups.
+(`maxSpeedMultiplier`) inside `AddPoints`.
+
+**Stage 2b done and tested:** combo in Score (`comboWindow` 1.5, `comboStepBonus` 50,
+`comboStepGrowth` 0.5: steps of 50, 75, 100… so kill bonuses 0, 50, 125, 225, no cap), `AddComboKill(points)`
+called from `AsteroidBehavior.Explode()`, (base + bonus) × speed multiplier. New events
+`PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` end the combo (Score subscribes in OnEnable/OnDisable;
+stage 3's perfect wave will reuse them). Known edge case: `comboWindow` 0 means the combo never expires
+(in Score.md Gotchas). Docs updated. **Next: 2c popups.**
 
 **Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
 `GameManager.Score`. Doc: `Score.md`.

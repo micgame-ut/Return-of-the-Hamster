@@ -236,8 +236,10 @@ Called by `AsteroidBehavior` when the player hits an asteroid they are too slow 
    circle, out of the way, and it fades the same way a boost does. AsteroidBehavior picks the direction
    based on which side of the asteroid the player was on.
 3. `Speed` drops by `speedLoss`.
-4. The invulnerability timer starts, and `TakeHit` returns `true`. AsteroidBehavior uses this to decide
-   whether to shake the camera and take a life (`PlayerHealth.LoseLife`).
+4. The invulnerability timer starts, it raises **`OnHit`**, and `TakeHit` returns `true`. AsteroidBehavior
+   uses the return value to decide whether to shake the camera and take a life (`PlayerHealth.LoseLife`).
+   `OnHit` only fires for hits that count, so hits during invulnerability don't reach its listeners. Score
+   listens to end the combo.
 
 ### Invulnerability blink (`UpdateInvulnerability`)
 
@@ -273,6 +275,7 @@ Side effects of doing it this way:
 - **PlayerTwins**: calls `ShiftOrbit` when the player is hit during the twin
 - **ExhaustFlame**: reads `Speed01` and `MeshVisible`; subscribes to `OnSpeedBoost` and (on the player's own
   flame) `OnOrbitShifted`
+- **Score**: reads the static `Speed01` for its speed multiplier; subscribes to `OnHit` to end the combo
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
 - **Anything reading `Speed`**: see the table above
