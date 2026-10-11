@@ -33,6 +33,7 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
 | `destructible` | false | Whether the player can smash it by being fast enough. Also gives it the outline |
 | `destroySpeed` | 5 | The player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
+| `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
 | `template` | none | The shared SpawnableTemplate asset |
 
 Note that `speed` here is the asteroid's own speed. It's unrelated to the player's `PlayerMovement.Speed`,
@@ -57,8 +58,8 @@ though both feed into how fast the asteroid approaches.
 
 - Finds the Renderer on its child and the Collider on itself. The child mesh is what spins, so the
   collider (on the root) doesn't rotate with it.
-- Gets the gameplay camera from GameManager, and the player's PlayerMovement, PlayerHealth and
-  PlayerInvincibility. Like every script that isn't on the player, it gets player components from
+- Gets the gameplay camera from GameManager, the player's PlayerMovement, PlayerHealth and
+  PlayerInvincibility, the level's Score, and the player's CloseCallZone. Like every script that isn't on the player, it gets player components from
   GameManager once instead of looking them up on each hit.
 - Creates `blinkWait`, one `WaitForSeconds(blinkInterval)` that every blink of the warning reuses (see
   `WarnThenMove`). Only when there's a template, since that's where `blinkInterval` lives.
@@ -75,6 +76,8 @@ with `SetActive(true)`. That fires `OnEnable`, which:
 - Adds this asteroid to the static `Active` list (see below).
 - Stores its current position as `origin`. All movement is measured from here.
 - Resets its timers and sets `isMoving = false`.
+- Resets the close-call state (`passedPlayer`, `closeCallJudged`, `hitPlayer`). Asteroids are pooled, so
+  each reveal is a fresh flight that gets its own close-call check.
 - Picks a random `spinAxis` so every asteroid tumbles differently.
 - Works out `baseAngle`, the angle it sits at around the orbit center, for Wave movement. It uses
   `Mathf.Atan2(y, x)`, the reverse of cos/sin: cos/sin take an angle and give you an x/y, and Atan2 takes
@@ -135,10 +138,30 @@ renderer when that changes, not every frame.
       player uses. They're read every frame, so they follow the asset if it's tuned in Play mode.
 
    Because `sin(0)` is 0, the swing starts at the same angle the asteroid was placed at.
-5. **Place it.** `transform.position = position`.
+5. **Place it.** `transform.position = position`. Then, until the close call has been judged, it calls
+   `TrackCloseCall` (see below).
 6. **Despawn.** Once it's more than `despawnBehindCamera` units behind the camera, it calls
    `PatternCopy.Despawn(gameObject)`. It's flying away from the player at that point, so it can never come
    back into view.
+
+### `TrackCloseCall`: near misses
+
+A close call is a threatening asteroid that passes within CloseCallZone's `Distance` of a body's hitbox edge
+without touching it. `depth` is how far in front of the player the asteroid is (positive in front, since
+asteroids fly toward −Z).
+
+1. **Measure once, on the frame it crosses the player's depth** (`depth` reaches 0 or less, `passedPlayer`
+   not yet set): store the gap from `CloseCallZone.NearestGap`, the nearest body's position, and whether it
+   was a threat (`!CanBreak`, so invincibility and breakable-at-this-speed asteroids don't count).
+2. **Wait** until it's more than its `HitRadius` + the player's `Reach` behind the player. Before that it could
+   still touch, and a physics hit can be reported a frame after the crossing.
+3. **Judge once** (`closeCallJudged`): if it never touched a body (`hitPlayer`), was a threat, and the gap is
+   above 0 and at most `Distance`, it calls `Score.AddCloseCall(body position)`.
+
+Measuring at the crossing, rather than every frame while it's level with the player, matters at high speed.
+At max speed an asteroid moves about 2.8 units a frame, so it could be level with the player for one frame
+or none, but the crossing frame always exists. A gap of 0 or less means the hitboxes overlapped, so it isn't
+rewarded even if physics missed the contact.
 
 ### `OnTriggerEnter`: touching the player (or a twin copy)
 
@@ -146,13 +169,16 @@ renderer when that changes, not every frame.
    touched: the player, a copy, or null. It uses `IsChildOf`, so it still works if a collider is on a child.
    A hit on the copy the player jumped onto in this same frame counts as the player. Without a PlayerTwins,
    it falls back to `other.transform.IsChildOf(player.transform)`. Anything else, or no player at all, is
-   ignored.
+   ignored. Any touch sets `hitPlayer`, so this flight can't score a close call.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
 
    Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
-   shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), and
-   despawns the asteroid with `PatternCopy.Despawn`. Since this branch
+   shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), adds
+   `scorePoints` with `Score.AddComboKill` (null-safe; Score adds the combo bonus and applies the speed
+   multiplier), and despawns the asteroid with `PatternCopy.Despawn`. `Explode` takes the touching body's
+   position and passes it to Score, so the score popup appears above the body that smashed it (the player
+   or a twin copy), not above the asteroid. Since this branch
    comes first, an invincible player gets no knockback, speed loss or lost life. Twin copies smash
    asteroids the same way.
 3. **Twinned?** If PlayerTwins `IsTwinned`, it calls `LoseBody(body)`: that body blows up and one body is
@@ -201,9 +227,13 @@ PlayerInvincibility, that part is just false.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
   arc are green and touching it explodes it.
 - **PlayerTwins**: `FindBody` on every contact; `LoseBody` on a hit during the twin; reads `IsTwinned`.
-- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility` and `PlayerTwins` in `Awake`, and `RunStats` when an
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins` and `Score` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.
+- **Score**: calls `AddComboKill(scorePoints, bodyPosition)` on a smash, and `AddCloseCall(body position)` on a
+  close call.
+- **CloseCallZone**: calls `NearestGap` when it crosses the player's depth; reads `Reach` and `Distance` to
+  judge the close call.
 - **ObjectSpawner**: reveals asteroids (triggering `OnEnable`) and reads `ApproachSpeed` to time the
   gaps between them.
 - **OrbitRing**: reads the `Active` list and the properties above.

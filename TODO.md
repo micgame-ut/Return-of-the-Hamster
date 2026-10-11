@@ -68,6 +68,17 @@ Questions to settle with the user first: cooldown length, whether both boost typ
 the cooldown is shown (HUD, on the player, the trail above), what the boost effect looks like, and whether
 boosting should interact with overdrive.
 
+## Score system
+
+**Done and tested** (branch `score-system`, PR to `main`). Score on the Game Manager: time score from
+LevelTimer progress, asteroid smashes with combos, wave clears and perfect waves, close calls
+(CloseCallZone), score multiplier power-ups (MultiplierDisplay), and an overdrive tally (OverdriveTally).
+Popups through ScorePopups; HUD score pulses. Only losing a life breaks the combo or a perfect wave. See
+`Score.md` and the docs for each script.
+
+**Follow-up: per-level leaderboard**, ranked by score, with a details view (hamster name + RunStats
+snapshot at that moment). Round `Score.Total` down, like the HUD, when saving it.
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

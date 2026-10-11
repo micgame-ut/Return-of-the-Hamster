@@ -15,6 +15,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| CloseCallZone.cs | [CloseCallZone.md](CloseCallZone.md) | Done |
 | Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
 | DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
 | EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |
@@ -23,9 +24,11 @@ It lives outside `Assets/` so Unity does not import these files.
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| MultiplierDisplay.cs | [MultiplierDisplay.md](MultiplierDisplay.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |
+| OverdriveTally.cs | [OverdriveTally.md](OverdriveTally.md) | Done |
 | PatternCopy.cs | [PatternCopy.md](PatternCopy.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
@@ -39,6 +42,8 @@ It lives outside `Assets/` so Unity does not import these files.
 | PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
+| Score.cs | [Score.md](Score.md) | Done |
+| ScorePopups.cs | [ScorePopups.md](ScorePopups.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |

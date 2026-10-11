@@ -41,6 +41,10 @@ copies that actually exist. `OnTwinChanged(true)` is raised when the first copy 
 `OnTwinChanged(false)` when the last one is gone. DangerWarning and PlayerShell listen to pause and resume the
 life-based visuals.
 
+`Copies` hands out the list as an `IReadOnlyList<TwinCopy>`: other scripts can count, index and loop over the
+copies, but only PlayerTwins can add or remove them. It's the same list, not a copy, so it makes no garbage.
+Loop over it with `for` and an index; `foreach` through the interface allocates.
+
 ### `Awake`
 
 Gets the PlayerMovement component on the same GameObject. PlayerTwins is on the player, so by the rule in
@@ -127,6 +131,7 @@ shortest signed gap (−180° to 180°), and `Abs` drops the direction. A copy a
 - **PowerUp**: calls `FindBody` on contact, `AddBody` for the Twin type, and reads `IsTwinned` (Health gives
   nothing while twinned).
 - **DangerWarning** and **PlayerShell**: subscribe to `OnTwinChanged`, read `IsTwinned`.
+- **CloseCallZone**: reads `Copies` to measure close calls from every body and draw its gizmo around them.
 - **GameManager**: exposes it as `PlayerTwins` for scripts not on the player.
 
 ## Gotchas

@@ -11,6 +11,7 @@ public class PlayerHealth : MonoBehaviour
     public int CurrentLives { get; private set; }
 
     public event Action<int> OnLivesChanged;
+    public event Action OnLifeLost;
 
     private void Awake()
     {
@@ -24,6 +25,7 @@ public class PlayerHealth : MonoBehaviour
 
         CurrentLives--;
         OnLivesChanged?.Invoke(CurrentLives);
+        OnLifeLost?.Invoke();
 
         if (CurrentLives <= 0)
             gm.GameOver();

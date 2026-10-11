@@ -87,11 +87,16 @@ has to match the event's type (`Action<int>`, `Action<bool>`) to sign up.
 
 Nothing is checked every frame. The shell only changes when one of the events fires.
 
-### `HitRadius`
+### `HitRadius`, `Reach` and `Extent`
 
-Gives the hitbox's size while it's on (0 while off), for OrbitRing's arcs. It's the bigger of the
-collider's x and y **bounds extents**, so it includes any scaling on the parents. A disabled collider's
+`Extent(collider)` is a small `static` helper: the bigger of the collider's x and y **bounds extents** (so
+it includes any scaling on the parents), or 0 if the collider is missing or off. A disabled collider's
 bounds aren't updated, so it returns 0 then instead of reading them.
+
+- **`HitRadius`** is `Extent(shellCollider)`: the shell's size while it's on, for OrbitRing's arcs.
+- **`Reach`** is the bigger of `Extent(bodyCollider)` and `Extent(shellCollider)`. `Refresh` only ever has
+  one of them on, so this is the radius of whichever hitbox is active. CloseCallZone measures close calls
+  from its edge.
 
 ### Why the hitbox and the mesh are separate objects
 
@@ -145,6 +150,8 @@ nothing), so it reads as light shining over the ship.
   `IsChildOf` (through PlayerTwins' `FindBody`), so the shell's collider counts as the player with no
   asteroid changes.
 - **OrbitRing**: reads `HitRadius` once per frame to widen the arcs.
+- **CloseCallZone**: reads `Reach` (found with `GetComponent`, on the same object) to measure close calls
+  from the hitbox's edge.
 
 ## Gotchas
 

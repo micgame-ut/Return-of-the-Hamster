@@ -28,6 +28,8 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | --- | --- | --- |
 | `waves` | empty | The list of waves. Each has a `pattern` (the prefab to spawn) and a `delayAfter` |
 | `waves[].delayAfter` | 2 | Seconds to wait after this pattern has finished appearing, before the next wave starts |
+| `waves[].clearPoints` | 300 | Score points when every object in this wave is gone. Half if the earth cut the wave short |
+| `waves[].perfectBonus` | 200 | Added on top of `clearPoints` if no life was lost while this wave was on screen |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
 | `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
@@ -67,7 +69,7 @@ patterns built in the editor always line up with where they spawn in the game.
 
 ### `Start`
 
-Gets the LevelTimer from GameManager, **prewarms** (for each wave's pattern, makes copies until its free list
+Gets the LevelTimer and Score from GameManager, **prewarms** (for each wave's pattern, makes copies until its free list
 holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), then starts `RunWaves`, as
 long as there's at least one wave.
 
@@ -78,7 +80,8 @@ long as there's at least one wave.
   subscribes `HandleReleased` to its `OnReleased`, and stores the sorted children in `revealOrder`.
 - **`GetCopy`** returns a free copy if the pattern has one, otherwise `CreateCopy`.
 - **`GetFreeList`** returns a pattern's free list, making an empty one the first time (`TryGetValue`).
-- **`HandleReleased`** pushes a copy that's free again back onto its pattern's list.
+- **`HandleReleased`** scores the wave (see "Wave score" below), then pushes a copy that's free again back
+  onto its pattern's list.
 
 ### `RunWaves`: going through the list
 
@@ -154,9 +157,33 @@ For each asteroid, once its wait is over:
 **4. Finish.** `EndReveal` tells the copy the spawner is done with it. If every revealed child is already
 home, the copy is free straight away; otherwise the last child home frees it.
 
+### Wave score
+
+`SpawnPattern` takes the whole `Wave` (not just its pattern) so it knows the wave's points.
+
+- **At the start** it notes `Score.LivesLostCount` in `livesLostAtStart`. Score only ever counts that up,
+  so if it's still the same number when the wave clears, no life was lost during the wave.
+- **If `StopSpawning` stops the reveal**, it sets `cutShort`.
+- **Just before `EndReveal`**, it stores a `RunningWave` (a small struct: the `Wave`, `livesLostAtStart`,
+  `cutShort`) in `runningWaves`, keyed by the copy. It has to be stored first, because `EndReveal` can
+  release the copy straight away, which calls `HandleReleased` from inside `EndReveal`. It's a struct
+  because it's written once and read once, so storing it makes no garbage.
+
+When the copy is released, `HandleReleased` looks the entry up (`TryGetValue`), removes it, and calls
+`AwardWave`, which checks cut short first and perfect second:
+
+| Fully revealed? | Life lost during it? | Calls | Popup |
+| --- | --- | --- | --- |
+| Yes | No | `AddWaveClear(500, true)` | `PERFECT WAVE +500` |
+| Yes | Yes | `AddWaveClear(300, false)` | `WAVE CLEAR +300` |
+| No (cut short) | doesn't matter | `AddWaveClear(150, false)` | `WAVE CLEAR +150` |
+
+Waves overlap (the next starts after `delayAfter`, while the last may still be flying), but each one
+compares against its own starting count, so a life lost with two waves on screen spoils both.
+
 ## Talks to
 
-- **GameManager**: gets the LevelTimer (in `Start`) and the gameplay camera (each pattern), and reads
+- **GameManager**: gets the LevelTimer and Score (in `Start`) and the gameplay camera (each pattern), and reads
   `IsGameOver` through `StopSpawning`.
 - **OrbitSettings**: reads `SpawnerPosition` in `Awake`.
 - **LevelTimer**: checks `IsComplete`, through `StopSpawning`, to stop spawning once the earth has arrived.
@@ -164,11 +191,15 @@ home, the copy is free straight away; otherwise the last child home frees it.
   gaps, and switches them on, which starts their `OnEnable`.
 - **PatternCopy**: adds one to each copy, calls `Init`, `BeginReveal`, `ChildRevealed` and `EndReveal`, and
   listens to `OnReleased`.
+- **Score**: reads `LivesLostCount` when a wave starts and clears, and calls `AddWaveClear` when a wave's copy
+  is released.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
   this script spawns.
 
 ## Gotchas
 
+- **A wave of only power-ups still scores.** It clears once the power-ups are gone. Set its `clearPoints`
+  and `perfectBonus` to 0 if it shouldn't.
 - **Moving the spawner in the scene does nothing.** It moves itself to `OrbitSettings`' `spawnerPosition`
   when the game starts. Change the asset instead.
 - **Every pattern empty means a freeze.** If `loop` is on and every wave's `pattern` is empty,

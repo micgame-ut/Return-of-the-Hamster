@@ -267,12 +267,15 @@ Side effects of doing it this way:
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
+- **OverdriveTally**: reads `InOverdrive` every frame (through GameManager's `Player`) to count the overdrive
+  score tally
 - **RunStats**: reads `InOverdrive` every frame (through GameManager's `Player`) to time overdrive
 - **PowerUp**: checks whether what touched it is the player (through GameManager's `Player`)
 - **TwinCopy**: reads `OrbitAngle`, `OrbitCenter`, `CircleRadius` and `MeshTransform` every frame to follow the player
 - **PlayerTwins**: calls `ShiftOrbit` when the player is hit during the twin
 - **ExhaustFlame**: reads `Speed01` and `MeshVisible`; subscribes to `OnSpeedBoost` and (on the player's own
   flame) `OnOrbitShifted`
+- **Score**: reads the static `Speed01` for its speed multiplier
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
 - **Anything reading `Speed`**: see the table above

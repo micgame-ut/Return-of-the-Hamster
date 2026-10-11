@@ -97,7 +97,7 @@ and nothing can run in Play mode until it's fixed.
 - Don't add, change, or delete code comments without the user's approval. This includes comments that
   were already in the file.
 - For each comment you want to add, show it, explain why it's worth having, and ask whether to keep it.
-  The user may reword it or drop it.
+  The user may reword it or drop it. If the user doesn't answer about a comment, keep it.
 - Match the style of existing comments in the file.
 
 ## 5. New features: ask for the variables first

@@ -37,12 +37,14 @@ the matching end screen. It doesn't stop other scripts itself. It announces the 
 | `playerInvincibility` | PlayerInvincibility | The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the `player` object |
 | `playerShell` | PlayerShell | The player's shield shell and its hitbox. Can be left empty if PlayerShell is on the `player` object |
 | `playerTwins` | PlayerTwins | The twin power-up on the player. Can be left empty if PlayerTwins is on the `player` object |
+| `closeCallZone` | CloseCallZone | The close-call range on the player. Can be left empty if CloseCallZone is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
+| `score` | Score | This level's score and its HUD counter. Can be left empty if Score is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
 | `showOrbitRing` | bool (default on) | Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts. Meant to be set from a menu setting later |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
-`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
+`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `RunStats`, `Score`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
 
 ## How it works
 
@@ -73,9 +75,9 @@ or `Start` runs, `Instance` is ready.
 3. **Unfreeze time.** `Time.timeScale = 1f`. Time scale is global and, like static values, survives a
    scene reload. Without this, restarting after a game over would start the new scene frozen. GameManager
    runs first (`-100`), so time is normal before any other script runs.
-4. **Fill in the LevelTimer and RunStats.** If either was left empty, it looks for one on the same
+4. **Fill in the LevelTimer, RunStats and Score.** If any was left empty, it looks for one on the same
    GameObject with `GetComponent`.
-5. **Fill in the PlayerHealth, PlayerInvincibility, PlayerShell and PlayerTwins.** If any was left empty and `player` is
+5. **Fill in the PlayerHealth, PlayerInvincibility, PlayerShell, PlayerTwins and CloseCallZone.** If any was left empty and `player` is
    assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
    another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
@@ -95,7 +97,7 @@ GameManager never reaches into other scripts to stop them. There are two ways a 
   `OnGameOver` is raised at the end of `GameOver()`, and `OnWin` at the end of `Win()`. Both are `Action`
   (no value passed) and both can fire at most once, because of the guards at the top of those methods.
   Subscribe in `OnEnable` and unsubscribe in `OnDisable`, like `PlayerHealth.OnLivesChanged`. PlayerDeath,
-  PlayerInvincibility, ExhaustFlame and DangerWarning do this.
+  PlayerInvincibility, ExhaustFlame, DangerWarning and OverdriveTally do this.
 - **Read `IsGameOver` / `HasWon`** when the check is part of work that runs anyway (every frame, or on a
   hit). PlayerMovement, ObjectSpawner, LevelTimer, RunStats, PlayerHealth and PowerUp do this.
 
@@ -169,10 +171,14 @@ anything. Other scripts read from it or call it:
 | **ExhaustFlame** | subscribes to `OnGameOver` and `OnWin`; on a twin copy, gets `Player` and `PlayerInvincibility` | `Awake`; at game over or win |
 | **TwinCopy** | `Player`, `PlayerShell` | `Awake` |
 | **DangerWarning** | gets `PlayerHealth` and `PlayerTwins`; subscribes to `OnWin` | `Awake`; on a win |
-| **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
-| **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
+| **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`, `CloseCallZone`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
+| **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
-| **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
+| **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |
+| **ScorePopups** | `GameplayCamera`, `Score` | `Awake` |
+| **MultiplierDisplay** | `Score` | `Awake` |
+| **OverdriveTally** | `Player`, `Score`; subscribes to `OnGameOver` and `OnWin` | `Awake`; at game over or win |
+| **ObjectSpawner** | `LevelTimer`, `Score`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
 | **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
 | **OrbitRing** | `ShowOrbitRing`, `Player`, `PlayerShell` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
