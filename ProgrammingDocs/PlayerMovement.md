@@ -267,6 +267,8 @@ Side effects of doing it this way:
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
 - **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
+- **OverdriveTally**: reads `InOverdrive` every frame (through GameManager's `Player`) to count the overdrive
+  score tally
 - **RunStats**: reads `InOverdrive` every frame (through GameManager's `Player`) to time overdrive
 - **PowerUp**: checks whether what touched it is the player (through GameManager's `Player`)
 - **TwinCopy**: reads `OrbitAngle`, `OrbitCenter`, `CircleRadius` and `MeshTransform` every frame to follow the player

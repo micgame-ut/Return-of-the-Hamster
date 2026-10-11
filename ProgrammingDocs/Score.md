@@ -6,7 +6,7 @@ Keeps track of the player's score for this level and shows it on the HUD. The sc
 points that grow with the level timer's progress, and event points that other scripts add with
 `AddPoints`. Asteroid smashes go through `AddComboKill`, which adds a growing combo bonus for quick
 chains of kills. Wave clears go through `AddWaveClear`, which adds unmultiplied, labelled points. The
-score starts at 0 in every level.
+overdrive tally is banked through `AddOverdriveBonus`. The score starts at 0 in every level.
 
 ## Where it lives
 
@@ -189,6 +189,17 @@ timer, so overlapping pickups stack and drop off one at a time.
 
 Two pickups 5 s apart: ×+2 for 5 s, then ×+4 for 5 s, then ×+2 for 5 s, then nothing.
 
+### `AddOverdriveBonus`
+
+Called by OverdriveTally, once per overdrive, to bank the tally. It's standalone: it adds the amount
+straight to `eventPoints` and pulses the HUD score, with no multipliers, no combo, and no `OnPointsAdded`
+(so no normal popup; OverdriveTally shows its own).
+
+**It has no game-over guard, on purpose.** If the player dies or wins while in overdrive, OverdriveTally banks
+from `GameManager.OnGameOver` / `OnWin`, which fire after the end state is set. A guarded method would throw
+the tally away. It's safe because its only caller banks once per overdrive, and the tally can't grow after
+the freeze. `Update` keeps running during the freeze, so the HUD still shows the banked points.
+
 ### `AddWaveClear`
 
 Called by ObjectSpawner when a wave clears, with the amount and whether it was perfect. ObjectSpawner works
@@ -218,8 +229,8 @@ running, so the HUD always shows the real final score.
 - **PlayerHealth**: subscribes to `OnLifeLost` to end the combo and count lives lost.
 - **AsteroidBehavior**: calls `AddComboKill(scorePoints, bodyPosition)` when an asteroid is smashed, and
   `AddCloseCall(bodyPosition)` on a close call.
-- **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears. The overdrive bonus
-  will add points later (see TODO.md).
+- **ObjectSpawner**: reads `LivesLostCount` and calls `AddWaveClear` when a wave clears.
+- **OverdriveTally**: calls `AddOverdriveBonus` to bank the overdrive tally.
 - **ScorePopups**: subscribes to `OnPointsAdded` to show a popup for each gain.
 - **PowerUp**: calls `AddMultiplierPowerUp()` when a ScoreMultiplier power-up is picked up.
 - **MultiplierDisplay**: reads `ActivePowerUps`, `PowerUpMultiplier` and `NextPowerUpFraction` for the HUD
@@ -236,7 +247,8 @@ running, so the HUD always shows the real final score.
 - **`Total` is a `float`; the HUD shows it rounded down.** Anything that saves or ranks the score (the
   future leaderboard) should round the same way so it matches what the player saw.
 - **Points added after game over in the same frame are lost.** If something calls `AddPoints` after
-  `GameOver()` or `Win()` has run, it's ignored, even in the same frame.
+  `GameOver()` or `Win()` has run, it's ignored, even in the same frame. The one exception is
+  `AddOverdriveBonus`, which has no guard (see above). Don't call it from anywhere else.
 - **`maxSpeedMultiplier` below 1 punishes speed.** At 0.5, a player at max speed gets half the points of a
   slow one.
 - **`comboWindow` of 0 means the combo never runs out.** The timer is set to 0, so the countdown never runs,

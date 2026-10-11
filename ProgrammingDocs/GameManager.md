@@ -97,7 +97,7 @@ GameManager never reaches into other scripts to stop them. There are two ways a 
   `OnGameOver` is raised at the end of `GameOver()`, and `OnWin` at the end of `Win()`. Both are `Action`
   (no value passed) and both can fire at most once, because of the guards at the top of those methods.
   Subscribe in `OnEnable` and unsubscribe in `OnDisable`, like `PlayerHealth.OnLivesChanged`. PlayerDeath,
-  PlayerInvincibility, ExhaustFlame and DangerWarning do this.
+  PlayerInvincibility, ExhaustFlame, DangerWarning and OverdriveTally do this.
 - **Read `IsGameOver` / `HasWon`** when the check is part of work that runs anyway (every frame, or on a
   hit). PlayerMovement, ObjectSpawner, LevelTimer, RunStats, PlayerHealth and PowerUp do this.
 
@@ -177,6 +177,7 @@ anything. Other scripts read from it or call it:
 | **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |
 | **ScorePopups** | `GameplayCamera`, `Score` | `Awake` |
 | **MultiplierDisplay** | `Score` | `Awake` |
+| **OverdriveTally** | `Player`, `Score`; subscribes to `OnGameOver` and `OnWin` | `Awake`; at game over or win |
 | **ObjectSpawner** | `LevelTimer`, `Score`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
 | **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
 | **OrbitRing** | `ShowOrbitRing`, `Player`, `PlayerShell` | `Start` |

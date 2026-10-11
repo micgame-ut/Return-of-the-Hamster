@@ -143,6 +143,14 @@ public class Score : MonoBehaviour
         powerUpTimers.Add(powerUpDuration);
     }
 
+    // Banks the overdrive tally. No game-over guard: it's called once per overdrive,
+    // including right as the level ends.
+    public void AddOverdriveBonus(float amount)
+    {
+        eventPoints += amount;
+        pulseTimer = pulseDuration;
+    }
+
     private void ComboKill(float points, Vector3 position, string label)
     {
         AddPoints(points + comboBonus, position, label);

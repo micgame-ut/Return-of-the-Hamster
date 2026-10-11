@@ -70,58 +70,14 @@ boosting should interact with overdrive.
 
 ## Score system
 
-Stages (test each before the next): 1) `Score` on Game Manager, time score
-(`Progress × levelTime × pointsPerSecond`) + HUD (`D6`); 2) asteroids destroyed + combos;
-3) wave complete + perfect wave bonus; 4) close calls; 5) score multiplier power-up;
-6) overdrive bonus. Speed multiplier (×1 to `maxSpeedMultiplier` 2 via `Speed01`) applies to
-every gain except the time score. Score resets each level; gains stop after game over / win.
+**Done and tested** (branch `score-system`, PR to `main`). Score on the Game Manager: time score from
+LevelTimer progress, asteroid smashes with combos, wave clears and perfect waves, close calls
+(CloseCallZone), score multiplier power-ups (MultiplierDisplay), and an overdrive tally (OverdriveTally).
+Popups through ScorePopups; HUD score pulses. Only losing a life breaks the combo or a perfect wave. See
+`Score.md` and the docs for each script.
 
-**Stage 2a done and tested:** per-prefab `scorePoints` on AsteroidBehavior, speed multiplier
-(`maxSpeedMultiplier`) inside `AddPoints`.
-
-**Stage 2b done and tested:** combo in Score (`comboWindow` 1.5, `comboStepBonus` 50,
-`comboStepGrowth` 0.5: steps of 50, 75, 100… so kill bonuses 0, 50, 125, 225, no cap), `AddComboKill(points)`
-called from `AsteroidBehavior.Explode()`, (base + bonus) × speed multiplier. Only losing a life ends it
-(changed in stage 3, see below). Known edge case: `comboWindow` 0 means the combo never expires
-(in Score.md Gotchas). Docs updated.
-
-**Stage 2c done and tested:** `Score.OnPointsAdded(points, multiplier, position)`; `AddPoints` /
-`AddComboKill` take a position (the smashing body's, from `AsteroidBehavior.Explode`). New `ScorePopups`
-on the HUD canvas: screen-space UI popups from a pool, rise and fade with unscaled time, size scales
-smoothly with the final gain, multiplier shown to one decimal only above ×1.5. HUD score pulse in Score
-(`pulseScale` 1.15, `pulseDuration` 0.15, snaps up then shrinks). Doc: `ScorePopups.md`.
-
-**Stage 3 done and tested:** per-wave `clearPoints` 300 / `perfectBonus` 200 on ObjectSpawner's `Wave`.
-A wave clears when its PatternCopy is released; perfect = `Score.LivesLostCount` unchanged since the wave
-started revealing; cut short by the earth = half `clearPoints`, never perfect. No speed multiplier
-(`Score.AddBonusPoints`, shared private `Award`). Popups carry a label (`PERFECT WAVE +500`,
-`WAVE CLEAR +300`; Inspector strings on Score). Rule change: **only losing a life** breaks the combo or a
-perfect wave (new `PlayerHealth.OnLifeLost`; `PlayerMovement.OnHit` and `PlayerTwins.OnBodyLost` removed),
-so twin hits don't count. Docs updated.
-
-**Stage 4 done and tested:** new `CloseCallZone` on the player (`closeCallDistance` 1.5 past the active
-hitbox edge, `PlayerShell.Reach`; yellow gizmo when selected; `NearestGap` over the player and
-`PlayerTwins.Copies`). Each asteroid measures once on the frame it crosses the player's depth and judges
-once it's past touching range (`AsteroidBehavior.TrackCloseCall`): never touched + a threat (`!CanBreak`) +
-gap in range → `Score.AddCloseCall` (`closeCallPoints` 50, `CLOSE CALL` label), a combo kill with the speed
-multiplier. Doc: `CloseCallZone.md`.
-
-**Stage 5 done and tested:** `PowerUpType.ScoreMultiplier` (added at the end of the enum) → 
-`Score.AddMultiplierPowerUp()`. Each pickup is its own 10 s timer (`powerUpDuration`) in a list; each active
-one adds +2 (`powerUpBonus`), **added** to the speed multiplier (speed ×2 + one pickup = ×4), no cap. Only
-smashes and close calls (`AddPoints`); waves skip it. New `MultiplierDisplay` on the HUD canvas shows `x2`/`x4`
-and a bar for the pickup that runs out next (FIFO, element 0). Doc: `MultiplierDisplay.md`.
-**Next: stage 6, overdrive bonus + tally popup.**
-
-**Stage 1 done and tested:** `Score.cs` (`Total`, `AddPoints`), `LevelTimer.LevelTime`,
-`GameManager.Score`. Doc: `Score.md`.
-
-**Overdrive tally popup (stage 6):** overdrive gains won't use the normal popup. A separate popup shows a
-running tally while in overdrive, emphasized when the player leaves it. May reuse ScorePopups' placement
-and fade; Score needs a way to add overdrive points without raising `OnPointsAdded` (or its own event).
-
-Later: per-level leaderboard ranked by score, with a details view (hamster name + RunStats
-snapshot at that moment).
+**Follow-up: per-level leaderboard**, ranked by score, with a details view (hamster name + RunStats
+snapshot at that moment). Round `Score.Total` down, like the HUD, when saving it.
 
 ## Small cleanup
 
