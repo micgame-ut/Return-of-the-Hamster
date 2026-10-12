@@ -15,16 +15,24 @@ public class EndScreen : MonoBehaviour
         public TMP_Text hamsterNameText;
         public TMP_Text statsText;
         public bool showProgress;
+        public TMP_Text scoreTotalText;
+        public Transform scoreRowContainer;
     }
 
     [SerializeField] private ScreenParts gameOver;
     [SerializeField] private ScreenParts win;
+    [SerializeField] private GameObject statsOverlay;
+    [SerializeField] private GameObject scoreHud;
     [SerializeField] private string menuSceneName = "Menu";
+
+    private ScoreBreakdown scoreBreakdown;
 
     private void Awake()
     {
         gameOver.panel.SetActive(false);
         win.panel.SetActive(false);
+        if (statsOverlay != null) statsOverlay.SetActive(false);
+        scoreBreakdown = GetComponent<ScoreBreakdown>();
     }
 
     public void ShowGameOver() => Show(gameOver);
@@ -34,6 +42,8 @@ public class EndScreen : MonoBehaviour
     {
         FillStats(parts);
         parts.panel.SetActive(true);
+        if (scoreHud != null) scoreHud.SetActive(false);
+        if (scoreBreakdown != null) scoreBreakdown.Play(parts.scoreTotalText, parts.scoreRowContainer);
 
         // PlayerMovement locked the cursor for flying; the buttons need it back.
         Cursor.lockState = CursorLockMode.None;
@@ -63,6 +73,10 @@ public class EndScreen : MonoBehaviour
             text += $"\nProgress{col}{progress}%";
         parts.statsText.text = text;
     }
+
+    // Stats button on either panel, and the overlay's Close button.
+    public void ShowStats() => statsOverlay.SetActive(true);
+    public void CloseStats() => statsOverlay.SetActive(false);
 
     public void Restart()
     {
