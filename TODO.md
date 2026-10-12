@@ -76,6 +76,24 @@ LevelTimer progress, asteroid smashes with combos, wave clears and perfect waves
 Popups through ScorePopups; HUD score pulses. Only losing a life breaks the combo or a perfect wave. See
 `Score.md` and the docs for each script.
 
+**In progress: end-screen score breakdown** (branch `score-breakdown`, uncommitted). Between the title and
+the stats on both end screens: `SCORE 000000`, then one row per source that earned points (Progress,
+Asteroids, Close calls, Waves, Overdrive; zero sources skipped). Each row's label pops in, then its value,
+then the total ticks up (`countUpTime` 0.3) before the next row (`rowDelay` 0.4). Real time (the game is
+frozen). Space (boost, `skipAction`) finishes it instantly.
+- Done: `Score.ScoreSource`, per-source totals (`sourceTotals`, filled in `Award` and `AddOverdriveBonus`),
+  `GetSourceTotal` (Progress = `TimePoints`). `ScoreBreakdown.cs` fields, `Awake`, `OnEnable` (enables
+  the action), `Update` (skip flag), `Wait`, `Pop`, `CountUp`, `ShowRow`, `Play`, `Reveal` (float running
+  total shown rounded down, so it matches the HUD; each source read at its row's turn, so the overdrive
+  tally banked by `OnWin` is included).
+- Next: `EndScreen`: per-screen
+  total text + row container, call `Play`; layout B (one shared stats overlay with Close, a Stats button
+  per panel; both `statsText` slots point at the overlay text); hide a `scoreHud` object in `Show`.
+- Scene: group the score text, multiplier indicator and tally text under a stretched `Score HUD` child and
+  move `ScorePopups` onto it (scripts that must keep running stay on the canvas). Row prefab: label left,
+  value right, no Horizontal Layout Group. Watch for Space also "submitting" a selected UI button.
+- Later experiment: combo / multiplier bonus rows, for the user to judge in Play mode.
+
 **Follow-up: per-level leaderboard**, ranked by score, with a details view (hamster name + RunStats
 snapshot at that moment). Round `Score.Total` down, like the HUD, when saving it.
 

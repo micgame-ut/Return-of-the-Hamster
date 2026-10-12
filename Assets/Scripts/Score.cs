@@ -7,6 +7,8 @@ using UnityEngine;
 // from events (AddPoints), and shows it on the HUD.
 public class Score : MonoBehaviour
 {
+    public enum ScoreSource { Progress, Asteroids, CloseCalls, Waves, Overdrive }
+
     [SerializeField] private float pointsPerSecond = 1f;
     [SerializeField] private float maxSpeedMultiplier = 2f;
     [SerializeField] private float comboWindow = 1.5f;
@@ -27,6 +29,7 @@ public class Score : MonoBehaviour
     public int ActivePowerUps => powerUpTimers.Count;
     public float NextPowerUpFraction => powerUpTimers.Count > 0 ? powerUpTimers[0] / powerUpDuration : 0f;
     public float PowerUpMultiplier => powerUpBonus * ActivePowerUps;
+    private float TimePoints => timer.Progress * timer.LevelTime * pointsPerSecond;
     public event Action<float, float, Vector3, string> OnPointsAdded; // base points, total multiplier, world position, label (null for none)
 
     private float eventPoints;
@@ -37,6 +40,7 @@ public class Score : MonoBehaviour
     private float comboBonus;
     private float pulseTimer;
     private readonly List<float> powerUpTimers = new List<float>();
+    private readonly float[] sourceTotals = new float[Enum.GetValues(typeof(ScoreSource)).Length];
     private PlayerMovement player;
     private PlayerHealth health;
 
@@ -78,8 +82,7 @@ public class Score : MonoBehaviour
             if (powerUpTimers[i] <= 0f) powerUpTimers.RemoveAt(i);
         }
 
-        float timePoints = timer.Progress * timer.LevelTime * pointsPerSecond;
-        Total = timePoints + eventPoints;
+        Total = TimePoints + eventPoints;
 
         int whole = Mathf.FloorToInt(Total);
         if (whole == shownPoints || scoreText == null) return;
@@ -100,42 +103,43 @@ public class Score : MonoBehaviour
         comboBonus = 0f;
     }
 
-    public void AddPoints(float amount, Vector3 position, string label = null)
+    public void AddPoints(float amount, Vector3 position, ScoreSource source, string label = null)
     {
         float speedMultiplier = Mathf.Lerp(1f, maxSpeedMultiplier, PlayerMovement.Speed01);
         float multiplier = speedMultiplier + PowerUpMultiplier;
-        Award(amount, multiplier, position, label);
+        Award(amount, multiplier, position, label, source);
     }
 
-    public void AddBonusPoints(float amount, Vector3 position, string label)
+    public void AddBonusPoints(float amount, Vector3 position, string label, ScoreSource source)
     {
-        Award(amount, 1f, position, label);
+        Award(amount, 1f, position, label, source);
     }
 
     public void AddWaveClear(float points, bool perfect)
     {
         Vector3 position = player != null ? player.transform.position : Vector3.zero;
-        AddBonusPoints(points, position, perfect ? perfectWaveLabel : waveClearLabel);
+        AddBonusPoints(points, position, perfect ? perfectWaveLabel : waveClearLabel, ScoreSource.Waves);
     }
 
-    private void Award(float amount, float multiplier, Vector3 position, string label)
+    private void Award(float amount, float multiplier, Vector3 position, string label, ScoreSource source)
     {
         GameManager gm = GameManager.Instance;
         if (gm.IsGameOver || gm.HasWon) return;
 
         eventPoints += amount * multiplier;
+        sourceTotals[(int)source] += amount * multiplier;
         OnPointsAdded?.Invoke(amount, multiplier, position, label);
         pulseTimer = pulseDuration;
     }
 
     public void AddComboKill(float points, Vector3 position)
     {
-        ComboKill(points, position, null);
+        ComboKill(points, position, null, ScoreSource.Asteroids);
     }
 
     public void AddCloseCall(Vector3 position)
     {
-        ComboKill(closeCallPoints, position, closeCallLabel);
+        ComboKill(closeCallPoints, position, closeCallLabel, ScoreSource.CloseCalls);
     }
 
     public void AddMultiplierPowerUp()
@@ -148,12 +152,16 @@ public class Score : MonoBehaviour
     public void AddOverdriveBonus(float amount)
     {
         eventPoints += amount;
+        sourceTotals[(int)ScoreSource.Overdrive] += amount;
         pulseTimer = pulseDuration;
     }
 
-    private void ComboKill(float points, Vector3 position, string label)
+    public float GetSourceTotal(ScoreSource source) =>
+        source == ScoreSource.Progress ? TimePoints : sourceTotals[(int)source];
+
+    private void ComboKill(float points, Vector3 position, string label, ScoreSource source)
     {
-        AddPoints(points + comboBonus, position, label);
+        AddPoints(points + comboBonus, position, source, label);
         comboBonus += comboStepBonus * (1f + comboStepGrowth * comboCount);
         comboCount++;
         comboTimer = comboWindow;
