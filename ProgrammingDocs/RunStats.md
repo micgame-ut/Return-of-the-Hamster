@@ -33,7 +33,7 @@ saved and goes up by one each time the player dies.
 | `ApolloName` | `string` | — | `hamsterName` + `Attempt`, e.g. "Apollo 3". Built each time it's read |
 | `AsteroidsDestroyed` | `int` | `AsteroidsDestroyed` | Asteroids smashed by this Apollo |
 | `PowerUpsPickedUp` | `int` | `PowerUpsPickedUp` | Power-ups picked up, including ones wasted at full health |
-| `OverdriveTime` | `float` | `OverdriveTime` | Seconds spent in the top 10% of speed |
+| `OverdriveTime` | `float` | `OverdriveTime` | Seconds spent in overdrive (from PlayerMovement's `overdriveFraction` of max speed up, 0.9 by default) |
 | `TimeSurvived` | `float` | `TimeSurvived` | Seconds survived, across all levels |
 | `LevelsBeaten` | `int` | `LevelsBeaten` | Levels won. Not shown on any screen yet; kept for future Apollo records |
 

@@ -15,6 +15,7 @@ public class PlayerDeath : MonoBehaviour
     [Header("Shake")]
     [SerializeField] private float timeToExplode = 2f;      // seconds from game over to the explosion
     [SerializeField] private float maxShake = 0.3f;         // mesh offset at the moment it explodes
+    [SerializeField, Min(1f)] private float shakeFrequency = 60f;
 
     [Header("Explosion")]
     [SerializeField] private ParticleSystem explosionPrefab;
@@ -22,18 +23,17 @@ public class PlayerDeath : MonoBehaviour
     [SerializeField] private float explodeShakeMagnitude = 0.5f;
     [SerializeField] private float endDelay = 1.5f;          // seconds after exploding before DeathSequenceFinished
 
-    private bool started;
-
-    private void Update()
+    private void OnEnable()
     {
-        if (started) return;
-
-        GameManager gm = GameManager.Instance;
-        if (gm == null || !gm.IsGameOver) return;
-
-        started = true;
-        StartCoroutine(DeathSequence());
+        if (GameManager.Instance != null) GameManager.Instance.OnGameOver += HandleGameOver;
     }
+
+    private void OnDisable()
+    {
+        if (GameManager.Instance != null) GameManager.Instance.OnGameOver -= HandleGameOver;
+    }
+
+    private void HandleGameOver() => StartCoroutine(DeathSequence());
 
     private IEnumerator DeathSequence()
     {
@@ -47,6 +47,8 @@ public class PlayerDeath : MonoBehaviour
 
         float approachTime = timeToExplode - holdTime;
         Vector3 lastOffset = Vector3.zero;
+        Vector3 shakeDirection = Vector3.zero;
+        float directionTimer = 0f;
 
         for (float elapsed = 0f; elapsed < timeToExplode; elapsed += Time.unscaledDeltaTime)
         {
@@ -55,7 +57,14 @@ public class PlayerDeath : MonoBehaviour
 
             // Same trick as CameraShake: undo last frame's offset before adding a new one.
             meshTransform.localPosition -= lastOffset;
-            lastOffset = Random.insideUnitSphere * maxShake * (elapsed / timeToExplode);
+            // A new direction shakeFrequency times a second, not every frame, so the shake looks the same at any frame rate.
+            directionTimer -= Time.unscaledDeltaTime;
+            if (directionTimer <= 0f)
+            {
+                shakeDirection = Random.insideUnitSphere;
+                directionTimer = 1f / shakeFrequency;
+            }
+            lastOffset = shakeDirection * maxShake * (elapsed / timeToExplode);
             meshTransform.localPosition += lastOffset;
 
             yield return null;

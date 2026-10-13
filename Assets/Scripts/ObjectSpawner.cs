@@ -16,17 +16,36 @@ public class ObjectSpawner : MonoBehaviour
     {
         public GameObject pattern;
         public float delayAfter = 2f;      // seconds to wait before the next wave starts
+        public float clearPoints = 300f;    // points when every object in the wave is gone
+        public float perfectBonus = 200f;   // added on top if no life was lost during the wave
     }
 
     [SerializeField] private List<Wave> waves = new List<Wave>();
     [SerializeField] private WaveOrder order = WaveOrder.Sequential;
     [SerializeField] private bool loop = true;
     [SerializeField] private float startDelay = 1f; // seconds before the first wave
+    [SerializeField] private int prewarmPerPattern = 1; // copies of each pattern made at level start
+
+    // Pooling: free copies per pattern prefab, and each copy's children in reveal order.
+    private readonly Dictionary<GameObject, Stack<PatternCopy>> freeCopies = new Dictionary<GameObject, Stack<PatternCopy>>();
+    private readonly Dictionary<PatternCopy, Transform[]> revealOrder = new Dictionary<PatternCopy, Transform[]>();
+
+    // A revealed wave waiting to clear: its settings, Score's LivesLostCount when it
+    // started, and whether the earth cut it short.
+    private struct RunningWave
+    {
+        public Wave wave;
+        public int livesLostAtStart;
+        public bool cutShort;
+    }
+
+    private readonly Dictionary<PatternCopy, RunningWave> runningWaves = new Dictionary<PatternCopy, RunningWave>();
 
     // Children this close in Z spawn together. Public so PatternGizmos groups them the same way.
     public const float SameZTolerance = 0.01f;
 
     private LevelTimer levelTimer;
+    private Score score;
 
     // Once the earth has arrived or the game is over, no more waves or objects are spawned.
     private bool StopSpawning => (levelTimer != null && levelTimer.IsComplete) ||
@@ -41,6 +60,16 @@ public class ObjectSpawner : MonoBehaviour
     private void Start()
     {
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
+        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+
+        // Make each pattern's first copies now, so the first waves don't stutter.
+        foreach (Wave wave in waves)
+        {
+            if (wave.pattern == null) continue;
+            Stack<PatternCopy> free = GetFreeList(wave.pattern);
+            while (free.Count < prewarmPerPattern)
+                free.Push(CreateCopy(wave.pattern));
+        }
 
         if (waves.Count > 0)
             StartCoroutine(RunWaves());
@@ -58,7 +87,7 @@ public class ObjectSpawner : MonoBehaviour
                 if (wave.pattern == null) continue;
 
                 // Wait for the whole pattern to finish revealing, then pause.
-                yield return SpawnPattern(wave.pattern);
+                yield return SpawnPattern(wave);
                 yield return new WaitForSeconds(wave.delayAfter);
             }
         }
@@ -83,31 +112,90 @@ public class ObjectSpawner : MonoBehaviour
         return ordered;
     }
 
-    private IEnumerator SpawnPattern(GameObject prefab)
+    // The free list for one pattern prefab, made the first time it's needed.
+    private Stack<PatternCopy> GetFreeList(GameObject prefab)
+    {
+        if (!freeCopies.TryGetValue(prefab, out Stack<PatternCopy> list))
+            freeCopies[prefab] = list = new Stack<PatternCopy>();
+        return list;
+    }
+
+    // PatternCopy.OnReleased: every child is home, so the wave scores and the copy
+    // waits for its next use.
+    private void HandleReleased(PatternCopy copy)
+    {
+        if (runningWaves.TryGetValue(copy, out RunningWave run))
+        {
+            runningWaves.Remove(copy);
+            if (score != null) AwardWave(run);
+        }
+        GetFreeList(copy.Prefab).Push(copy);
+    }
+
+    // Half points if the earth cut it short; the perfect bonus only if no life was lost during it.
+    private void AwardWave(RunningWave run)
+    {
+        if (run.cutShort)
+        {
+            score.AddWaveClear(run.wave.clearPoints * 0.5f, false);
+            return;
+        }
+
+        bool perfect = score.LivesLostCount == run.livesLostAtStart;
+        score.AddWaveClear(run.wave.clearPoints + (perfect ? run.wave.perfectBonus : 0f), perfect);
+    }
+
+    // Makes a new copy of a pattern with its children hidden, ready to be revealed.
+    private PatternCopy CreateCopy(GameObject prefab)
     {
         // Parenting to the spawner keeps the pattern's own offset from it.
-        GameObject pattern = Instantiate(prefab, transform);
+        GameObject root = Instantiate(prefab, transform);
 
-        // Snapshot and hide the children before the first frame renders.
-        var children = new List<Transform>(pattern.transform.childCount);
-        foreach (Transform child in pattern.transform)
-            children.Add(child);
-        foreach (Transform child in children)
-            child.gameObject.SetActive(false);
+        var children = new Transform[root.transform.childCount];
+        for (int i = 0; i < children.Length; i++)
+        {
+            children[i] = root.transform.GetChild(i);
+            children[i].gameObject.SetActive(false);
+        }
 
         // Order by Z distance from the camera only, closest first.
         Camera cam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         float camZ = cam != null ? cam.transform.position.z : 0f;
-        children.Sort((a, b) =>
+        Array.Sort(children, (a, b) =>
             Mathf.Abs(a.position.z - camZ).CompareTo(Mathf.Abs(b.position.z - camZ)));
+
+        PatternCopy copy = root.AddComponent<PatternCopy>();
+        copy.Init(prefab);
+        copy.OnReleased += HandleReleased;
+        revealOrder[copy] = children;
+        return copy;
+    }
+
+    // A free copy of the pattern if there is one; a new one otherwise.
+    private PatternCopy GetCopy(GameObject prefab)
+    {
+        Stack<PatternCopy> free = GetFreeList(prefab);
+        return free.Count > 0 ? free.Pop() : CreateCopy(prefab);
+    }
+
+    private IEnumerator SpawnPattern(Wave wave)
+    {
+        PatternCopy copy = GetCopy(wave.pattern);
+        Transform[] children = revealOrder[copy];
+        copy.BeginReveal();
+        int livesLostAtStart = score != null ? score.LivesLostCount : 0;
+        bool cutShort = false;
+
+        Camera cam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
+        float camZ = cam != null ? cam.transform.position.z : 0f;
 
         // Every child appears at the first step's Z (the spawn plane). The wait
         // before each later step is how long it takes to fly that step's Z gap, so
         // in flight each step trails the one before by exactly its authored gap.
-        float spawnZ = children.Count > 0 ? children[0].position.z : 0f;
+        float spawnZ = children.Length > 0 ? children[0].position.z : 0f;
 
         float previousDistance = 0f;
-        for (int i = 0; i < children.Count; i++)
+        for (int i = 0; i < children.Length; i++)
         {
             float distance = Mathf.Abs(children[i].position.z - camZ);
             float gap = distance - previousDistance;
@@ -122,19 +210,23 @@ public class ObjectSpawner : MonoBehaviour
             previousDistance = distance;
 
             // Earth arrived or game over mid-pattern: stop revealing. The hidden children
-            // are still under the pattern root and are removed with it below.
-            if (StopSpawning) break;
+            // stay home in the copy, ready for its next use.
+            if (StopSpawning)
+            {
+                cutShort = true;
+                break;
+            }
 
-            // Detach so each child moves on its own, then reveal it. Its OnEnable
-            // records its start point (and, for asteroids, starts the warning blink).
+            // Reveal it at the spawn plane. Its OnEnable records its start point
+            // (and, for asteroids, starts the warning blink).
             Vector3 p = children[i].position;
-            children[i].SetParent(null, true);
             children[i].position = new Vector3(p.x, p.y, spawnZ);
+            copy.ChildRevealed();
             children[i].gameObject.SetActive(true);
         }
 
-        // Only the empty root (plus any unrevealed children) is left.
-        Destroy(pattern);
+        runningWaves[copy] = new RunningWave { wave = wave, livesLostAtStart = livesLostAtStart, cutShort = cutShort };
+        copy.EndReveal();
     }
 
     // Asteroids and power-ups both report how fast they close on the camera.

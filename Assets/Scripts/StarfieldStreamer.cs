@@ -13,9 +13,8 @@ public class StarfieldStreamer : MonoBehaviour
     [SerializeField] private float sidewaysDrift = 2f;
 
     [Header("Field Shape")]
-    [SerializeField] private float fieldWidth = 500f;
-    [SerializeField] private float fieldHeight = 320f;
-    [SerializeField] private float fieldDepth = 40f;
+    [SerializeField] private float fieldRadius = 300f; // stars spawn up to this far from the center...
+    [SerializeField] private float clearRadius = 20f;  // ...and no closer, so none stream through the middle of the screen
     [SerializeField] private float spawnDistance = 300f;
     [SerializeField] private float despawnDistance = -50f;
 
@@ -29,14 +28,9 @@ public class StarfieldStreamer : MonoBehaviour
     [SerializeField] private float streakLengthScale = 2f;
     [SerializeField] private Material starMaterial;
 
-    [Header("Occluder")]
-    [SerializeField] private float earthPadding = 1f; // extra margin so streak tails don't poke through
-
-    private Renderer earth; // stars are killed on entering this, supplied by the GameManager
-
     private ParticleSystem stars;
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
-    private ParticleSystem.Particle[] particleBuffer;
+    private Material fallbackMaterial;
 
     private void Awake()
     {
@@ -45,12 +39,6 @@ public class StarfieldStreamer : MonoBehaviour
         // per-frame allocation or lookup.
         stars = BuildParticleSystem();
         velocityModule = stars.velocityOverLifetime;
-        particleBuffer = new ParticleSystem.Particle[stars.main.maxParticles];
-    }
-
-    private void Start()
-    {
-        earth = GameManager.Instance != null ? GameManager.Instance.Earth : null;
     }
 
     private void Update()
@@ -61,48 +49,13 @@ public class StarfieldStreamer : MonoBehaviour
         velocityModule.z = new ParticleSystem.MinMaxCurve(-speed, -speed);
     }
 
-    private void LateUpdate()
-    {
-        // Kill any star that has streamed past despawnDistance behind the
-        // camera, or that has flown into the earth so it never emerges out
-        // the near side. Simulation space is local, so positions are relative
-        // to the camera; the earth is converted into that same space.
-        // Lifetime still applies as well, so whichever comes first wins.
-        bool checkEarth = earth != null;
-        Vector3 earthCenter = Vector3.zero;
-        float earthRadiusSqr = 0f;
-
-        if (checkEarth)
-        {
-            earthCenter = stars.transform.InverseTransformPoint(earth.bounds.center);
-            float radius = earth.bounds.extents.x + earthPadding;
-            earthRadiusSqr = radius * radius;
-        }
-
-        int count = stars.GetParticles(particleBuffer);
-        bool changed = false;
-
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 pos = particleBuffer[i].position;
-
-            if (pos.z < despawnDistance ||
-                (checkEarth && (pos - earthCenter).sqrMagnitude < earthRadiusSqr))
-            {
-                particleBuffer[i].remainingLifetime = 0f;
-                changed = true;
-            }
-        }
-
-        if (changed) stars.SetParticles(particleBuffer, count);
-    }
-
     private ParticleSystem BuildParticleSystem()
     {
         // Create a child object under the camera so the particle system
         // rides along with it, rather than parenting stars to the camera
         // component directly.
         var go = new GameObject("StarfieldParticles");
+        go.layer = gameObject.layer;
         go.transform.SetParent(transform, false);
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;
@@ -111,14 +64,15 @@ public class StarfieldStreamer : MonoBehaviour
         var renderer = go.GetComponent<ParticleSystemRenderer>();
 
         // Main module: lifetime, size, color, and cap on live particles.
-        // Start speed is zero because all motion is driven by the
-        // velocityOverLifetime module below instead.
+        // Start speed is a small outward drift (the circle fires particles away
+        // from its center); forward motion comes from the velocityOverLifetime
+        // module below.
         var main = ps.main;
         main.loop = true;
         main.playOnAwake = true;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;
         main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * 0.85f, lifetime * 1.15f);
-        main.startSpeed = 0f; // all motion comes from velocityOverLifetime below
+        main.startSpeed = new ParticleSystem.MinMaxCurve(0f, sidewaysDrift); // outward drift; forward motion is velocityOverLifetime below
         main.startSize = new ParticleSystem.MinMaxCurve(minSize, maxSize);
         main.startColor = new ParticleSystem.MinMaxGradient(colorA, colorB);
         main.maxParticles = 3000;
@@ -127,17 +81,21 @@ public class StarfieldStreamer : MonoBehaviour
         var emission = ps.emission;
         emission.rateOverTime = emissionRate;
 
-        // Shape: a box positioned out in front of the camera that stars
-        // spawn within, giving the field its width/height/depth extent.
+        // Shape: a ring out in front of the camera that stars spawn within. The
+        // middle (inside clearRadius) is left empty, so no star streams past the
+        // camera through the middle of the screen.
         var shape = ps.shape;
         shape.enabled = true;
-        shape.shapeType = ParticleSystemShapeType.Box;
-        shape.scale = new Vector3(fieldWidth, fieldHeight, fieldDepth);
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = fieldRadius;
+        shape.radiusThickness = 1f - Mathf.Clamp01(clearRadius / fieldRadius);
+        shape.arc = 360f;
         shape.position = new Vector3(0f, 0f, spawnDistance);
 
         // Velocity over lifetime: drives all actual particle motion. Z is
         // set to a placeholder here and overwritten every frame in Update
-        // based on player speed; X/Y add a slight sideways drift for depth.
+        // based on player speed; X/Y stay 0: the sideways drift is the outward
+        // start speed instead, so it never heads into the empty middle.
         var velocityOverLifetime = ps.velocityOverLifetime;
         velocityOverLifetime.enabled = true;
         velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
@@ -145,9 +103,25 @@ public class StarfieldStreamer : MonoBehaviour
         // All three axes must share the same MinMaxCurve mode (Unity throws
         // "Particle curves must all be in the same mode" otherwise), so Z
         // uses the same two-constant form as X/Y even though both are equal.
-        velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(-sidewaysDrift, sidewaysDrift);
-        velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(-sidewaysDrift, sidewaysDrift);
+        velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+        velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(0f, 0f);
         velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(-baseSpeed, -baseSpeed);
+
+        // Collision: an invisible plane despawnDistance behind the camera. A star
+        // that touches it loses all its lifetime, so fast stars' long streak tails
+        // never poke back into view. The particle system does this itself, so no
+        // star is ever copied into C#.
+        Transform despawnPlane = new GameObject("Star Despawn Plane").transform;
+        despawnPlane.SetParent(go.transform, false);
+        despawnPlane.localPosition = new Vector3(0f, 0f, despawnDistance);
+        despawnPlane.localRotation = Quaternion.FromToRotation(Vector3.up, Vector3.forward); // a plane faces along its up axis: point it at the incoming stars
+
+        var collision = ps.collision;
+        collision.enabled = true;
+        collision.type = ParticleSystemCollisionType.Planes;
+        collision.AddPlane(despawnPlane);
+        collision.lifetimeLoss = 1f;
+        collision.bounce = 0f;
 
         // Color over lifetime: fades each star in and out so spawning and
         // despawning aren't visible as hard pops.
@@ -172,8 +146,8 @@ public class StarfieldStreamer : MonoBehaviour
         renderer.lengthScale = streakLengthScale;
         renderer.material = starMaterial != null ? starMaterial : CreateFallbackStarMaterial();
 
-        // Stars die at the end of their lifetime, or earlier in LateUpdate
-        // if they pass despawnDistance behind the camera.
+        // Stars die at the end of their lifetime, or earlier at the despawn
+        // plane (see Collision above).
         return ps;
     }
 
@@ -195,6 +169,12 @@ public class StarfieldStreamer : MonoBehaviour
             if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", dot);
             if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", dot);
         }
+        fallbackMaterial = mat;
         return mat;
+    }
+
+    private void OnDestroy()
+    {
+        if (fallbackMaterial != null) Destroy(fallbackMaterial);
     }
 }

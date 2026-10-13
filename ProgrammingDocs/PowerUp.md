@@ -6,11 +6,14 @@ A pickup that works like an asteroid: it flies toward the camera (and the player
 collider touches it, does something. Each power-up type has its own effect. Every pickup also adds one to
 the power-ups stat in RunStats.
 
-There are two types:
+There are four types:
 
-- **Health** gives the player a life back, up to their max.
+- **Health** gives the player a life back, up to their max. During the twin power-up it gives nothing.
 - **Invincible** makes the player invincible for a few seconds: every asteroid they touch is busted, and a
   rainbow overlay shows on the ship. The timer and overlay live in PlayerInvincibility on the player.
+- **Twin** adds a copy of the player on the orbit (see PlayerTwins). A twin copy can also pick power-ups up.
+- **ScoreMultiplier** adds +2 to the score multiplier for 10 seconds. Each pickup has its own timer, so
+  overlapping pickups stack (see Score).
 
 ## Where it lives
 
@@ -49,6 +52,10 @@ Adding a new type takes three things:
 
 Without the method and the case, the new type can be picked in the Inspector but does nothing.
 
+**Add new types at the end of the enum.** Unity saves an enum field as its position number (Health = 0,
+Invincible = 1, Twin = 2, ScoreMultiplier = 3). Inserting a type earlier in the list would shift those
+numbers and quietly change the type of every existing power-up prefab.
+
 ### `ApproachSpeed`
 
 `speed + PlayerMovement.Speed × template.speedMultiplier`, worked out fresh each time it's read, so it
@@ -57,11 +64,13 @@ between two asteroids stays between them in flight. ObjectSpawner reads it to ti
 
 ### `Awake` and `OnEnable`
 
-- **`Awake`** finds the gameplay camera through GameManager, once.
+- **`Awake`** gets the gameplay camera, the player's PlayerMovement, PlayerHealth, PlayerInvincibility and
+  PlayerTwins, and the level's Score, from GameManager, once.
 - **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
   and resets `distance` to 0.
-- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up, despawned, or its
-  pattern destroyed) goes through `Destroy`, which runs `OnDisable`.
+- **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up or missed) goes through
+  `PatternCopy.Despawn`, which switches it off (running `OnDisable`) and puts it back at its spot in its
+  pattern copy for the pattern's next use. Outside a pooled pattern, `Despawn` destroys it as before.
 
 `Active` is shared by the whole class, the same as `AsteroidBehavior.Active`. GameManager reads it to know
 whether the field is clear before the level can be won.
@@ -80,7 +89,8 @@ Each frame, the same as a Linear asteroid:
    on, instead of making the power-up jump.
 2. **Spin** around the world's up axis at `template.powerUpSpinSpeed`.
 3. **Despawn.** Once it's `template.despawnBehindCamera` units past the camera, it's been missed, so it
-   destroys itself.
+   calls `PatternCopy.Despawn(gameObject)`. Its spin is undone too: going home restores its authored
+   rotation, so a reused power-up starts upright.
 
 Without a template it still moves, but doesn't spin or despawn. There's no warning blink, unlike
 asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by itself.
@@ -89,25 +99,30 @@ asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by it
 
 When something touches it:
 
-1. **Is it the player?** It looks for `PlayerMovement` on what it touched or its parents. If none is found,
-   it ignores it.
+1. **Is it the player or a twin copy?** PlayerTwins' `FindBody(other.transform)` returns the body that was
+   touched (using `IsChildOf`, so colliders on children count), or null. Without a PlayerTwins, it falls back
+   to `other.transform.IsChildOf(player.transform)`. Anything else, or no cached player, is ignored.
 2. **Is the level already won?** It reads `GameManager.Instance`. If `HasWon` is set, it ignores the
    touch, and the power-up flies on through the ship without being used up.
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
    that does nothing (Health at full lives) still counts.
-4. **Apply the effect** with `ApplyEffect(player)`.
-5. **Feedback** from the template's Power-Up section: spawn `pickupEffectPrefab`, and shake the camera only
-   if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling `Shake` would restart the
-   timer of a shake already running.)
-6. **Destroy** the power-up.
+4. **Apply the effect** with `ApplyEffect()`.
+5. **Feedback** from the template's Power-Up section: play `pickupEffectPrefab` through `EffectPool.Play`,
+   and shake the camera only if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling
+   `Shake` would restart the timer of a shake already running.)
+6. **Despawn** the power-up with `PatternCopy.Despawn`.
 
-### `ApplyEffect`, `Heal` and `MakeInvincible`
+It runs once per pickup because the player only ever has **one** collider on (PlayerShell switches the body
+off while the shield is on). With two, a pickup healed twice, counted twice and, with pooling, played a
+second explosion at the power-up's home spot.
 
-`ApplyEffect(player)` runs the effect method for this power-up's `type`. Every effect method takes the
-player that picked it up (`PlayerMovement player`), so it can get whatever it needs from the player's
-object.
+### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin` and `AddScoreMultiplier`
 
-**`Heal`** finds PlayerHealth on the player and calls `GainLife()`, which adds one life but never goes
+`ApplyEffect()` runs the effect method for this power-up's `type`. The effect methods take no
+parameters: whatever they need from the player was already cached from GameManager in `Awake`. A new
+effect that needs another player component gets it the same way (expose it on GameManager if it isn't yet).
+
+**`Heal`** calls `GainLife()` on the cached PlayerHealth, which adds one life but never goes
 past the max:
 
 | Lives before | After | Counted? |
@@ -115,33 +130,49 @@ past the max:
 | 1 | 2 | yes |
 | 2 | 3 | yes |
 | 3 (max) | 3 | yes (used up and wasted) |
+| any, while twinned | unchanged | yes (used up and wasted) |
 
-**`MakeInvincible`** finds PlayerInvincibility on the player and calls `Activate(template.invincibleDuration)`.
+**`MakeInvincible`** calls `Activate(template.invincibleDuration)` on the cached PlayerInvincibility.
 It does nothing if either the component or the template is missing (the duration comes from the template).
 
-The timer can't live in PowerUp, because the power-up destroys itself on the same frame it's picked up, so
+The timer can't live in PowerUp, because the power-up is switched off on the same frame it's picked up, so
 its `Update` would never count down. Instant effects like `Heal` can finish inside the effect method;
 effects that last over time hand off to a script on the player.
 
 A second pickup while invincible resets the timer to the full duration rather than adding to it.
+
+**`AddTwin`** calls `AddBody()` on the cached PlayerTwins, which adds a copy and re-spaces the bodies (up to
+`maxBodies`; past that it does nothing).
+
+**`AddScoreMultiplier`** calls `AddMultiplierPowerUp()` on the cached Score, which starts another 10-second
+timer. Like invincibility, the timer lives in Score, not here, because the power-up is switched off as soon
+as it's picked up.
 
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab`, the pickup shake settings and `invincibleDuration`.
-- **GameManager**: gets the gameplay camera, reads `HasWon`, and reaches RunStats through it. GameManager
+- **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`,
+  `PlayerTwins` and `Score` in `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
-- **PlayerMovement**: finds it on whatever touched the power-up, and reads its static `Speed`.
+- **PlayerMovement**: checks whether what touched the power-up is the player, and reads its static `Speed`.
 - **PlayerHealth**: calls `GainLife()` (Health type).
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
+- **PlayerTwins**: `FindBody` decides whether the player or a twin copy touched it; calls `AddBody()` (Twin
+  type); reads `IsTwinned` so Health gives no life during the twin.
+- **Score**: calls `AddMultiplierPowerUp()` (ScoreMultiplier type).
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
 - **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
+- **PatternCopy**: `Despawn` takes it back into its pattern copy.
+- **EffectPool**: `Play` shows the pickup effect from the effect pool.
 
 ## Gotchas
 
 - **It must be a direct child of a pattern,** or the spawner won't reveal it on its own.
+- **It's reused.** Any new state must be reset in `OnEnable`, which runs on every reveal. Never `Destroy`
+  it in code; call `PatternCopy.Despawn`.
 - **The pickup effect must be assigned in the template** (`pickupEffectPrefab`), or there's no visual
   feedback.
 - **A new type needs its `case`.** A type with no case in `ApplyEffect` is counted as picked up but does

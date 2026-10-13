@@ -20,6 +20,7 @@ public class AsteroidBehavior : MonoBehaviour
     [Header("Destruction")]
     [SerializeField] private bool destructible = false;
     [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
+    [SerializeField] private int scorePoints = 10; // base points when broken, before the speed multiplier
 
     [Header("Template")]
     [SerializeField] private SpawnableTemplate template;
@@ -31,9 +32,21 @@ public class AsteroidBehavior : MonoBehaviour
     private Collider col;
     private MaterialPropertyBlock block;
     private MaterialPropertyBlock outlineBlock;
+    private WaitForSeconds blinkWait;
     private Transform mesh;
     private Transform cam;
     private PlayerInvincibility invincibility;
+    private PlayerMovement player;
+    private PlayerHealth health;
+    private PlayerTwins twins;
+    private Score score;
+    private CloseCallZone closeCalls;
+    private bool passedPlayer;      // has crossed the player's depth and been measured
+    private bool closeCallJudged;   // the close call has been decided, so stop checking
+    private bool hitPlayer;         // touched the player or a twin copy this flight
+    private float closeCallGap;     // gap to the nearest body when it crossed
+    private Vector3 closeCallBody;  // that body's position, for the popup
+    private bool closeCallThreat;   // couldn't be broken when it crossed
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
 
@@ -64,12 +77,18 @@ public class AsteroidBehavior : MonoBehaviour
         rend = GetComponentInChildren<Renderer>();
         col = GetComponent<Collider>();
         block = new MaterialPropertyBlock();
+        if (template != null) blinkWait = new WaitForSeconds(template.blinkInterval);
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
+        player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+        health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
+        twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
+        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+        closeCalls = GameManager.Instance != null ? GameManager.Instance.CloseCallZone : null;
 
         // Destructible asteroids get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
@@ -96,6 +115,9 @@ public class AsteroidBehavior : MonoBehaviour
         distance = 0f;
         isMoving = false;
         outlineState = -1; // force the outline color to refresh
+        passedPlayer = false;
+        closeCallJudged = false;
+        hitPlayer = false;
 
         // Each asteroid spins around its own random axis.
         spinAxis = Random.onUnitSphere;
@@ -126,7 +148,7 @@ public class AsteroidBehavior : MonoBehaviour
             {
                 on = !on;
                 SetGlow(on);
-                yield return new WaitForSeconds(template.blinkInterval);
+                yield return blinkWait;
             }
 
             SetGlow(false);
@@ -203,26 +225,54 @@ public class AsteroidBehavior : MonoBehaviour
         }
 
         transform.position = position;
+        if (closeCalls != null && player != null && !closeCallJudged) TrackCloseCall();
 
         // Asteroids fly toward -Z, so once one is far enough behind the camera it
         // can never come back into view.
         if (cam != null && template != null &&
             transform.position.z < cam.position.z - template.despawnBehindCamera)
         {
-            Destroy(gameObject);
+            PatternCopy.Despawn(gameObject);
         }
+    }
+
+    // Measures the gap once, on the frame it crosses the player's depth, then judges
+    // once it's too far past to still touch.
+    private void TrackCloseCall()
+    {
+        float depth = transform.position.z - player.transform.position.z;
+        if (!passedPlayer)
+        {
+            if (depth > 0f) return;
+            passedPlayer = true;
+            closeCallGap = closeCalls.NearestGap(transform.position, HitRadius, out closeCallBody);
+            closeCallThreat = !CanBreak;
+        }
+
+        if (depth > -(HitRadius + closeCalls.Reach)) return;
+        closeCallJudged = true;
+
+        if (!hitPlayer && closeCallThreat && closeCallGap > 0f && closeCallGap <= closeCalls.Distance && score != null)
+            score.AddCloseCall(closeCallBody);
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only react to the player. GetComponentInParent covers the collider
-        // being on a child of the object that has PlayerMovement.
-        PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
+        // Only react to the player or a twin copy. FindBody also covers the
+        // collider being on a child, and says which body was touched.
         if (player == null) return;
+        Transform body = twins != null ? twins.FindBody(other.transform)
+                       : other.transform.IsChildOf(player.transform) ? player.transform : null;
+        if (body == null) return;
+        hitPlayer = true;
 
         if (CanBreak)
         {
-            Explode();
+            Explode(body.position);
+        }
+        else if (twins != null && twins.IsTwinned)
+        {
+            twins.LoseBody(body);
         }
         else if (template != null)
         {
@@ -234,25 +284,24 @@ public class AsteroidBehavior : MonoBehaviour
             {
                 CameraShake.Shake(template.hitShakeDuration, template.hitShakeMagnitude);
 
-                PlayerHealth health = player.GetComponent<PlayerHealth>();
                 if (health != null) health.LoseLife();
             }
         }
     }
 
-    private void Explode()
+    private void Explode(Vector3 bodyPosition)
     {
         if (template != null)
         {
-            if (template.explosionPrefab != null)
-                Instantiate(template.explosionPrefab, transform.position, Quaternion.identity);
+            EffectPool.Play(template.explosionPrefab, transform.position);
 
             CameraShake.Shake(template.shakeDuration, template.shakeMagnitude);
         }
 
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
+        if (score != null) score.AddComboKill(scorePoints, bodyPosition);
 
-        Destroy(gameObject);
+        PatternCopy.Despawn(gameObject);
     }
 }

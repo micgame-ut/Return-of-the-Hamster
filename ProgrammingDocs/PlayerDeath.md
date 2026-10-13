@@ -14,7 +14,7 @@ it keeps going while the rest of the level stands still.
 - **Attached to:** the player object, alongside `PlayerMovement` and `PlayerHealth`.
 - **Requires:**
   - `meshTransform` assigned to the ship's mesh child (the same one `PlayerMovement` uses).
-  - `GameManager.Instance`, for `IsGameOver`, the gameplay camera, and `DeathSequenceFinished()`.
+  - `GameManager.Instance`, for the `OnGameOver` event, the gameplay camera, and `DeathSequenceFinished()`.
   - An explosion prefab whose particle system uses **Unscaled** delta time (`Player Explosion`, a copy of
     `Asteroid Explosion`), or it spawns frozen.
 
@@ -27,6 +27,7 @@ it keeps going while the rest of the level stands still.
 | `holdTime` | 0.75 | Seconds the ship sits in front of the camera, shaking, before it explodes |
 | `timeToExplode` | 2 | Seconds from game over to the explosion. The approach takes `timeToExplode − holdTime` |
 | `maxShake` | 0.3 | How far the mesh jitters at the moment it explodes. It grows from 0 |
+| `shakeFrequency` | 60 (min 1) | New shake directions per second, so the shake looks the same at any frame rate |
 | `explosionPrefab` | none | The particle effect spawned at the explosion (`Player Explosion`) |
 | `explodeShakeDuration` | 0.4 | How long the camera shakes at the explosion |
 | `explodeShakeMagnitude` | 0.5 | How hard the camera shakes at the explosion |
@@ -44,13 +45,18 @@ With the defaults:
 | 2 s | Explosion and camera shake; the ship disappears |
 | 3.5 s | `DeathSequenceFinished()` |
 
-### `Update` and `started`
+### `OnEnable` / `OnDisable` and `HandleGameOver`
 
-`Update` runs every frame, checking whether the game is over. On the first frame it is, it sets `started`
-to true and starts the `DeathSequence` coroutine. On every frame after that, the first line exits the
-method, so the sequence only starts once. Without `started`, a new coroutine would start every frame.
+There's no `Update`. Instead it subscribes to GameManager's `OnGameOver` event in `OnEnable` and
+unsubscribes in `OnDisable`, so GameManager never holds on to a destroyed PlayerDeath. GameManager's
+`Awake` runs first (`DefaultExecutionOrder(-100)`), so `Instance` is ready by `OnEnable`.
 
-`Update` still runs while time is frozen. `Time.timeScale = 0` only makes `Time.deltaTime` 0.
+When the game ends, `HandleGameOver` starts the `DeathSequence` coroutine. `OnGameOver` fires at most once
+per level, so the sequence can only start once. It starts in the same frame as the hit that cost the last
+life, from inside `GameOver()`.
+
+The coroutine keeps running while time is frozen. `Time.timeScale = 0` only makes `Time.deltaTime` 0, and
+the sequence uses unscaled time.
 
 ### `DeathSequence`: setup
 
@@ -72,9 +78,12 @@ frozen). Each frame:
   Because the approach is shorter than `timeToExplode`, `moveT` reaches 1 early and the ship holds there.
   If `holdTime` is `timeToExplode` or more, `approachTime` is 0 or less and `moveT` is set straight to 1
   instead of dividing by it (dividing by 0 would give `NaN` and break the position).
-- **Shake.** The mesh child's last offset is removed, and a new random one is added. Its size is
+- **Shake.** The mesh child's last offset is removed, and a new one is added. Its size is
   `maxShake × (elapsed / timeToExplode)`, so the shake grows as the explosion gets closer. Removing the
   old offset first keeps the jitter centered instead of wandering off (the same idea as CameraShake).
+  The **direction** is a new `Random.insideUnitSphere` only `shakeFrequency` times a second (local
+  `directionTimer` and `shakeDirection`), held in between, the same as CameraShake. Picking a new one every
+  frame made the shake buzzier on faster screens.
 
 The root moves and the mesh child shakes, so the two never fight.
 
@@ -90,7 +99,8 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 
 ### `DeathSequence`: explosion and finish
 
-1. Spawns `explosionPrefab` at the ship, if one is assigned.
+1. Spawns `explosionPrefab` at the ship, if one is assigned. This one isn't pooled (EffectPool): it only
+   happens once per level.
 2. Shakes the camera with `CameraShake.Shake`.
 3. Hides the ship by switching off the **mesh child**. The root stays active, because switching off the
    object this coroutine runs on would stop the coroutine.
@@ -100,7 +110,7 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 
 ## Talks to
 
-- **GameManager**: reads `IsGameOver` every frame until the sequence starts, gets `GameplayCamera` for the
+- **GameManager**: subscribes to `OnGameOver` to start the sequence, gets `GameplayCamera` for the
   target, and calls `DeathSequenceFinished()` at the end.
 - **CameraShake**: calls `Shake` at the explosion.
 - **PlayerMovement**: no direct link. PlayerMovement stops moving the ship at game over so this script

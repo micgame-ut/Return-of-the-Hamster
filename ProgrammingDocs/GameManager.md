@@ -3,19 +3,23 @@
 ## Purpose
 
 One central place for the scene's important objects: the player, the gameplay camera, the earth, the
-earth camera, the LevelTimer, and the player's PlayerHealth and PlayerInvincibility. Instead of every script having its own
+earth camera, the LevelTimer, and the player's PlayerHealth, PlayerInvincibility, PlayerShell and PlayerTwins. Instead of every script having its own
 Inspector fields for these (and each one needing to be dragged in by hand), scripts ask the GameManager
 with `GameManager.Instance`.
 
+**The rule for player components:** a script on the player finds the player's other components itself. A
+script anywhere else gets them (and the player itself) from GameManager, once in `Awake` or `Start`. If
+GameManager doesn't expose one yet, it's added here. (AGENTS.md section 5.)
+
 It also holds the level's end state: whether the game is over or the level is won. It decides when the
 level is won (the earth has arrived and the field is clear), freezes the game on either ending, and shows
-the matching end screen. It doesn't stop other scripts itself. It announces the state, and each script
-checks it and stops itself.
+the matching end screen. It doesn't stop other scripts itself. It announces the state (the `OnGameOver` and
+`OnWin` events, plus the `IsGameOver` / `HasWon` properties), and each script reacts and stops itself.
 
 ## Where it lives
 
-- **Attached to:** the `Game Manager` GameObject in `Game.unity`. `LevelTimer` sits on the same object.
-  `PlayerHealth` and `PlayerInvincibility` sit on the player object instead, since they belong to the player.
+- **Attached to:** the `Game Manager` GameObject in `TestGame.unity`. `LevelTimer` sits on the same object.
+  `PlayerHealth`, `PlayerInvincibility`, `PlayerShell` and `PlayerTwins` sit on the player object instead, since they belong to the player.
 - **Requires:** its Inspector fields filled in (see below). There must be exactly one in the scene.
 - **Not in:** `PatternEnvironment.unity`. Scripts that use it check for `null`, so they still run there
   without it (see Gotchas).
@@ -28,14 +32,19 @@ checks it and stops itself.
 | `gameplayCamera` | Camera | The main camera. Used to despawn asteroids once they're behind it, and to sort a pattern's asteroids by distance |
 | `earth` | Renderer | The earth model that approaches as the level goes on |
 | `earthCamera` | Camera | The camera that renders the earth |
-| `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `Game.unity`) |
+| `levelTimer` | LevelTimer | The level's timer. Can be left empty if LevelTimer is on the same GameObject (it is in `TestGame.unity`) |
 | `playerHealth` | PlayerHealth | The player's lives. Can be left empty if PlayerHealth is on the `player` object |
 | `playerInvincibility` | PlayerInvincibility | The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the `player` object |
+| `playerShell` | PlayerShell | The player's shield shell and its hitbox. Can be left empty if PlayerShell is on the `player` object |
+| `playerTwins` | PlayerTwins | The twin power-up on the player. Can be left empty if PlayerTwins is on the `player` object |
+| `closeCallZone` | CloseCallZone | The close-call range on the player. Can be left empty if CloseCallZone is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
+| `score` | Score | This level's score and its HUD counter. Can be left empty if Score is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
+| `showOrbitRing` | bool (default on) | Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts. Meant to be set from a menu setting later |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
-`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`). Other scripts can read the references but can't swap them out.
+`LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `RunStats`, `Score`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
 
 ## How it works
 
@@ -66,9 +75,9 @@ or `Start` runs, `Instance` is ready.
 3. **Unfreeze time.** `Time.timeScale = 1f`. Time scale is global and, like static values, survives a
    scene reload. Without this, restarting after a game over would start the new scene frozen. GameManager
    runs first (`-100`), so time is normal before any other script runs.
-4. **Fill in the LevelTimer and RunStats.** If either was left empty, it looks for one on the same
+4. **Fill in the LevelTimer, RunStats and Score.** If any was left empty, it looks for one on the same
    GameObject with `GetComponent`.
-5. **Fill in the PlayerHealth and PlayerInvincibility.** If either was left empty and `player` is
+5. **Fill in the PlayerHealth, PlayerInvincibility, PlayerShell, PlayerTwins and CloseCallZone.** If any was left empty and `player` is
    assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
    another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
@@ -82,15 +91,25 @@ Two `bool` properties, both `private set`, so other scripts can read them but on
 them. Both start as `false`, the default for a `bool`. They're instance properties, so a reloaded scene
 starts with a new GameManager and both are `false` again.
 
-Other scripts **pull** this state: each one checks it and stops itself, instead of GameManager reaching
-into them. If something new needs to stop at game over, the check goes in that script and GameManager
-doesn't change.
+GameManager never reaches into other scripts to stop them. There are two ways a script can react:
+
+- **Subscribe to an event** when it needs to do something *once*, at the moment the level ends.
+  `OnGameOver` is raised at the end of `GameOver()`, and `OnWin` at the end of `Win()`. Both are `Action`
+  (no value passed) and both can fire at most once, because of the guards at the top of those methods.
+  Subscribe in `OnEnable` and unsubscribe in `OnDisable`, like `PlayerHealth.OnLivesChanged`. PlayerDeath,
+  PlayerInvincibility, ExhaustFlame, DangerWarning and OverdriveTally do this.
+- **Read `IsGameOver` / `HasWon`** when the check is part of work that runs anyway (every frame, or on a
+  hit). PlayerMovement, ObjectSpawner, LevelTimer, RunStats, PlayerHealth and PowerUp do this.
+
+If something new needs to stop at game over, the reaction goes in that script and GameManager doesn't
+change.
 
 ### `GameOver`
 
 Called by PlayerHealth when the player runs out of lives. If the game is already over or the level is
 already won, it exits immediately. Otherwise it sets `IsGameOver`, freezes the level, records the death
-in RunStats (`RecordDeath()`, which saves the next Apollo number), and logs "Game over". So it only ever runs once, and losing a life after winning can't turn a win into a loss.
+in RunStats (`RecordDeath()`, which saves the next Apollo number), and raises `OnGameOver` last, so
+listeners see the final state. So it only ever runs once, and losing a life after winning can't turn a win into a loss.
 
 **The freeze** is `Time.timeScale = 0f`. `Time.deltaTime` becomes 0, so everything that moves by it
 stops: asteroids, the starfield, the skybox, the spawner's timers, physics, and particles. Unity still
@@ -107,8 +126,8 @@ does nothing. Otherwise it shows the Game Over screen (`endScreen.ShowGameOver()
 
 Called by GameManager's own `Update` when the level is cleared (see below). It mirrors `GameOver`: it exits
 if either state is already set, otherwise it sets `HasWon`, freezes the game (`Time.timeScale = 0`), records
-the win in RunStats (`RecordWin()`, which saves the Apollo's totals for the next level), and shows the win
-screen (`endScreen.ShowWin()`).
+the win in RunStats (`RecordWin()`, which saves the Apollo's totals for the next level), shows the win
+screen (`endScreen.ShowWin()`), and raises `OnWin` last.
 
 ### `LevelCleared` and `Update`: deciding the win
 
@@ -139,22 +158,29 @@ its own.
 
 ## Talks to
 
-GameManager reads `player` once in `Awake` to find the PlayerHealth and PlayerInvincibility. Otherwise it doesn't read from or call
+GameManager reads `player` once in `Awake` to find the PlayerHealth, PlayerInvincibility, PlayerShell and PlayerTwins. Otherwise it doesn't read from or call
 anything. Other scripts read from it or call it:
 
 | Script | What it gets or calls | When |
 | --- | --- | --- |
 | **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
-| **PlayerDeath** | reads `IsGameOver` and `GameplayCamera`, calls `DeathSequenceFinished()` | every frame until game over; at the end of the sequence |
+| **PlayerDeath** | subscribes to `OnGameOver`; gets `GameplayCamera`, calls `DeathSequenceFinished()` | at game over; at the end of the sequence |
 | **EndScreen** | GameManager calls `ShowGameOver()` / `ShowWin()`; it reads `RunStats` and `LevelTimer` | when the death sequence finishes; on a win |
-| **PlayerInvincibility** | reads `IsGameOver` and `HasWon` | every frame |
-| **AsteroidBehavior** | `GameplayCamera`, `PlayerInvincibility`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
-| **PowerUp** | `GameplayCamera`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
+| **PlayerInvincibility** | subscribes to `OnGameOver` and `OnWin` | at game over or win |
+| **ExhaustFlame** | subscribes to `OnGameOver` and `OnWin`; on a twin copy, gets `Player` and `PlayerInvincibility` | `Awake`; at game over or win |
+| **TwinCopy** | `Player`, `PlayerShell` | `Awake` |
+| **DangerWarning** | gets `PlayerHealth` and `PlayerTwins`; subscribes to `OnWin` | `Awake`; on a win |
+| **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`, `CloseCallZone`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
+| **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
-| **ObjectSpawner** | `LevelTimer`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
+| **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |
+| **ScorePopups** | `GameplayCamera`, `Score` | `Awake` |
+| **MultiplierDisplay** | `Score` | `Awake` |
+| **OverdriveTally** | `Player`, `Score`; subscribes to `OnGameOver` and `OnWin` | `Awake`; at game over or win |
+| **ObjectSpawner** | `LevelTimer`, `Score`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
 | **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
-| **OrbitRing** | `Player` | `Start` |
+| **OrbitRing** | `ShowOrbitRing`, `Player`, `PlayerShell` | `Start` |
 | **StarfieldStreamer** | `Earth` | `Start` |
 
 ## Gotchas
@@ -164,14 +190,14 @@ anything. Other scripts read from it or call it:
 - **LevelTimer doesn't check for `null`.** Every other script uses `GameManager.Instance != null ? ... : null`,
   so it keeps running in a scene without a GameManager. LevelTimer reads `GameManager.Instance` directly
   (for `Earth`, `EarthCamera`, `IsGameOver` and `Win()`), so it throws an error if there's no GameManager or
-  `earth` / `earthCamera` is empty. It's fine today because LevelTimer is only in `Game.unity`.
+  `earth` / `earthCamera` is empty. It's fine today because LevelTimer is only in `TestGame.unity`.
 - **Only safe from `Awake` onward.** `Instance` is set in `Awake`. Reading it from a field initializer or a
   constructor gets `null`.
 - **Most lookups happen once.** Almost every script grabs its reference in `Awake` or `Start` and keeps it.
   Changing a GameManager field during Play mode won't reach those scripts.
-- **The PlayerHealth and PlayerInvincibility fallbacks need `player`.** If `player` is empty, both stay
-  empty too. AsteroidBehavior finds PlayerHealth through the player it hit, so lives still work, but it
-  gets PlayerInvincibility from here, so invincibility would stop busting asteroids and turning them green.
+- **The PlayerHealth, PlayerInvincibility, PlayerShell and PlayerTwins fallbacks need `player`.** If `player` is empty,
+  they stay empty too. AsteroidBehavior and PowerUp also get the player itself from here, so with no
+  `player` they ignore every contact: no hits, no smashes, no pickups.
 - **Anything that must move during the game-over freeze has to use unscaled time.** Anything using
   `Time.deltaTime`, `WaitForSeconds`, or particle systems left on Scaled stays frozen.
 - **A spawnable that isn't in an `Active` list can't hold up the win.** A new kind of object sent at the
@@ -179,5 +205,5 @@ anything. Other scripts read from it or call it:
   can be won while it's still flying.
 - **Nothing resets the end state during play.** Once `IsGameOver` or `HasWon` is set, it stays set until
   the scene reloads.
-- **The player is only used by OrbitRing and GameManager's own `Awake`.** Other scripts that need the
-  player (like AsteroidBehavior) find it through the collision instead.
+- **Many scripts depend on `player` being assigned.** OrbitRing, RunStats, AsteroidBehavior and PowerUp
+  read `Player`, and every player-component fallback goes through it.

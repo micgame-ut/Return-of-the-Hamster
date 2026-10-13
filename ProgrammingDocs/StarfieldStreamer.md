@@ -15,8 +15,8 @@ forward. Everything else moves past them.
   When the game starts, it creates a child object called `StarfieldParticles` with the particle system on
   it.
 - **Requires:**
-  - `GameManager.Instance` with `earth` assigned, so stars can be removed when they fly into the earth. It
-    still works without one, but stars would pass straight through the earth.
+  - `Camera Rig` on a layer that **Earth Camera's Culling Mask** includes (currently **Background**, the layer the earth is on too). The stars
+    are put on the rig's layer; if Earth Camera doesn't draw that layer, no stars show at all.
   - Optionally a `starMaterial`. If empty (it is in the scene), it makes one itself.
 
 ### Which camera sees the stars
@@ -29,8 +29,7 @@ The scene is split into two areas, far apart:
   `Earth Camera` sits at the rig's position and looks the other way, toward -z, where the earth is.
 
 `Camera Rig` is turned 180°, so its "forward" is the direction `Earth Camera` looks. The stars are
-children of the rig, so they spawn ahead of **Earth Camera**, stream toward it, and fly past the earth
-on the way. Main Camera is about 2,500 units away, facing the other direction, and never sees them.
+children of the rig, so they spawn ahead of **Earth Camera** and stream toward it. Main Camera is about 2,500 units away, facing the other direction, and never sees them.
 
 In the rest of this doc, "the camera" means Earth Camera. All positions are in the rig's own space
 (see `simulationSpace` below): +z is straight ahead of Earth Camera, and 0 is the rig, where Earth
@@ -47,17 +46,16 @@ Only `baseSpeed` and `speedMultiplier` are read while the game runs. Everything 
 | --- | --- | --- |
 | `baseSpeed` | 30 | How fast stars stream past when the player's `Speed` is 0, in units/sec |
 | `speedMultiplier` | 15 | How much faster they go for each point of player `Speed` |
-| `sidewaysDrift` | 2 | Each star also drifts sideways/up/down at a random speed up to this, so they don't all move in perfect parallel lines |
+| `sidewaysDrift` | 2 | Each star also drifts **outward** (away from the middle) at a random speed up to this, so they don't all move in perfect parallel lines |
 
 ### Field Shape
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `fieldWidth` | 500 | Width of the box stars spawn in |
-| `fieldHeight` | 320 | Height of the box stars spawn in |
-| `fieldDepth` | 40 | Depth of the box stars spawn in, so they don't all start at exactly the same distance |
-| `spawnDistance` | 300 | How far ahead of the camera the spawn box is |
-| `despawnDistance` | -50 | Stars are removed once they're this far behind the camera |
+| `fieldRadius` | 300 | Stars spawn up to this far from the middle |
+| `clearRadius` | 20 | …and no closer than this, so no star streams past the camera through the middle of the screen. Tune by eye |
+| `spawnDistance` | 300 | How far ahead of the camera the spawn ring is |
+| `despawnDistance` | -50 | Stars are removed once they're this far behind the camera (the despawn plane) |
 
 ### Stars
 
@@ -69,12 +67,6 @@ Only `baseSpeed` and `speedMultiplier` are read while the game runs. Everything 
 | `colorA` / `colorB` | white / pale blue | Each star gets a random color between these |
 | `streakLengthScale` | 2 | How long the streaks are |
 | `starMaterial` | none | Material for the stars. If empty, one is made in code |
-
-### Occluder
-
-| Field | Default | What it changes |
-| --- | --- | --- |
-| `earthPadding` | 1 | Extra margin around the earth when removing stars that fly into it |
 
 The scene uses all of the default values.
 
@@ -89,49 +81,57 @@ how they're drawn. Normally you'd set these in the Inspector. This script sets t
 
 ### `Awake`: building the particle system (`BuildParticleSystem`)
 
-1. **Make a child GameObject** under the rig and add a ParticleSystem to it.
+1. **Make a child GameObject** under the rig, on the **rig's layer** (so Earth Camera draws it), and add a
+   ParticleSystem to it.
 
 2. **Main module:** the basics.
    - `loop` and `playOnAwake`: keep spawning forever, starting right away.
    - `simulationSpace = Local`: particle positions are measured relative to the rig, not the world. That's
      what makes "z = 300" mean "300 ahead of the camera".
    - Random lifetime (85%–115% of `lifetime`), size, and color per star.
-   - `startSpeed = 0`: the particles don't get an initial push. All their movement comes from the velocity
-     module below.
+   - `startSpeed` = random 0 to `sidewaysDrift`: a small push **outward** from the middle (the circle shape
+     fires particles away from its center). Forward movement comes from the velocity module below.
    - `maxParticles = 3000`: a cap. At 180 per second, living up to about 9 seconds, there are at most
      about 1,650 alive at once, so it's never hit.
 
 3. **Emission module:** `emissionRate` new stars per second.
 
-4. **Shape module:** where stars spawn. A box `fieldWidth` × `fieldHeight` × `fieldDepth`, centered
-   `spawnDistance` ahead of the camera. Each new star appears at a random point inside it. The box is much
-   wider and taller than the screen, so stars also stream past the edges of the view.
+4. **Shape module:** where stars spawn. A **Circle** of radius `fieldRadius`, `spawnDistance` ahead of the
+   camera, facing it. **Radius Thickness** decides how much of the circle spawns stars: 1 = the whole disc,
+   0 = only the edge. It's set to `1 − clearRadius ÷ fieldRadius` (clamped to 0–1), so stars spawn in a
+   **ring** from `clearRadius` out to `fieldRadius`, and the middle stays empty. With 300 and 20 that's
+   1 − 20/300 = 0.933. The ring is much wider than the screen, so stars also stream past the edges.
+
+   What the empty middle does: perspective still makes far stars start near the screen's center and
+   stream outward as they approach (the warp look). What it guarantees is that no star passes close to the
+   camera through the middle, so the big, fast streaks near the end of their flight never cross the middle
+   of the screen. The ring is flat, but stars still end up spread out in depth, because they're emitted
+   continuously while flying.
 
 5. **Velocity over Lifetime module:** how stars move.
    - **z** is set to `-baseSpeed` for now, straight toward the camera. `Update` changes it every frame.
-   - **x** and **y** are each a random speed between `-sidewaysDrift` and `+sidewaysDrift`, picked once per
-     star.
-   - Unity requires all three axes to use the same kind of value. x and y are "random between two
-     numbers", so z has to be written as "random between two numbers" too, even though both are the same.
+   - **x** and **y** are 0. The sideways drift is the outward start speed instead, so it can never carry a
+     star into the empty middle.
+   - Unity requires all three axes to use the same kind of value, so all three are written as "random
+     between two numbers", even though each pair is the same.
 
-6. **Color over Lifetime module:** fades each star in over the first 15% of its life and out over the last
+6. **Collision module:** removes stars behind the camera (see below).
+
+7. **Color over Lifetime module:** fades each star in over the first 15% of its life and out over the last
    15%, so stars don't suddenly pop in or out.
 
-7. **Renderer:** `Stretch` mode draws each star stretched along the direction it's moving, as a streak
+8. **Renderer:** `Stretch` mode draws each star stretched along the direction it's moving, as a streak
    instead of a dot. The length depends on `streakLengthScale` and on how fast it's moving
    (`velocityScale`), so **streaks get longer as the player speeds up**.
 
-8. **Material:** uses `starMaterial` if assigned. Otherwise `CreateFallbackStarMaterial` makes one. It tries
+9. **Material:** uses `starMaterial` if assigned. Otherwise `CreateFallbackStarMaterial` makes one. It tries
    the URP particle shader first, then older built-in ones, and uses the first it finds (`??` means "if
    this is null, use the next one"). It then gives it Unity's built-in soft round dot texture, so stars
-   look like glowing dots instead of squares.
+   look like glowing dots instead of squares. The made material is also stored in `fallbackMaterial`, and
+   `OnDestroy` destroys it. A material made with `new` isn't cleaned up with the scene, and the scene
+   leaves `starMaterial` empty, so this runs every scene load.
 
-It also saves the velocity module and makes a `particleBuffer` array big enough for every particle, so
-`Update` and `LateUpdate` don't have to create anything new each frame.
-
-### `Start`
-
-Gets the earth from GameManager.
+It also saves the velocity module, so `Update` doesn't have to look it up each frame.
 
 ### `Update`: matching the player's speed
 
@@ -147,38 +147,26 @@ The z velocity is set to `-speed` for every star. The particle system moves each
 every frame, so each star's position is already a running total. Changing the speed only changes how fast
 they move from now on, and nothing jumps.
 
-### `LateUpdate`: removing stars early
+### The despawn plane: removing stars behind the camera
 
-Stars normally disappear at the end of their lifetime. This removes them sooner in two cases:
+Stars normally disappear at the end of their lifetime. A star that has flown past the camera can never be
+seen again, but at high speed its streak tail is long (around 30 units at top speed), so it's removed once
+it's `despawnDistance` (50 units) behind, before the tail could poke back into view.
 
-1. **Behind the camera.** Once a star is past `despawnDistance` (50 units behind), it can never be seen
-   again.
-2. **Inside the earth.** The earth sits out in the starfield. Without this, stars would fly into the back
-   of it and come out the front, drawn over it.
+The **Collision module** does this in **Planes** mode: an invisible, infinite plane (a child object called
+`Star Despawn Plane`) sits `despawnDistance` behind the camera. A plane faces along its Transform's **up**
+axis, so it's turned (`FromToRotation(up, forward)`) to face the incoming stars. A star that crosses it has
+collided; **Lifetime Loss = 1** takes all its remaining lifetime, so it dies there, and **Bounce = 0**.
 
-How it checks each star:
-
-1. Get the earth's center and turn it from world space into the rig's space
-   (`InverseTransformPoint`), so it can be compared to the star positions.
-2. Treat the earth as a sphere, with a radius of half its width plus `earthPadding`.
-3. Copy every living star into `particleBuffer` with `GetParticles`.
-4. For each star, if it's behind the camera or inside the earth's sphere, set its remaining lifetime to 0.
-   The particle system removes it next update.
-5. If any were changed, copy them all back with `SetParticles`.
-
-**Squared distances.** "Is the star inside the sphere?" means "is its distance from the center less than
-the radius?" Working out a distance needs a square root, which is relatively slow, and this runs for
-every star every frame. So it compares **squared** values instead: `sqrMagnitude < radius²`. If one
-distance is smaller than another, its square is smaller too, so the answer is the same without the
-square root.
-
-The earth moves toward the camera as the level goes on (see LevelTimer), so its position is checked fresh
-every frame.
+**Why not check in a script:** this used to be done in `LateUpdate` by copying every living star (around
+1,400) into a C# array, checking each, and copying them all back, about 140 KB each way per frame. The
+Collision module does the same check inside the engine with no copying. The old code also removed stars
+flying into the earth; the starfield never reaches the earth, so that check was removed.
 
 ## Talks to
 
-- **GameManager**: gets the earth in `Start`.
 - **PlayerMovement**: reads the static `Speed` every frame.
+- **Earth Camera** (indirectly): draws the stars, through the Camera Rig's layer.
 
 ## Gotchas
 
@@ -188,7 +176,11 @@ every frame.
   more stars alive at once.
 - **Most settings only apply at startup.** Only `baseSpeed` and `speedMultiplier` can be tuned in Play mode.
   Everything else is baked into the particle system in `Awake`.
-- **The earth is treated as a sphere, using its width.** That's fine for a round planet, but a different
-  shaped or rotated object would get the wrong size.
+- **No stars at all?** Check Earth Camera's Culling Mask includes the Camera Rig's layer (Background). The stars
+  are put on the rig's layer.
+- **Stars aren't removed at the earth any more.** If stars ever show in front of the earth, that's why; the
+  old per-star earth check was removed because the stars never reach it.
+- **`clearRadius` is in starfield units, not the orbit's.** The stars are in their own space, seen by a
+  different camera, so it's tuned by eye, not tied to `OrbitSettings`.
 - **The fallback material uses `Shader.Find`.** The same as OrbitRing: a shader only found this way can be
   left out of a build. If stars are missing or pink in a build, assign `starMaterial`.

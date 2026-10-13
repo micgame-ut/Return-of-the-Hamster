@@ -163,4 +163,5 @@ MonoBehaviour:
   frequency: 1
   destructible: 1
   destroySpeed: 5
+  scorePoints: 100
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}

@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 3d6ed8d6111c72e40ab4ad61122ee138, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -2166,9 +2166,8 @@ MonoBehaviour:
   baseSpeed: 70
   speedMultiplier: 15
   sidewaysDrift: 2
-  fieldWidth: 500
-  fieldHeight: 320
-  fieldDepth: 40
+  fieldRadius: 300
+  clearRadius: 20
   spawnDistance: 300
   despawnDistance: -50
   emissionRate: 180
@@ -2179,7 +2178,6 @@ MonoBehaviour:
   colorB: {r: 0.75, g: 0.85, b: 1, a: 1}
   streakLengthScale: 10
   starMaterial: {fileID: 0}
-  earthPadding: 1
 --- !u!114 &1434868270
 MonoBehaviour:
   m_ObjectHideFlags: 0

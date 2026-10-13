@@ -31,6 +31,9 @@ only LevelTimer can change it, but any script can read it.
 
 `IsComplete` is just `Progress >= 1`. Other scripts check it to know when the earth has arrived.
 
+`LevelTime` is a read-only property that hands back `levelTime`, so other scripts can read the setting
+without being able to change it. Score uses it to work out the time score.
+
 ### `Start`: working out the earth's path
 
 The earth moves in a straight line from where it starts to a **stop point** just in front of the earth
@@ -92,6 +95,7 @@ LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is o
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`
   to stop the player accelerating.
 - **ObjectSpawner**: reads `IsComplete` to stop spawning.
+- **Score**: reads `Progress` and `LevelTime` every frame for the time score.
 
 ## Gotchas
 

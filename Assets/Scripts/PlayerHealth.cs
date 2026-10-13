@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Tracks the player's lives. Lose one with LoseLife(); when none are left,
@@ -8,6 +9,9 @@ public class PlayerHealth : MonoBehaviour
 
     public int MaxLives => maxLives;
     public int CurrentLives { get; private set; }
+
+    public event Action<int> OnLivesChanged;
+    public event Action OnLifeLost;
 
     private void Awake()
     {
@@ -20,7 +24,8 @@ public class PlayerHealth : MonoBehaviour
         if (gm == null || gm.IsGameOver || gm.HasWon) return;
 
         CurrentLives--;
-        Debug.Log($"Lives left: {CurrentLives}");
+        OnLivesChanged?.Invoke(CurrentLives);
+        OnLifeLost?.Invoke();
 
         if (CurrentLives <= 0)
             gm.GameOver();
@@ -32,6 +37,6 @@ public class PlayerHealth : MonoBehaviour
         if (gm == null || gm.IsGameOver || gm.HasWon) return;
 
         CurrentLives = Mathf.Min(CurrentLives + 1, maxLives);
-        Debug.Log($"Lives left: {CurrentLives}");
+        OnLivesChanged?.Invoke(CurrentLives);
     }
 }

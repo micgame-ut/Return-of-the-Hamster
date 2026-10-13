@@ -1,6 +1,7 @@
 # Programming Documentation
 
-This folder has one Markdown file per script in `Assets/Scripts`. Each file explains
+This folder has one Markdown file per script in `Assets/Scripts`, and one per Shader Graph or Sub Graph
+in `Assets/Shaders`. Each file explains
 the approach and logic behind its script: what it does, how it does it, and why.
 
 Only hand-written scripts are documented. Auto-generated ones (like `PlayerInput.cs`, which Unity
@@ -14,12 +15,21 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
+| CloseCallZone.cs | [CloseCallZone.md](CloseCallZone.md) | Done |
+| Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
+| DangerWarning.cs | [DangerWarning.md](DangerWarning.md) | Done |
+| EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
+| ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
+| GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| MultiplierDisplay.cs | [MultiplierDisplay.md](MultiplierDisplay.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |
+| OverdriveTally.cs | [OverdriveTally.md](OverdriveTally.md) | Done |
+| PatternCopy.cs | [PatternCopy.md](PatternCopy.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
@@ -27,11 +37,32 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
+| PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
+| PlayerTwins.cs | [PlayerTwins.md](PlayerTwins.md) | Done |
+| PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
+| Score.cs | [Score.md](Score.md) | Done |
+| ScorePopups.cs | [ScorePopups.md](ScorePopups.md) | Done |
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
+| TwinCopy.cs | [TwinCopy.md](TwinCopy.md) | Done |
+
+## Shaders
+
+| Graph | Doc | Status |
+| --- | --- | --- |
+| Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
+| Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
+| Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
+| Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
+| Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
+| Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Done |
+| Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Done |
+| Starry Sky Volume.shadergraph | [StarrySkyVolume.md](StarrySkyVolume.md) | Done |
+| Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Done |
+| Tube Streams.shadersubgraph | [TubeStreams.md](TubeStreams.md) | Done |
 
 ## Template
 

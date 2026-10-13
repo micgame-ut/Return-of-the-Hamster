@@ -28,9 +28,26 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | --- | --- | --- |
 | `waves` | empty | The list of waves. Each has a `pattern` (the prefab to spawn) and a `delayAfter` |
 | `waves[].delayAfter` | 2 | Seconds to wait after this pattern has finished appearing, before the next wave starts |
+| `waves[].clearPoints` | 300 | Score points when every object in this wave is gone. Half if the earth cut the wave short |
+| `waves[].perfectBonus` | 200 | Added on top of `clearPoints` if no life was lost while this wave was on screen |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
 | `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
+| `prewarmPerPattern` | 1 | Copies of each pattern made at level start, so the first waves don't stutter |
+
+## Pooling
+
+Pattern copies are **reused** instead of being created and destroyed every wave (object pooling, see
+[PatternCopy.md](PatternCopy.md)):
+
+- Each copy's root gets a `PatternCopy` at runtime. Its children stay **under the copy** the whole time,
+  and asteroids and power-ups call `PatternCopy.Despawn` instead of `Destroy`, which switches them off and
+  puts them back at their authored spot.
+- `freeCopies` holds the free copies of each pattern prefab (a `Dictionary` from prefab to a `Stack`).
+  `revealOrder` holds each copy's children, **sorted once** when the copy is made.
+- `GetCopy` pops a free copy, or makes one with `CreateCopy` when none is free (no limit). A copy is free
+  again when PatternCopy's `OnReleased` fires, which `HandleReleased` pushes back onto its free list.
+- After the first loop or two, no new copies are made at all.
 
 ## How it works
 
@@ -52,7 +69,19 @@ patterns built in the editor always line up with where they spawn in the game.
 
 ### `Start`
 
-Gets the LevelTimer from GameManager, then starts `RunWaves`, as long as there's at least one wave.
+Gets the LevelTimer and Score from GameManager, **prewarms** (for each wave's pattern, makes copies until its free list
+holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), then starts `RunWaves`, as
+long as there's at least one wave.
+
+### `CreateCopy`, `GetCopy`, `GetFreeList`, `HandleReleased`
+
+- **`CreateCopy`** instantiates the pattern under the spawner, switches its children off, sorts them closest
+  to the camera first (`Array.Sort` with a comparison function), adds a `PatternCopy` and calls `Init`,
+  subscribes `HandleReleased` to its `OnReleased`, and stores the sorted children in `revealOrder`.
+- **`GetCopy`** returns a free copy if the pattern has one, otherwise `CreateCopy`.
+- **`GetFreeList`** returns a pattern's free list, making an empty one the first time (`TryGetValue`).
+- **`HandleReleased`** scores the wave (see "Wave score" below), then pushes a copy that's free again back
+  onto its pattern's list.
 
 ### `RunWaves`: going through the list
 
@@ -83,17 +112,15 @@ This is the heart of the script. The goal is for the asteroids to reach the play
 and spacing they were laid out in, including their depth. Asteroids further back in the pattern
 should arrive later.
 
-**1. Spawn and hide.** It spawns the pattern prefab as a child of the spawner, makes a list of the
-pattern's children (the asteroids), and switches them all off. They're switched off before the first
-frame is drawn, so the player never sees the whole pattern at once.
+**1. Get a copy.** `GetCopy` gives a pattern copy whose children are all switched off and at their
+authored spots, and `revealOrder` gives them sorted by how far each is from the camera along Z, closest
+first. That's the order they'll appear in. Both were done once, in `CreateCopy`, so the player never sees
+the whole pattern at once. `BeginReveal` tells the copy the spawner is using it.
 
-**2. Sort by distance.** It sorts the asteroids by how far each one is from the camera along Z, closest
-first. That's the order they'll appear in.
-
-**3. Pick the spawn plane.** `spawnZ` is the Z of the closest asteroid. **Every** asteroid appears at
+**2. Pick the spawn plane.** `spawnZ` is the Z of the closest asteroid. **Every** asteroid appears at
 this Z, not where it was laid out.
 
-**4. Reveal them in order, waiting between depths.** Rather than placing far-back asteroids further
+**3. Reveal them in order, waiting between depths.** Rather than placing far-back asteroids further
 away, it places them all at the spawn plane, so every asteroid appears from the same distance, and
 reveals the deeper ones **later**. The wait is how long an asteroid takes to fly the gap:
 
@@ -118,30 +145,61 @@ Asteroids at the **same depth** (within `SameZTolerance`, 0.01 units) have no ga
 together. `SameZTolerance` is `public const`, so PatternGizmos can group asteroids the same way. That's how a ring or row laid out at one depth appears all at once.
 
 For each asteroid, once its wait is over:
-- If `StopSpawning` is true (the earth arrived or the game ended mid-pattern), stop revealing.
-- **Detach it** from the pattern (`SetParent(null, true)`, where `true` means keep its position in the
-  world). It then moves on its own instead of with the pattern.
-- Move it to the spawn plane, keeping its x/y.
+- If `StopSpawning` is true (the earth arrived or the game ended mid-pattern), stop revealing. The hidden
+  children stay home in the copy.
+- Move it to the spawn plane, keeping its x/y. It **stays under the copy**: asteroids and power-ups set
+  their world position every frame and the copy never moves, so being parented changes nothing about how
+  they fly, and `PatternCopy.Despawn` can find their copy later.
+- `ChildRevealed` counts it as out (before it's switched on, so the count is right before it can do anything).
 - **Switch it on.** That runs its `OnEnable`, which records its start point (and, for asteroids, begins
   the warning blink; power-ups skip it).
 
-**5. Clean up.** Once the loop finishes, it destroys the pattern root. The revealed asteroids were
-detached, so they're unaffected. Only the empty root and any asteroids that never got revealed (if
-spawning stopped partway) are removed.
+**4. Finish.** `EndReveal` tells the copy the spawner is done with it. If every revealed child is already
+home, the copy is free straight away; otherwise the last child home frees it.
+
+### Wave score
+
+`SpawnPattern` takes the whole `Wave` (not just its pattern) so it knows the wave's points.
+
+- **At the start** it notes `Score.LivesLostCount` in `livesLostAtStart`. Score only ever counts that up,
+  so if it's still the same number when the wave clears, no life was lost during the wave.
+- **If `StopSpawning` stops the reveal**, it sets `cutShort`.
+- **Just before `EndReveal`**, it stores a `RunningWave` (a small struct: the `Wave`, `livesLostAtStart`,
+  `cutShort`) in `runningWaves`, keyed by the copy. It has to be stored first, because `EndReveal` can
+  release the copy straight away, which calls `HandleReleased` from inside `EndReveal`. It's a struct
+  because it's written once and read once, so storing it makes no garbage.
+
+When the copy is released, `HandleReleased` looks the entry up (`TryGetValue`), removes it, and calls
+`AwardWave`, which checks cut short first and perfect second:
+
+| Fully revealed? | Life lost during it? | Calls | Popup |
+| --- | --- | --- | --- |
+| Yes | No | `AddWaveClear(500, true)` | `PERFECT WAVE +500` |
+| Yes | Yes | `AddWaveClear(300, false)` | `WAVE CLEAR +300` |
+| No (cut short) | doesn't matter | `AddWaveClear(150, false)` | `WAVE CLEAR +150` |
+
+Waves overlap (the next starts after `delayAfter`, while the last may still be flying), but each one
+compares against its own starting count, so a life lost with two waves on screen spoils both.
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer (in `Start`) and the gameplay camera (each pattern), and reads
+- **GameManager**: gets the LevelTimer and Score (in `Start`) and the gameplay camera (each pattern), and reads
   `IsGameOver` through `StopSpawning`.
 - **OrbitSettings**: reads `SpawnerPosition` in `Awake`.
 - **LevelTimer**: checks `IsComplete`, through `StopSpawning`, to stop spawning once the earth has arrived.
 - **AsteroidBehavior** and **PowerUp**: reads `ApproachSpeed` (through `GetApproachSpeed`) to time the
   gaps, and switches them on, which starts their `OnEnable`.
+- **PatternCopy**: adds one to each copy, calls `Init`, `BeginReveal`, `ChildRevealed` and `EndReveal`, and
+  listens to `OnReleased`.
+- **Score**: reads `LivesLostCount` when a wave starts and clears, and calls `AddWaveClear` when a wave's copy
+  is released.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
   this script spawns.
 
 ## Gotchas
 
+- **A wave of only power-ups still scores.** It clears once the power-ups are gone. Set its `clearPoints`
+  and `perfectBonus` to 0 if it shouldn't.
 - **Moving the spawner in the scene does nothing.** It moves itself to `OrbitSettings`' `spawnerPosition`
   when the game starts. Change the asset instead.
 - **Every pattern empty means a freeze.** If `loop` is on and every wave's `pattern` is empty,
@@ -160,8 +218,12 @@ spawning stopped partway) are removed.
 - **Everything appears at the closest asteroid's depth.** Moving a whole pattern closer to or further from
   the camera changes where its asteroids appear.
 - **Stopping doesn't clear the screen.** At game over or when the earth arrives, asteroids already
-  revealed keep flying until they pass the camera. Only unrevealed ones are removed.
+  revealed keep flying until they pass the camera. Unrevealed ones just stay hidden in their copy.
+- **Anything a pattern spawns must leave through `PatternCopy.Despawn`, never `Destroy`.** A destroyed child
+  leaves a hole in its copy, and the next reuse of that copy throws errors.
+- **Pattern copies persist for the whole level** under the spawner. That's why PatternGizmos skips drawing
+  in Play.
 - **Random can repeat a wave back to back.** The last wave of one shuffle and the first of the next can be
   the same.
-- **Asteroids' `OnEnable` runs once when the pattern spawns,** before they're switched off. See
+- **Asteroids' `OnEnable` runs once when a copy is created,** before they're switched off. See
   AsteroidBehavior's gotchas.

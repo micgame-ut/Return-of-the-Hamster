@@ -3,29 +3,26 @@
 ## Purpose
 
 Makes the player invincible for a set time after picking up an Invincible power-up. While it's active,
-every asteroid the player touches is busted (it explodes and counts as destroyed) instead of hitting them,
-and a rippling rainbow shader shows over the ship. In the last `warningTime` seconds the rainbow flickers,
-so the player knows it's about to end.
+every asteroid the player touches is busted (it explodes and counts as destroyed) instead of hitting them.
+It keeps the timer and decides when the rainbow should show, including a flicker in the last
+`warningTime` seconds so the player knows it's about to end. PlayerShell does the actual drawing.
 
 ## Where it lives
 
-- **Attached to:** the player object (the one with `PlayerMovement`), next to `PlayerHealth`.
+- **Attached to:** the player object (the one with `PlayerMovement`), next to `PlayerHealth` and `PlayerShell`.
 - **Requires:**
-  - `meshTransform`: the ship's mesh, to find its renderers. Without it, it uses every renderer under the
-    player object.
-  - `rainbowMaterial`: `Assets/Shaders/RainbowOverlayMat.mat`. Without it, invincibility still works, just
-    with no rainbow.
   - `GameManager.Instance`, to switch off on game over or a win. Without one, it still runs, but only ends
     when the timer runs out.
+  - `PlayerShell` on the same object, to show the rainbow. Without it, invincibility still works, just with
+    nothing on screen.
 
 ## Inspector settings
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `meshTransform` | none | The ship's mesh. Assign the same object as PlayerMovement's `meshTransform` |
-| `rainbowMaterial` | none | The overlay material added to the ship while invincible |
 | `warningTime` | 1 | Seconds before the end when the rainbow starts flickering |
 | `warningBlinkInterval` | 0.1 | Seconds between each flicker on/off |
+| `lockMaxSpeed` | true | While invincible, PlayerMovement holds the player at max speed |
 
 The duration isn't set here. It's `invincibleDuration` in the SpawnableTemplate (default 5), passed in by
 the power-up.
@@ -42,42 +39,50 @@ The whole feature, start to finish:
 3. In the last `warningTime` seconds, the rainbow flickers.
 4. It ends when the timer runs out, or straight away on game over or a win.
 
-### `IsInvincible`
+### `IsInvincible` and `RainbowShowing`
 
-A read-only property: `timer > 0f`. It's worked out each time it's read, so it can never get out of sync
-with the timer. AsteroidBehavior reads it.
+- **`IsInvincible`**: `timer > 0f`. It's worked out each time it's read, so it can never get out of sync with
+  the timer. AsteroidBehavior reads it (in `CanBreak`), and PlayerShell reads it for the hitbox.
+- **`RainbowShowing`**: whether the rainbow should be visible right now, including the flicker (`overlayOn`).
+  PlayerShell reads it for the look.
+- **`LocksMaxSpeed`**: `lockMaxSpeed && IsInvincible`. PlayerMovement reads it at the end of every speed
+  update and, while it's true, sets `Speed` to max (unless the level has ended). When invincibility runs out,
+  the normal overdrive drain takes over straight away.
 
-### `Awake`
+They differ during the flicker: you're still invincible on the "off" moments, so the hitbox stays on while
+only the look flickers.
 
-Finds the ship's mesh renderers, saves each one's original materials, and builds a second set of arrays
-with the rainbow added, once, so nothing is built during play.
+### Events
 
-- `originalMaterials` and `rainbowMaterials` are **arrays of arrays** (`Material[][]`): one entry per
-  renderer, each holding that renderer's own materials array, since renderers can have different numbers of
-  material slots.
-- It reads `sharedMaterials`, not `materials`. `materials` would make a private copy of each material, and
-  we only need to swap which materials are in the slots.
-- Each rainbow array is the original plus one extra slot at the end holding `rainbowMaterial`, the same way
-  AsteroidBehavior adds its outline.
+Both are `Action<bool>`, raised with `?.Invoke`:
 
-Saving the originals in `Awake`, before anything changes, matters: reading them later (say, in `Activate`)
-could pick up the rainbow too, if it was already on.
+- **`OnInvincibilityChanged`**: exactly once when invincibility starts (`true`) and once when it ends
+  (`false`), however many pickups or frames happen in between.
+- **`OnRainbowChanged`**: every time the rainbow flips: at the start, on each flicker flip, and at the end.
+
+PlayerShell listens to both and re-checks everything when either fires.
 
 ### `SetOverlay`
 
-Turns the rainbow material on or off. It only touches the renderers when the state flips.
+Changes whether the rainbow should show, only when the state actually flips.
 
-1. **Guard:** if the overlay is already in the requested state, or there's no `rainbowMaterial`, it returns
-   straight away. `overlayOn` tracks the current state.
-2. Each renderer's `sharedMaterials` is set to either its rainbow array or its original array.
+1. **Guard:** if it's already in the requested state, it returns straight away. `overlayOn` tracks the
+   current state.
+2. Records the new state and raises `OnRainbowChanged`.
 
-`Update` calls it every frame during the flicker, but the guard means the renderers only change when the
-flicker flips. With the defaults, that's about 10 changes a second instead of 60.
+`Update` calls it every frame during the flicker, but the guard means the event only fires when the flicker
+flips. With the defaults, that's about 10 times a second instead of 60.
 
 ### `Activate`
 
 Sets the timer to the full duration (a second pickup resets it) and turns the rainbow on. It's `public`
 so PowerUp can call it.
+
+1. A duration of 0 or less is ignored. Without this, the rainbow would turn on, but the timer would already
+   be finished, so nothing would ever turn it off.
+2. It remembers whether it was already invincible, sets the timer, and turns the rainbow on.
+3. It raises `OnInvincibilityChanged(true)` only if it **wasn't** already invincible, so a re-pickup doesn't
+   announce a second start.
 
 | Event | `timer` after |
 | --- | --- |
@@ -88,18 +93,25 @@ so PowerUp can call it.
 A pickup during the flicker turns the rainbow back on straight away, and the flicker stops because the
 timer is no longer inside `warningTime`.
 
+### `OnEnable` / `OnDisable` and `HandleLevelEnded`
+
+It subscribes `HandleLevelEnded` to both GameManager events, `OnGameOver` and `OnWin`, in `OnEnable`, and
+unsubscribes in `OnDisable`. Both events pass no value, so one method can handle both.
+
+If it's still invincible when the level ends, `HandleLevelEnded` sets `timer` to 0, turns the rainbow off
+and raises `OnInvincibilityChanged(false)`. This is needed because `GameOver()` and `Win()` set
+`Time.timeScale` to 0, so `Time.deltaTime` is 0 and the countdown would never finish, leaving the rainbow
+stuck on.
+
 ### `Update`
 
-Checks for game over or a win first (and switches everything off), then counts the timer down, handles the
-timer running out, and handles the warning flicker.
+Counts the timer down, handles the timer running out, and handles the warning flicker.
 
-1. **Game over or won?** Sets `timer` to 0 and switches the overlay off. This has to come first:
-   `GameOver()` and `Win()` set `Time.timeScale` to 0, so `Time.deltaTime` is 0 and the countdown would
-   never finish, leaving the rainbow stuck on.
-2. **Not active?** Returns. The timer may be slightly below 0 after it ran out (say −0.01), which counts as
+1. **Not active?** Returns. The timer may be slightly below 0 after it ran out (say −0.01), which counts as
    not active.
-3. **Count down.** If that takes the timer to 0 or below, it switches the overlay off and returns.
-4. **Flicker.** The rainbow is on if there's more than `warningTime` left. Otherwise it uses the same
+2. **Count down.** If that takes the timer to 0 or below, it turns the rainbow off, raises
+   `OnInvincibilityChanged(false)`, and returns.
+3. **Flicker.** The rainbow is on if there's more than `warningTime` left. Otherwise it uses the same
    formula as PlayerMovement's hit blink: on when `Mathf.FloorToInt(timer / warningBlinkInterval)` is even.
 
 With `warningTime` 1 and `warningBlinkInterval` 0.25:
@@ -112,55 +124,31 @@ With `warningTime` 1 and `warningBlinkInterval` 0.25:
 | 0.24 to 0.01 | 0 | on |
 | 0 or less | — | off (ended) |
 
-### The Rainbow Overlay shader
+### History: why it doesn't draw anything itself
 
-`Assets/Shaders/Rainbow Overlay.shadergraph` is an **Unlit**, **Transparent**, **Additive** Shader Graph.
-Additive means it only brightens the ship (black adds nothing), so it reads as light shining over it.
-
-- **The rainbow moves** because of the time and speed properties. The noise sets the hue at each point,
-  and `Time × Scroll Speed` slides the hue along over time.
-- **The surface ripples** from the same idea run through the noise: `noise × Ripple Frequency −
-  Time × Ripple Speed` goes into a Sine, which gives moving crests. The crests push the surface out along
-  its normals (Vertex stage) by up to `Ripple Height`, and make the color brighter (Fragment stage,
-  `ripple + 0.5`, times `Strength`).
-- **Triplanar noise** is used to get rid of seams. UVs have a seam where their edges meet, so the
-  `Triplanar Noise` Sub Graph samples Gradient Noise three times from object-space position (yz, xz and
-  xy), and blends them by the surface normal, with weights that always add up to 1. It's a Sub Graph so
-  the same logic can be used twice (hue and ripple) without building it twice.
-
-| Property | Default | In `RainbowOverlayMat` | What it changes |
-| --- | --- | --- | --- |
-| `Scroll Speed` | 0.5 | | How fast the colors move |
-| `Stripe Scale` | 2 | | How many rainbows fit across the noise range |
-| `Strength` | 0.6 | | Overall brightness. 0 makes it invisible |
-| `Noise Scale` | 8 | **2** | Size of the noise blobs (bigger = more, smaller blobs) |
-| `Ripple Frequency` | 20 | | How many ripples are stacked around each blob |
-| `Ripple Speed` | 3 | | How fast the ripples crawl |
-| `Ripple Height` | 0.02 | | How far crests rise off the surface, in object units |
+It used to add the rainbow material to the ship's own renderers, by swapping their material arrays. That
+clashed with the shield, which needed the same renderers. Now one script, PlayerShell, owns all the overlay
+visuals, and this script only announces state. The rainbow shader is documented in
+[PlayerShell.md](PlayerShell.md).
 
 ## Talks to
 
 - **PowerUp**: calls `Activate(duration)` from `MakeInvincible` (Invincible type).
 - **SpawnableTemplate**: not directly; PowerUp reads `invincibleDuration` from it and passes it in.
+- **PlayerShell**: listens to both events, and reads `IsInvincible` (hitbox) and `RainbowShowing` (look).
 - **AsteroidBehavior**: reads `IsInvincible` in its `CanBreak`. While it's true, any asteroid explodes on
   contact, and destructible outlines turn green.
 - **OrbitRing**: not directly; it reads `CanBreak`, so every danger arc turns green while invincible.
-- **GameManager**: reads `IsGameOver` and `HasWon` every frame. GameManager also keeps a reference to this
+- **PlayerMovement**: reads `LocksMaxSpeed` every frame (it finds this component in `Awake`) to hold the
+  player at max speed.
+- **GameManager**: subscribes to `OnGameOver` and `OnWin`. GameManager also keeps a reference to this
   component (auto-filled from the player), which is how asteroids find it.
 
 ## Gotchas
 
-- **Assign `rainbowMaterial` before pressing Play.** The rainbow arrays are built in `Awake`, so changing
-  the material during Play mode doesn't change what shows. Filling an empty field during Play leaves an
-  empty material slot.
-- **Material values override the graph's defaults.** Changing a default in the Shader Graph doesn't
-  update `RainbowOverlayMat`; set the value on the material.
-- **The hit blink hides the rainbow too.** If the player was hit just before picking it up, PlayerMovement's
-  blink switches the whole ship's renderers off and on, rainbow included, until the blink ends.
 - **GameManager needs `player` assigned** (or `playerInvincibility` filled in). Asteroids get this
   component through GameManager, so without it, invincibility shows the rainbow but doesn't bust asteroids
   or turn them green.
-- **The ripple height depends on the mesh.** Height moves vertices, so a low-poly mesh ripples roughly,
-  and hard edges can split apart if `Ripple Height` is large.
-- **Noise scale follows the object.** It's object space, so scaling the ship's Transform scales the
-  pattern with it.
+- **Without PlayerShell there's no visual,** but busting still works.
+- **Removed Inspector fields.** `meshTransform` and `rainbowMaterial` used to be set here. The rainbow
+  material is now assigned on PlayerShell.

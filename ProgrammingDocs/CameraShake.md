@@ -15,8 +15,12 @@ Any script can trigger it with one line: `CameraShake.Shake(duration, magnitude)
 
 ## Inspector settings
 
-None. Every shake's strength and length come from whoever calls `Shake`. For asteroids, those values are
-in the SpawnableTemplate asset:
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `shakeFrequency` | 60 (min 1) | New shake directions per second. 60 matches how the shake looked at 60 fps. Lower = a slower, rougher rumble |
+
+Every shake's strength and length come from whoever calls `Shake`. For asteroids, those values are in the
+SpawnableTemplate asset:
 
 | Event | Duration | Magnitude |
 | --- | --- | --- |
@@ -59,11 +63,17 @@ Every frame:
 4. **Work out how strong it is now.** `strength = magnitude × (timeLeft / duration)`. `timeLeft / duration`
    goes from 1 down to 0 as the shake runs out, so the shake starts at full strength and fades to
    nothing instead of stopping suddenly.
-5. **Pick a random offset.** `Random.insideUnitSphere` gives a random point inside a ball with a radius
-   of 1. Multiplying by `strength` shrinks the ball to `strength` units. The offset can go in any
-   direction: left/right, up/down, and forward/back.
-6. **Apply it.** `localPosition += lastOffset`, and remember it for step 1 next frame.
-7. **When the time runs out,** reset `magnitude` to 0, so the next shake's "keep the bigger one" starts
+5. **Pick a direction, at a fixed rate.** `directionTimer` counts down in real time. When it reaches 0,
+   `shakeDirection = Random.insideUnitSphere` (a random point inside a ball with a radius of 1) and the
+   timer is **set** to `1 / shakeFrequency`. Between picks, the same direction is held. Set rather than
+   added to, so a long hitch doesn't make it fire several times to catch up.
+
+   It used to pick a new offset **every frame**, so at 180 fps the camera jumped 180 times a second and the
+   same shake looked three times buzzier than at 60. Picking at a fixed rate looks the same on any screen.
+6. **Scale it.** `lastOffset = shakeDirection × strength`. The direction can point anywhere: left/right,
+   up/down, and forward/back. The strength still fades every frame, so the shake dies away smoothly.
+7. **Apply it.** `localPosition += lastOffset`, and remember it for step 1 next frame.
+8. **When the time runs out,** reset `magnitude` to 0, so the next shake's "keep the bigger one" starts
    fresh.
 
 ### Why undo and redo instead of saving a home position
@@ -97,5 +107,7 @@ CameraShake doesn't read from or call anything itself.
   away from the scene. Use `Random.insideUnitCircle` for a flat, screen-only shake.
 - **It ignores pauses.** Because it counts real time, a shake keeps playing if time is frozen, including
   any future pause menu that uses `Time.timeScale`.
-- **The shake rate depends on frame rate.** A new random offset is picked every frame, so at a higher
-  frame rate the shake looks faster and more frantic.
+- **The shake rate can't go above the frame rate.** `shakeFrequency` higher than the screen's frame rate
+  just picks a new direction every frame.
+- **PlayerDeath's mesh shake uses the same idea,** with its own `shakeFrequency` (also 60) for the ship's
+  shake before it explodes.

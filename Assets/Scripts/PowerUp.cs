@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // A pickup that flies toward the camera like a Linear asteroid, using the
-// same SpawnableTemplate settings. Touching the player counts the pickup and
-// applies the effect for its type.
+// same SpawnableTemplate settings. Touching the player (or a twin copy) counts the
+// pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier }
 
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [SerializeField] private float speed = 20f;
@@ -15,6 +15,11 @@ public class PowerUp : MonoBehaviour
     private Vector3 origin;
     private float distance;
     private Transform cam;
+    private PlayerMovement player;
+    private PlayerHealth health;
+    private PlayerInvincibility invincibility;
+    private PlayerTwins twins;
+    private Score score;
 
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
     public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
@@ -26,6 +31,11 @@ public class PowerUp : MonoBehaviour
     {
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
+        player = GameManager.Instance != null ? GameManager.Instance.Player : null;
+        health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
+        invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
+        twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
+        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
     }
 
     private void OnEnable()
@@ -51,38 +61,56 @@ public class PowerUp : MonoBehaviour
 
         // Missed: once it's far enough behind the camera it can never be picked up.
         if (cam != null && transform.position.z < cam.position.z - template.despawnBehindCamera)
-            Destroy(gameObject);
+            PatternCopy.Despawn(gameObject);
     }
 
-    private void Heal(PlayerMovement player)
+    private void Heal()
     {
-        PlayerHealth health = player.GetComponent<PlayerHealth>();
-        if (health != null) health.GainLife();
+        if (health != null && (twins == null || !twins.IsTwinned)) health.GainLife();
     }
 
-    private void MakeInvincible(PlayerMovement player)
+    private void MakeInvincible()
     {
-        PlayerInvincibility invincibility = player.GetComponent<PlayerInvincibility>();
         if (invincibility != null && template != null) invincibility.Activate(template.invincibleDuration);
     }
 
-    private void ApplyEffect(PlayerMovement player)
+    private void AddTwin()
+    {
+        if (twins != null) twins.AddBody();
+    }
+
+    private void AddScoreMultiplier()
+    {
+        if (score != null) score.AddMultiplierPowerUp();
+    }
+
+    private void ApplyEffect()
     {
         switch (type)
         {
             case PowerUpType.Health:
-                Heal(player);
+                Heal();
                 break;
             case PowerUpType.Invincible:
-                MakeInvincible(player);
+                MakeInvincible();
+                break;
+            case PowerUpType.Twin:
+                AddTwin();
+                break;
+            case PowerUpType.ScoreMultiplier:
+                AddScoreMultiplier();
                 break;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        PlayerMovement player = other.GetComponentInParent<PlayerMovement>();
+        // Only react to the player or a twin copy. FindBody also covers the
+        // collider being on a child.
         if (player == null) return;
+        Transform body = twins != null ? twins.FindBody(other.transform)
+                       : other.transform.IsChildOf(player.transform) ? player.transform : null;
+        if (body == null) return;
 
         GameManager gm = GameManager.Instance;
         if (gm != null && gm.HasWon) return;
@@ -90,17 +118,16 @@ public class PowerUp : MonoBehaviour
         RunStats stats = gm != null ? gm.RunStats : null;
         if (stats != null) stats.AddPowerUpPickedUp();
 
-        ApplyEffect(player);
+        ApplyEffect();
 
         if (template != null)
         {
-            if (template.pickupEffectPrefab != null)
-                Instantiate(template.pickupEffectPrefab, transform.position, Quaternion.identity);
+            EffectPool.Play(template.pickupEffectPrefab, transform.position);
 
             if (template.pickupShakeDuration > 0f)
                 CameraShake.Shake(template.pickupShakeDuration, template.pickupShakeMagnitude);
         }
 
-        Destroy(gameObject);
+        PatternCopy.Despawn(gameObject);
     }
 }

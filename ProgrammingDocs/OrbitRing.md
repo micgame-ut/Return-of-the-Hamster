@@ -13,7 +13,7 @@ of the circle is about to be dangerous.
 
 ## Where it lives
 
-- **Attached to:** the `Game Manager` GameObject in `Game.unity`. The lines it draws are created as child
+- **Attached to:** the `Game Manager` GameObject in `TestGame.unity`. The lines it draws are created as child
   objects of it when the game starts.
 - **Requires:** `GameManager.Instance` with `player` assigned. Without a player, it draws nothing.
 
@@ -30,7 +30,7 @@ of the circle is about to be dangerous.
 | `arcWidth` | 0.15 | 0.1 | Thickness of the danger arcs |
 | `arcOffset` | 0.6 | 0.5 | How far outside the ring the arcs are drawn, so they don't cover the hamster |
 | `warnTime` | 1.5 | 1.5 | Seconds before impact that an arc starts fading in |
-| `playerRadius` | 0.5 | 0.1 | The player's size, added to the asteroid's size to work out how wide the danger zone is |
+| `playerRadius` | 0.5 | 0.1 | The player's size, added to the asteroid's size to work out how wide the danger zone is. While PlayerShell's hitbox is on and bigger, its size is used instead |
 
 ## How it works
 
@@ -45,27 +45,50 @@ them. A circle is really a lot of short straight lines, so with enough points it
   point uses the same cos/sin placement as PlayerMovement: `center + (cos(a), sin(a)) × radius`. It
   splits the angle range into `segments` equal steps and places a point at each one.
 
+  The points are written into the shared `points` array, then handed to the LineRenderer in **one**
+  `SetPositions` call. Each call into Unity's engine has a fixed overhead, so one call carrying every point
+  is much cheaper than one `SetPosition` call per point. `SetPositions` copies the points, so the same
+  array is reused for every line, and only the first `positionCount` points are used. `SetArc` takes the
+  array as a parameter, so it stays `static`.
+
   A full circle is set to `loop`, so the LineRenderer joins the last point back to the first by itself.
   That's why it needs one fewer point than an open arc.
 
 ### `Start`
 
-1. Get the player from GameManager.
-2. If no line material was assigned, make one from the `Sprites/Default` shader.
+0. If GameManager's `ShowOrbitRing` is off (an accessibility setting), set `enabled = false` and stop.
+   A disabled component gets no `LateUpdate` calls, so nothing is drawn, and nothing is created, so
+   there's nothing to clean up. `enabled = false` (rather than removing the component) means turning it
+   back on later only needs `enabled = true`. Without a GameManager, the ring always shows.
+1. Get the player and its PlayerShell (if there is one) from GameManager.
+2. If no line material was assigned, make one from the `Sprites/Default` shader. It's also stored in
+   `createdMaterial`, so `OnDestroy` can destroy it. A material made with `new` isn't cleaned up with the
+   scene. Only this one is destroyed, never an assigned asset.
 3. Create the orbit ring line.
 
 ### `LateUpdate`: every frame
 
 It runs in `LateUpdate` so the player and asteroids have already moved this frame.
 
+**0. Make sure `points` is big enough.** The longest line, an arc covering the whole ring, needs
+`ringSegments + 1` points. The array is created on the first frame, and again only if `ringSegments` is
+raised in Play mode.
+
 **1. Draw the orbit ring** at the player's orbit center, radius, and depth (z). The player gets the center
-and radius from `OrbitSettings`. It's redrawn every frame so it follows the asset if it's tuned in Play mode.
+and radius from `OrbitSettings`. It's only redrawn when the center, radius, z, or `ringSegments` differs from
+what it was last drawn with (`drawnCenter`, `drawnRadius`, `drawnZ`, `drawnSegments`), so most frames it
+costs four comparisons. It still follows the asset if it's tuned in Play mode, because a change counts as a
+difference. `drawnSegments` starts at -1, so the first frame always draws. The danger arcs below are still
+redrawn every frame, since asteroids move and fade constantly.
 
 **2. For each asteroid in `AsteroidBehavior.Active`**, decide whether it gets an arc:
 
 - **Skip it if it's still warning.** Only moving asteroids count.
-- **Work out its reach.** `reach = asteroid's HitRadius + playerRadius`. The player's center is on the ring,
+- **Work out its reach.** `reach = asteroid's HitRadius + playerReach`. The player's center is on the ring,
   so the player gets hit anywhere their center comes within `reach` of the asteroid's center.
+  `playerReach` is worked out once per frame, before the loop: `Max(playerRadius, shell.HitRadius)`. While
+  PlayerShell's hitbox is on (shield or invincible), the player is as big as the shell, so the arcs widen to
+  match. It's `Max`, not a sum, because the shell surrounds the ship from the same center.
 - **Skip it if it has already passed.** `dz` is how far in front of the player it is along z. Once it's
   more than `reach` behind the player, it's gone.
 - **How visible is it?** `timeToImpact = dz / ApproachSpeed` (time = distance ÷ speed). Then
@@ -135,13 +158,16 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 
 ## Talks to
 
-- **GameManager**: gets the player in `Start`.
+- **GameManager**: reads `ShowOrbitRing` and gets `Player` and `PlayerShell` in `Start`.
+- **PlayerShell**: reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,
   `ApproachSpeed`, and `CanBreak`.
 
 ## Gotchas
 
+- **`showOrbitRing` is only read in `Start`.** Changing it on GameManager during Play mode does nothing
+  until the scene restarts.
 - **Asteroids are treated as circles.** `HitRadius` uses whichever of the collider's width or height is
   bigger, so an oddly shaped collider gets a slightly bigger arc than the real hit area.
 - **Arcs show where a Wave asteroid is now, not where it will be.** A Wave asteroid keeps swinging along
