@@ -489,7 +489,7 @@ GameObject:
   - component: {fileID: 68657911}
   - component: {fileID: 68657914}
   - component: {fileID: 68657913}
-  - component: {fileID: 68657912}
+  - component: {fileID: 68657915}
   m_Layer: 0
   m_Name: Earth
   m_TagString: Untagged
@@ -505,34 +505,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 68657910}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -15.12, y: -3.93, z: 100}
-  m_LocalScale: {x: 30, y: 30, z: 30}
+  m_LocalRotation: {x: 0, y: -0.5313985, z: 0, w: 0.847122}
+  m_LocalPosition: {x: -132.2, y: -39.5, z: 408.7}
+  m_LocalScale: {x: 70, y: 70, z: 70}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2103753354}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &68657912
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 68657910}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -64.2, z: 0}
 --- !u!23 &68657913
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -589,7 +568,20 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 68657910}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4711208715938537054, guid: d9c896e5eb85542778966cb22d88e33d, type: 3}
+--- !u!114 &68657915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 68657910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abbdef487ee964f3c98a5e6b800d4f36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlanetMovement
+  rotationSpeed: 10
 --- !u!1 &217305664
 GameObject:
   m_ObjectHideFlags: 0
