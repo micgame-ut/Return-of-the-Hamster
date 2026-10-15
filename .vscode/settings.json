@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Return of the Hamster.slnx"
+    "dotnet.defaultSolution": "Return-of-the-Hamster.slnx"
 }
