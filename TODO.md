@@ -21,52 +21,26 @@ type), DangerWarning, ExhaustFlame (works on copies, snaps after a jump).
 **Docs:** `PlayerTwins.md` and `TwinCopy.md` written, with
 README rows; existing scripts' docs updated.
 
-## Exhaust flame + Ring spin (in progress)
+## Exhaust flame, boost cooldown and ring spin
 
-Replaced the "player trail" idea. A trail wouldn't work: the player never moves forward (asteroids move along
-`Vector3.back` instead), so a Trail Renderer would only trace sideways movement.
+**Done and tested** (branch `feature/boost-rework`).
 
-**Done:**
+- **Exhaust flame** (earlier work): `ExhaustFlame.cs` draws two LineRenderers (an outer flame plus an HDR inner
+  core) on the Ring, with speed scaling, flicker, boost stretch and drag. See `ExhaustFlame.md`. If the look
+  ever needs more life, a Shader Graph core with scrolling noise ("option C") is the next idea.
+- **Boost cooldown** (`PlayerMovement`): `boostCooldown` (3 s), shared by the side and forward boosts.
+  `BoostCharge01` goes from 0 just after a boost to 1 when ready. A new `OnSideBoost(direction)` event, and a
+  read-only `BoostDecay`. The dodge distance is still tuned with the existing `boostForce` / `boostDecay`
+  (distance = force ÷ decay).
+- **Ring Glow** Shader Graph and material on the `ring` (player and Twin Copy): the glow rises with the charge
+  and jumps to full when ready (`charging`, `ready`, `glow`, `emission`). Transparent, fading toward
+  `Fade Axis` (`axisDistance`, `alpha`), with the glow faded by alpha too. See `RingGlow.md`.
+- **BoostRing.cs** on each `ring`: sends `_Charge` through a MaterialPropertyBlock, and on `OnSideBoost` rolls
+  the ring 360° eased by the dodge's own fade (`1 − e^(−boostDecay·t)`). `spinAxis` is (0, 0, −1) in the
+  prefabs. See `BoostRing.md`.
+- Possible follow-ups: dark ring on the menu (it shows Ready Glow there); a mid-spin boost (only possible with
+  `boostDecay` below ~1.5) snaps the ring back. It could carry on from the current angle instead.
 
-- `PlayerMovement`: `using System;`, `public event Action OnSpeedBoost` (fired in the forward-boost branch of
-  `OnButton`), and `public bool MeshVisible { get; private set; } = true;` (the hit-blink state, set in
-  `UpdateInvulnerability`).
-- `ExhaustFlame.cs` (finished and tested): two LineRenderers instead of particles. The outer flame is on the
-  `Exhaust Flame` object (child of the **Ring**), the white inner core on its `Exhaust Core` child (Order in
-  Layer 1). Both use Use World Space and the `ExhaustCore` material (URP Particles/Unlit, Additive, no Base
-  Map). Longer and narrower with `Speed01`, Perlin width flicker that's stronger at low speed
-  (`minFlicker`/`maxFlicker`), boost stretch on `OnSpeedBoost` (`boostLengthMultiplier`, `boostDuration`), drag
-  around the orbit (`dragIntensity`, `dragSegments`, shared `FollowLine` method), HDR gradients
-  (`GradientUsage(true)`), rainbow on the outer line only, blinks with `MeshVisible`, hidden on
-  `OnGameOver` / `OnWin`. Sparks (Particle System) were tried and removed.
-- If the line look ever needs more life: **option C**, a Shader Graph core with scrolling noise, is the planned
-  next step.
-
-**Still to do:**
-
-1. `PlayerMovement`: add `public event Action<float> OnSideBoost`, fired in the side-boost branch with
-   `lastSideDirection` (the side boost now remembers the last sideways direction for `sideInputMemory`).
-2. `RingSpin.cs` (new) on the Ring: `spinDuration` = 0.4 s for a full 360° around z, in the boost's direction;
-   store the starting local rotation in `Awake` and spin on top of it; ignore side boosts while a spin is
-   playing (the future boost cooldown will stop that anyway). Knockback doesn't go through `OnButton`, so it
-   won't spin.
-3. Docs: `ExhaustFlame.md` done. `RingSpin.md` (section 7: the user explains first), README rows, and update
-   `PlayerMovement.md` for the new events and `MeshVisible`.
-
-## Boost rework: cooldown and visual flair
-
-The current boost lives in `PlayerMovement.OnButton`: sideways input gives a boost around the circle
-(`boostForce`, decaying by `boostDecay`), and no sideways input adds forward speed (`speedBoost`). It has **no
-cooldown** and **no visuals**.
-
-Wanted:
-
-- Boosting works **off a cooldown**.
-- **More visual flair** when boosting (and probably a way to show the cooldown).
-
-Questions to settle with the user first: cooldown length, whether both boost types share one cooldown, how
-the cooldown is shown (HUD, on the player, the trail above), what the boost effect looks like, and whether
-boosting should interact with overdrive.
 
 ## Score system
 
@@ -139,6 +113,31 @@ for the full walkthrough, and `GameManager.md` ("Starting: `HasStarted` and `Sta
 - Every pickup raises the static `PowerUp.OnCollected`; ScorePopups shows a label for it (`healthLabel` etc.).
 - `Mystery PowerUp` is the old `Twin PowerUp` prefab renamed (same GUID). The Health, Invincibility and Score
   prefabs still work as fixed types. See `PowerUp.md` (`RollType`).
+
+## Phase asteroid (planned, not started)
+
+Do this after the boost rework is merged. A new branch from `main` (`feature/phase-asteroid`).
+
+An asteroid that phases in and out. While phased, its collider is off and it shows a hologram material.
+Otherwise it's a normal asteroid. **Variables are agreed; the names and defaults still need a final OK.** Then
+explain the logic (section 2) before any code.
+
+- **In `AsteroidBehavior`**, not a separate script: a new `public enum EffectType { None, Phase }` with an
+  `effectType` field ("Effect" header), separate from `MovementType`, so any movement can have any effect.
+- **Phase fields** ("Phase" header): `solidTime` 1.5, `phasedTime` 1, `flickerTime` 0.3 (flicker just
+  **before** each switch), `flickerInterval` 0.05. A public `IsPhased` property.
+- **Timing comes from `elapsed`** (time since it started moving). So it starts **solid** once moving, and a wave
+  that spawns together phases **in sync**. There's no random offset.
+- **While phased:** collider off, `CanBreak` false (not destructible), no close calls, no outline. Materials are
+  two arrays prepared once in `Awake` (solid, including any outline; and phased), swapped with no allocation.
+- **`HitRadius`** returns 0 while the collider is off. Remember the radius while it's on, so the danger arc
+  keeps its width.
+- **`SpawnableTemplate`**: `phasedMaterial` (shared, like `outlineMaterial`).
+- **`OrbitRing`**: `phasedColor` (blue, 0.2 / 0.5 / 1). A phased asteroid's arc shows blue: safe but not
+  breakable.
+- **Hologram Shader Graph** (section 13): Unlit, transparent, additive. A fresnel rim plus scrolling scan lines,
+  with editable color, strength and speed.
+- **Prefabs:** a phase asteroid prefab per movement type wanted (Linear and/or Wave).
 
 ## Small cleanup
 

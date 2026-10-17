@@ -14,6 +14,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Script | Doc | Status |
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
+| BoostRing.cs | [BoostRing.md](BoostRing.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
 | CloseCallZone.cs | [CloseCallZone.md](CloseCallZone.md) | Done |
 | Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
@@ -60,6 +61,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
 | Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
 | Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Done |
+| Ring Glow.shadergraph | [RingGlow.md](RingGlow.md) | Done |
 | Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Done |
 | Starry Sky Volume.shadergraph | [StarrySkyVolume.md](StarrySkyVolume.md) | Done |
 | Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Done |
