@@ -71,7 +71,8 @@ patterns built in the editor always line up with where they spawn in the game.
 
 Gets the LevelTimer and Score from GameManager, **prewarms** (for each wave's pattern, makes copies until its free list
 holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), then starts `RunWaves`, as
-long as there's at least one wave.
+long as there's at least one wave. This happens on load, even while Level 1's menu shows, so the prewarm is
+done before play begins. `RunWaves` itself waits for the start.
 
 ### `CreateCopy`, `GetCopy`, `GetFreeList`, `HandleReleased`
 
@@ -85,14 +86,19 @@ long as there's at least one wave.
 
 ### `RunWaves`: going through the list
 
-1. Wait `startDelay` seconds.
-2. For each wave, in the order `GetWaveOrder` gives:
+1. **Wait for the game to start:** `yield return new WaitUntil(() => GameManager.Instance == null ||
+   GameManager.Instance.HasStarted)`. `WaitUntil` takes a small function (a lambda) and calls it once a frame,
+   continuing the first frame it returns true. That's a **higher-order function**, a method that takes another
+   function as input. On Level 1 this holds the waves back during the menu. Everywhere else it's already true,
+   and with no GameManager (the pattern-building scene) it never waits.
+2. Wait `startDelay` seconds, counted from the start of play, not from the load.
+3. For each wave, in the order `GetWaveOrder` gives:
    - If `StopSpawning` is true, stop for good.
    - If the wave has no pattern assigned, skip it.
    - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
      coroutine inside this one and continues only when that one is done.
    - Wait `delayAfter` seconds.
-3. If `loop` is on and `StopSpawning` is still false, go back to step 2.
+4. If `loop` is on and `StopSpawning` is still false, go back to step 3.
 
 `delayAfter` starts once the pattern's **last asteroid has appeared**, not once it has flown past. So
 with a short delay, the next pattern can start while the previous one is still coming at the player.
@@ -183,8 +189,8 @@ compares against its own starting count, so a life lost with two waves on screen
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer and Score (in `Start`) and the gameplay camera (each pattern), and reads
-  `IsGameOver` through `StopSpawning`.
+- **GameManager**: gets the LevelTimer and Score (in `Start`) and the gameplay camera (each pattern), waits for
+  `HasStarted` at the top of `RunWaves`, and reads `IsGameOver` through `StopSpawning`.
 - **OrbitSettings**: reads `SpawnerPosition` in `Awake`.
 - **LevelTimer**: checks `IsComplete`, through `StopSpawning`, to stop spawning once the earth has arrived.
 - **AsteroidBehavior** and **PowerUp**: reads `ApproachSpeed` (through `GetApproachSpeed`) to time the

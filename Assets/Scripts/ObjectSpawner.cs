@@ -77,6 +77,8 @@ public class ObjectSpawner : MonoBehaviour
 
     private IEnumerator RunWaves()
     {
+        // Wait for the menu to start the game; levels without a menu have already started.
+        yield return new WaitUntil(() => GameManager.Instance == null || GameManager.Instance.HasStarted);
         yield return new WaitForSeconds(startDelay);
 
         do

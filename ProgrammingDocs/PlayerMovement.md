@@ -15,7 +15,7 @@ the same way you would handle a mouse.
 - **Requires:**
   - `meshTransform`: the visual mesh (a child), which is rotated and blinked separately from the root/collider
   - A `PlayerInput` component sending `OnMove` and `OnButton` messages
-  - `GameManager.Instance`, which provides the `LevelTimer` and `IsGameOver`
+  - `GameManager.Instance`, which provides the `LevelTimer`, `HasStarted` and `IsGameOver`
   - A `PlayerHealth` on the same GameObject, for lives (read by AsteroidBehavior, not this script)
   - A `PlayerDeath` on the same GameObject, which moves the ship after game over (no direct link either)
   - The `OrbitSettings` asset, for the orbit's radius and center and the player's depth
@@ -71,20 +71,44 @@ Example, a 360 px mouse sweep with sensitivity 5: at 60 fps that's 60 × 6 px, a
 `mouseSensitivity` and `acceleration` are entered **in thousandths** (the constant `SensitivityScale` = 0.001
 multiplies them), so the Inspector shows friendly numbers like 5 instead of 0.005.
 
-### Game over and win (`InputLocked`)
+### Before the start, game over and win (`InputLocked`)
 
-`InputLocked` is a private property that's true once GameManager's `IsGameOver` **or** `HasWon` is set
-(the brackets around `IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes
-first). Either way GameManager freezes time (`Time.timeScale = 0`). On a death, PlayerDeath then takes over
-the ship; on a win, the ship just stays put while the win screen is up. While it's true, PlayerMovement
-gets out of the way:
+`InputLocked` is a private property that's true **before the game starts** (GameManager's `HasStarted` is
+`false`), and once GameManager's `IsGameOver` **or** `HasWon` is set. The brackets around
+`!HasStarted || IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes first.
+
+- **Before the start** (Level 1's menu), HamsterMenuFloat and then MenuTransition's glide move the player.
+- **On a death,** GameManager freezes time (`Time.timeScale = 0`) and PlayerDeath takes over the ship.
+- **On a win,** time freezes too, and the ship just stays put while the win screen is up.
+
+While it's true, PlayerMovement gets out of the way:
 
 - **`Update` returns straight away.** Roll, speed, the orbit and the invulnerability blink all stop where
-  they are, so `Movement` stops putting the ship back on the ring while PlayerDeath moves it. The blink
-  could freeze with the ship hidden, which is why PlayerDeath switches the renderers back on.
-- **`OnButton` returns straight away,** so no boosts.
+  they are, so `Movement` doesn't put the ship on the ring while something else moves it. The blink could
+  freeze with the ship hidden, which is why PlayerDeath switches the renderers back on.
+- **`OnButton` returns straight away,** so no boosts. Clicking the menu's Start button can't trigger one.
 
 The name stayed `InputLocked`, although it now stops movement as well as input.
+
+### `Start`: the cursor lock and the start angle
+
+`Start` gets the LevelTimer and sets `orbitAngle` from `startAngle`. It also locks and hides the cursor
+(`LockCursor`), but **only once play begins**, because the menu needs a visible cursor for its buttons:
+
+- If the game has already started (Level 2 / 3, a restart), or there's no GameManager, it locks now.
+- Otherwise it subscribes `LockCursor` to GameManager's `OnGameStarted`.
+
+The check comes first because on levels without a menu, `StartGame` has already run in GameManager's `Awake`,
+so subscribing would wait for an event that already happened. The subscription isn't removed: GameManager and
+the player are destroyed together with the scene. (MainMenu also locks the cursor the moment Start is pressed.)
+
+### Where the player starts (`StartPosition`, `StartRotation`)
+
+Two read-only properties give the position and rotation `PlaceOnOrbit` will use at `startAngle`. They use the
+same maths as the orbit below (centre + cos/sin × radius, at `playerZ`; rotation `startAngle + 90` on z if
+`faceCenter`, otherwise the current rotation). With the default settings that's (0, −2, −4) and (0, 0, 0).
+MenuTransition glides the menu hamster to exactly this pose, so when play begins and `Update` places the
+player on the orbit, it doesn't move.
 
 ### The orbit (`Movement`)
 
@@ -260,8 +284,12 @@ Side effects of doing it this way:
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer from it, and reads `IsGameOver` (through `InputLocked`) every
-  frame and on the boost button
+- **GameManager**: gets the LevelTimer from it, and reads `HasStarted`, `IsGameOver` and `HasWon` (through
+  `InputLocked`) every frame and on the boost button. Subscribes `LockCursor` to `OnGameStarted` if the game
+  hasn't started yet
+- **MenuTransition**: reads `StartPosition` and `StartRotation` for the menu glide's target
+- **HamsterMenuFloat**: no direct link, but on Level 1 it moves the same object during the menu, while
+  `InputLocked` keeps PlayerMovement out of the way
 - **OrbitSettings**: reads the orbit's radius and center every frame, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
@@ -292,6 +320,8 @@ Side effects of doing it this way:
 - The player's z comes from `OrbitSettings`. Moving the player in the scene does nothing, because it moves
   itself back to the asset's `playerZ` when the game starts.
 - `meshTransform` must be assigned. `Roll` uses it without a null check.
+- **`StartPosition` must match `PlaceOnOrbit`.** If the orbit maths changes, change both, or the menu glide
+  will end in the wrong spot and the player will jump when play begins.
 - Boost has no cooldown yet.
 - After game over, PlayerMovement does nothing. Anything that should happen to the ship then belongs in
   PlayerDeath. The collider stays on, but physics is frozen, so no hits can happen.

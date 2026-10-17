@@ -70,6 +70,13 @@ them. A circle is really a lot of short straight lines, so with enough points it
 
 It runs in `LateUpdate` so the player and asteroids have already moved this frame.
 
+**Before the start: hidden.** During Level 1's menu (GameManager's `HasStarted` is false) the ring line is
+switched off and the rest of `LateUpdate` is skipped. There are no asteroids yet, so there are no arcs to draw.
+When play begins the ring switches on at once. `ringShown` remembers the last value given to `ring.enabled`,
+so the line is only touched on the frame it changes. While it's skipped, the player is floating on the menu
+at other depths, so on the first frame after the start the ring is redrawn at the player's real depth.
+Without a GameManager, it counts as started.
+
 **0. Make sure `points` is big enough.** The longest line, an arc covering the whole ring, needs
 `ringSegments + 1` points. The array is created on the first frame, and again only if `ringSegments` is
 raised in Play mode.
@@ -158,7 +165,8 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 
 ## Talks to
 
-- **GameManager**: reads `ShowOrbitRing` and gets `Player` and `PlayerShell` in `Start`.
+- **GameManager**: reads `ShowOrbitRing` and gets `Player` and `PlayerShell` in `Start`; reads `HasStarted`
+  every frame.
 - **PlayerShell**: reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,

@@ -1,13 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.SceneManagement;
 using TMPro;
 public class MainMenu : MonoBehaviour
 {
-    [SerializeField] private string _gameSceneName;
-    [SerializeField] private float fadeDuration = 1f;
-    [SerializeField] private CanvasGroup fadePanel;
+    [SerializeField] private MenuTransition menuTransition;
     [SerializeField] private Button startButton;
     [SerializeField] private Button creditsButton;
     [SerializeField] private TMP_Text startButtonText;
@@ -19,8 +16,10 @@ public class MainMenu : MonoBehaviour
     public void OnStartPressed()
     {
         startButton.interactable = false;
-        StartCoroutine(FadeAndLoad());
-        StartCoroutine(BlinkText(startButtonText, fadeDuration));
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        menuTransition.Play();
+        StartCoroutine(BlinkText(startButtonText, menuTransition.Duration));
     }
 
     public void OnCreditsPressed()
@@ -38,19 +37,6 @@ public class MainMenu : MonoBehaviour
     public void OnQuitPressed()
     {
         Application.Quit();
-    }
-
-    private IEnumerator FadeAndLoad()
-    {
-        float elapsedTime = 0f; // starts timer
-        while (elapsedTime < fadeDuration) 
-        {
-            elapsedTime += Time.deltaTime;
-            fadePanel.alpha = elapsedTime / fadeDuration; 
-            yield return null; // wait for next frame
-        }
-        fadePanel.alpha = 1f;
-        SceneManager.LoadScene(_gameSceneName);
     }
 
     private IEnumerator BlinkText(TMP_Text text, float duration)

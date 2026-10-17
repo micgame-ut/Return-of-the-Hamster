@@ -111,7 +111,7 @@ Material:
     - _Cloud_Scale: 0.15
     - _Cloud_Softness: 0.7
     - _Color_Scale: 1
-    - _Core_Glow_Size: 0.0018
+    - _Core_Glow_Size: 0
     - _Cull: 2
     - _Cutoff: 0.5
     - _Dash_Frequency: 0.2

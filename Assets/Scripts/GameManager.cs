@@ -25,6 +25,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Score score;
     [SerializeField] private EndScreen endScreen;
     [SerializeField] private bool showOrbitRing = true;
+    [SerializeField] private GameObject hud;
+    [SerializeField] private bool startWithMenu; // tick on Level 1 only; other levels start straight away
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -43,6 +45,14 @@ public class GameManager : MonoBehaviour
     public bool HasWon { get; private set; }
     public event Action OnGameOver;
     public event Action OnWin;
+
+    // Set by EndScreen's Restart so the reloaded level skips the menu. Static, so it survives the reload.
+    public static bool SkipMenuOnce;
+
+    public bool HasStarted { get; private set; }
+    public float TimeSinceStart => HasStarted ? Time.time - startTime : 0f; // 0 until StartGame
+    public event Action OnGameStarted;
+    private float startTime;
 
     // Won once the earth has arrived and nothing spawned is still flying.
     // A boss fight would add its own condition here.
@@ -73,11 +83,26 @@ public class GameManager : MonoBehaviour
         if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
         if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
+
+        // No menu on this level, or a restart: start straight away.
+        if (!startWithMenu || SkipMenuOnce) StartGame();
+        else if (hud != null) hud.SetActive(false);
+        SkipMenuOnce = false;
     }
 
     private void Update()
     {
         if (!HasWon && !IsGameOver && LevelCleared) Win();
+    }
+
+    public void StartGame()
+    {
+        if (HasStarted) return;
+
+        HasStarted = true;
+        startTime = Time.time;
+        if (hud != null) hud.SetActive(true);
+        OnGameStarted?.Invoke();
     }
 
     public void GameOver()

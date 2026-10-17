@@ -68,6 +68,13 @@ public class PlayerMovement : MonoBehaviour
     public float OrbitAngle => orbitAngle;
     public Transform MeshTransform => meshTransform;
 
+    // Where PlaceOnOrbit puts the player at startAngle, so the menu's glide can end exactly there.
+    public Vector3 StartPosition => new Vector3(
+        OrbitCenter.x + Mathf.Cos(startAngle * Mathf.Deg2Rad) * CircleRadius,
+        OrbitCenter.y + Mathf.Sin(startAngle * Mathf.Deg2Rad) * CircleRadius,
+        orbit.PlayerZ);
+    public Quaternion StartRotation => faceCenter ? Quaternion.Euler(0f, 0f, startAngle + 90f) : transform.rotation;
+
     // Roll
     private Vector2 rollInput;
 
@@ -91,9 +98,9 @@ public class PlayerMovement : MonoBehaviour
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
 
-    // Once the game is over or won, all input is ignored.
+    // Before the game starts, and once it's over or won, all input is ignored.
     private bool InputLocked => GameManager.Instance != null &&
-                                (GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
+                                (!GameManager.Instance.HasStarted || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
     public static float OverdriveFraction { get; private set; }
@@ -124,18 +131,26 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
-        // Lock the cursor to the center of the screen and make it invisible
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
 
         orbitAngle = startAngle * Mathf.Deg2Rad;
+
+        // Lock the cursor when play begins. Levels without a menu have already started, so lock now.
+        GameManager gm = GameManager.Instance;
+        if (gm == null || gm.HasStarted) LockCursor();
+        else gm.OnGameStarted += LockCursor;
+    }
+
+    private void LockCursor()
+    {
+        // Lock the cursor to the center of the screen and make it invisible
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Update()
     {
-        // Once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
+        // Before the start, and once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
         if (InputLocked) return;
 
         Roll();
