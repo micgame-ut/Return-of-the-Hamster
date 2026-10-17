@@ -21,6 +21,7 @@ public class PlayerTwins : MonoBehaviour
     private int jumpFrame = -1;
 
     public bool IsTwinned => copies.Count > 0;
+    public bool CanAddBody => twinPrefab != null && copies.Count + 1 < maxBodies; // false at the cap, so a Twin pickup would do nothing
     public IReadOnlyList<TwinCopy> Copies => copies;
     public event Action<bool> OnTwinChanged; // true when the twin starts, false when the last copy is gone
 
@@ -42,7 +43,7 @@ public class PlayerTwins : MonoBehaviour
     // A twin pickup: a new copy splits off the player, and all bodies re-space.
     public void AddBody()
     {
-        if (twinPrefab == null || copies.Count + 1 >= maxBodies) return;
+        if (!CanAddBody) return;
 
         bool wasTwinned = IsTwinned;
         TwinCopy copy = Instantiate(twinPrefab, transform.position, transform.rotation);

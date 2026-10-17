@@ -105,6 +105,20 @@ they're meant to differ between asteroids.
 | `pickupShakeMagnitude` | 0 | How far the camera shakes on a pickup, in world units |
 | `invincibleDuration` | 5 | Seconds of invincibility from an Invincible power-up. Passed to `PlayerInvincibility.Activate` |
 
+### Random Power-Up Chances
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `healthChance` | 40 | How often a Random power-up gives Health |
+| `invincibleChance` | 20 | How often it gives Invincible |
+| `twinChance` | 20 | How often it gives Twin |
+| `scoreChance` | 20 | How often it gives Score Multiplier |
+
+These are **shares of the total**, not strict percentages: 40/20/20/20 is 40%, 20%, 20%, 20%, and 2/1/1/1
+would mean the same. 0 means that type never comes up. Types that would be wasted at pickup (Health at full
+lives, Twin at the cap) are left out of that roll, and the rest share their chance. Only Random power-ups use
+these; the fixed prefabs ignore them. See PowerUp's `RollType`.
+
 `despawnBehindCamera` (Despawn) is shared by asteroids and power-ups.
 
 ## How it works
@@ -132,7 +146,7 @@ AsteroidBehavior calls this during the warning blink.
 
 - **AsteroidBehavior**: reads every asteroid field and calls `GetGlow`.
 - **PowerUp**: reads `speedMultiplier`, `despawnBehindCamera` and the Power-Up section, including
-  `invincibleDuration` for the Invincible type.
+  `invincibleDuration` for the Invincible type, and the four Random Power-Up Chances for a Random pickup.
 
 The template doesn't read from or call anything itself.
 

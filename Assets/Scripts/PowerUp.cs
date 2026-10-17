@@ -6,7 +6,7 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random }
 
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [SerializeField] private float speed = 20f;
@@ -26,6 +26,14 @@ public class PowerUp : MonoBehaviour
 
     // Every revealed power-up, so GameManager can tell when the field is clear.
     public static readonly List<PowerUp> Active = new List<PowerUp>();
+
+    // Raised on every pickup with the type that was applied and where, so ScorePopups can show its label.
+    public static event System.Action<PowerUpType, Vector3> OnCollected;
+
+    // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
+    private static readonly PowerUpType[] RollTypes =
+        { PowerUpType.Health, PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier };
+    private readonly float[] rollWeights = new float[4];
 
     private void Awake()
     {
@@ -84,9 +92,55 @@ public class PowerUp : MonoBehaviour
         if (score != null) score.AddMultiplierPowerUp();
     }
 
-    private void ApplyEffect()
+    private PowerUpType RollType()
     {
-        switch (type)
+        float total = FillWeights(true);
+        if (total <= 0f) total = FillWeights(false); // everything is wasted: roll from the plain chances instead
+
+        float roll = Random.Range(0f, total);
+        int last = 0;
+        for (int i = 0; i < RollTypes.Length; i++)
+        {
+            if (rollWeights[i] <= 0f) continue;
+            if (roll < rollWeights[i]) return RollTypes[i];
+            roll -= rollWeights[i];
+            last = i;
+        }
+        return RollTypes[last]; // the roll landed exactly on the total
+    }
+
+    // Fills rollWeights from the template's chances, with wasted types at 0 if skipWasted. Returns the total.
+    private float FillWeights(bool skipWasted)
+    {
+        float total = 0f;
+        for (int i = 0; i < RollTypes.Length; i++)
+        {
+            bool wasted = skipWasted && IsWasted(RollTypes[i]);
+            rollWeights[i] = wasted ? 0f : Mathf.Max(0f, ChanceOf(RollTypes[i]));
+            total += rollWeights[i];
+        }
+        return total;
+    }
+
+    private float ChanceOf(PowerUpType t) => t switch
+    {
+        PowerUpType.Health => template.healthChance,
+        PowerUpType.Invincible => template.invincibleChance,
+        PowerUpType.Twin => template.twinChance,
+        _ => template.scoreChance,
+    };
+
+    // True when picking this type up right now would do nothing.
+    private bool IsWasted(PowerUpType t) => t switch
+    {
+        PowerUpType.Health => health == null || health.CurrentLives >= health.MaxLives || (twins != null && twins.IsTwinned),
+        PowerUpType.Twin => twins == null || !twins.CanAddBody,
+        _ => false,
+    };
+
+    private void ApplyEffect(PowerUpType picked)
+    {
+        switch (picked)
         {
             case PowerUpType.Health:
                 Heal();
@@ -118,7 +172,9 @@ public class PowerUp : MonoBehaviour
         RunStats stats = gm != null ? gm.RunStats : null;
         if (stats != null) stats.AddPowerUpPickedUp();
 
-        ApplyEffect();
+        PowerUpType picked = type == PowerUpType.Random && template != null ? RollType() : type;
+        ApplyEffect(picked);
+        OnCollected?.Invoke(picked, transform.position);
 
         if (template != null)
         {

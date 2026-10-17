@@ -34,3 +34,8 @@ MonoBehaviour:
   pickupEffectPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
   pickupShakeDuration: 0
   pickupShakeMagnitude: 0
+  invincibleDuration: 5
+  healthChance: 40
+  invincibleChance: 10
+  twinChance: 25
+  scoreChance: 25

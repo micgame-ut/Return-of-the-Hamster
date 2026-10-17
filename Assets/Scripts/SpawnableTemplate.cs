@@ -47,6 +47,12 @@ public class SpawnableTemplate : ScriptableObject
     public float pickupShakeMagnitude = 0f;     // max camera offset in units
     public float invincibleDuration = 5f;       // seconds of invincibility per pickup
 
+    [Header("Random Power-Up Chances")]          // shares of the total, so 40/20/20/20 = 40%, 20%, 20%, 20%
+    public float healthChance = 40f;
+    public float invincibleChance = 20f;
+    public float twinChance = 20f;
+    public float scoreChance = 20f;
+
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {
         AsteroidBehavior.MovementType.Wave => waveGlow,

@@ -127,6 +127,19 @@ for the full walkthrough, and `GameManager.md` ("Starting: `HasStarted` and `Sta
 - **Backburner:** docs for `MainMenu`, `HamsterMenuFloat`, `PlanetMovement`, `TitleFaceFlash` and
   `CreditsPanel`.
 
+## Random power-up
+
+**Done and tested** (branch `feature/random-powerup`). The patterns use one `Mystery PowerUp` prefab
+(`PowerUp` type **Random**) that rolls Health, Invincible, Twin or Score Multiplier on pickup.
+
+- Chances: `healthChance` / `invincibleChance` / `twinChance` / `scoreChance` on the SpawnableTemplate
+  (40/20/20/20), as shares of the total.
+- Wasted picks are skipped (Health at full lives or while twinned, Twin at the cap via the new
+  `PlayerTwins.CanAddBody`). If everything is wasted, the roll falls back to the plain chances.
+- Every pickup raises the static `PowerUp.OnCollected`; ScorePopups shows a label for it (`healthLabel` etc.).
+- `Mystery PowerUp` is the old `Twin PowerUp` prefab renamed (same GUID). The Health, Invincibility and Score
+  prefabs still work as fixed types. See `PowerUp.md` (`RollType`).
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

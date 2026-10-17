@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6887063950035471651}
   - component: {fileID: 6371528130768605071}
   m_Layer: 0
-  m_Name: Twin PowerUp
+  m_Name: Mystery PowerUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -125,6 +125,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8a1d7ef53562f04daeade7c6698797f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PowerUp
-  type: 2
+  type: 4
   speed: 10
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}
