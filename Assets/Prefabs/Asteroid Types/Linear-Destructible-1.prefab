@@ -102,7 +102,7 @@ GameObject:
   - component: {fileID: 8652781573384099342}
   - component: {fileID: 6354562314283906079}
   m_Layer: 0
-  m_Name: Asteroid Destructible 1
+  m_Name: Linear-Destructible-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -162,6 +162,6 @@ MonoBehaviour:
   amplitude: 5
   frequency: 1
   destructible: 1
-  destroySpeed: 40
+  destroySpeed: 5
   scorePoints: 100
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}

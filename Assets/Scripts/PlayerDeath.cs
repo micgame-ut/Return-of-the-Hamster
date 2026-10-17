@@ -23,6 +23,14 @@ public class PlayerDeath : MonoBehaviour
     [SerializeField] private float explodeShakeMagnitude = 0.5f;
     [SerializeField] private float endDelay = 1.5f;          // seconds after exploding before DeathSequenceFinished
 
+    private BoostRing ring;
+
+    private void Awake()
+    {
+        // The ring isn't under the mesh, so it's found separately to vanish with the ship when it explodes.
+        ring = GetComponentInChildren<BoostRing>(true);
+    }
+
     private void OnEnable()
     {
         if (GameManager.Instance != null) GameManager.Instance.OnGameOver += HandleGameOver;
@@ -78,6 +86,7 @@ public class PlayerDeath : MonoBehaviour
         CameraShake.Shake(explodeShakeDuration, explodeShakeMagnitude);
 
         meshTransform.gameObject.SetActive(false);
+        if (ring != null) ring.gameObject.SetActive(false);
 
         yield return new WaitForSecondsRealtime(endDelay);
 

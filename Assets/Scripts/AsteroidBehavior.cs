@@ -8,6 +8,7 @@ using UnityEngine;
 public class AsteroidBehavior : MonoBehaviour
 {
     public enum MovementType { Linear, Wave }
+    public enum EffectType { None, Phase }
 
     [Header("Movement")]
     [SerializeField] private MovementType movementType = MovementType.Linear;
@@ -16,6 +17,15 @@ public class AsteroidBehavior : MonoBehaviour
     [Header("Wave")]
     [SerializeField] private float amplitude = 30f;  // degrees swung each way around the orbit
     [SerializeField] private float frequency = 1f;   // cycles per second
+
+    [Header("Effect")]
+    [SerializeField] private EffectType effectType = EffectType.None;
+
+    [Header("Phase")]
+    [SerializeField] private float solidTime = 1.5f;        // seconds solid in each cycle
+    [SerializeField] private float phasedTime = 1f;         // seconds phased (no collider, hologram look) in each cycle
+    [SerializeField] private float flickerTime = 0.3f;      // seconds of flicker just before each switch
+    [SerializeField] private float flickerInterval = 0.05f; // seconds between flicker flips
 
     [Header("Destruction")]
     [SerializeField] private bool destructible = false;
@@ -49,6 +59,10 @@ public class AsteroidBehavior : MonoBehaviour
     private bool closeCallThreat;   // couldn't be broken when it crossed
     private int outlineIndex = -1; // material slot of the outline, -1 if none
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
+    private float hitRadius;            // collider footprint, measured once in Awake so it survives the collider being off
+    private Material[] solidMaterials;  // the normal look, including any outline
+    private Material[] phasedMaterials; // the hologram look
+    private bool showingPhased;         // which look is on the renderer right now
 
     private Vector3 origin;
     private float elapsed;
@@ -66,16 +80,23 @@ public class AsteroidBehavior : MonoBehaviour
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
 
     public bool IsMoving => isMoving;
-    public bool CanBreak => (invincibility != null && invincibility.IsInvincible) ||
-                            (destructible && PlayerMovement.Speed >= destroySpeed);
+    public bool IsPhased { get; private set; }
+    public bool CanBreak => !IsPhased &&
+                            ((invincibility != null && invincibility.IsInvincible) ||
+                             (destructible && PlayerMovement.Speed >= destroySpeed));
 
-    // XY footprint of the collider; its bounds are only valid while it's enabled.
-    public float HitRadius => col != null && col.enabled ? Mathf.Max(col.bounds.extents.x, col.bounds.extents.y) : 0f;
+    // XY footprint of the collider, measured once in Awake, since its bounds are only valid while it's enabled.
+    public float HitRadius => col != null ? hitRadius : 0f;
 
     private void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
         col = GetComponent<Collider>();
+
+        // Measured now, while the collider is still on (WarnThenMove switches it off). The collider is on
+        // the root, which never spins, so its footprint doesn't change.
+        if (col != null) hitRadius = Mathf.Max(col.bounds.extents.x, col.bounds.extents.y);
+
         block = new MaterialPropertyBlock();
         if (template != null) blinkWait = new WaitForSeconds(template.blinkInterval);
 
@@ -103,6 +124,11 @@ public class AsteroidBehavior : MonoBehaviour
             rend.sharedMaterials = withOutline;
             outlineBlock = new MaterialPropertyBlock();
         }
+
+        // The two looks a Phase asteroid swaps between, made once so a flicker flip allocates nothing.
+        if (rend != null) solidMaterials = rend.sharedMaterials;
+        if (effectType == EffectType.Phase && template != null && template.phasedMaterial != null)
+            phasedMaterials = new[] { template.phasedMaterial };
     }
 
     private void OnEnable()
@@ -118,6 +144,8 @@ public class AsteroidBehavior : MonoBehaviour
         passedPlayer = false;
         closeCallJudged = false;
         hitPlayer = false;
+        IsPhased = false;
+        SetLook(false); // back to solid, in case it was despawned while phased
 
         // Each asteroid spins around its own random axis.
         spinAxis = Random.onUnitSphere;
@@ -176,6 +204,31 @@ public class AsteroidBehavior : MonoBehaviour
         }
     }
 
+    // Swaps between the solid and hologram materials, only when the look actually changes.
+    private void SetLook(bool phased)
+    {
+        if (phased == showingPhased || phasedMaterials == null) return;
+        showingPhased = phased;
+        rend.sharedMaterials = phased ? phasedMaterials : solidMaterials;
+        if (!phased) outlineState = -1; // the outline slot is back, so refresh its color
+    }
+
+    // Phase effect: the collider follows the real cycle, and the look flickers just before each switch.
+    private void UpdatePhase()
+    {
+        float cycle = solidTime + phasedTime;
+        if (cycle <= 0f) return;
+
+        float t = elapsed % cycle;
+        IsPhased = t >= solidTime;
+        if (col != null && col.enabled == IsPhased) col.enabled = !IsPhased;
+
+        float untilSwitch = IsPhased ? cycle - t : solidTime - t;
+        bool flip = untilSwitch <= flickerTime && flickerInterval > 0f &&
+                    Mathf.FloorToInt(untilSwitch / flickerInterval) % 2 == 0;
+        SetLook(IsPhased != flip);
+    }
+
     private void Spin()
     {
         if (mesh == null || template == null) return;
@@ -184,7 +237,7 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void UpdateOutline()
     {
-        if (outlineIndex < 0) return;
+        if (outlineIndex < 0 || showingPhased) return;
 
         // Only touch the renderer when the state flips, not every frame.
         int state = CanBreak ? 1 : 0;
@@ -204,6 +257,7 @@ public class AsteroidBehavior : MonoBehaviour
         if (!isMoving) return;
 
         elapsed += Time.deltaTime;
+        if (effectType == EffectType.Phase) UpdatePhase();
 
         // Approach speed rises with the player's speed, like the starfield, so
         // flying faster brings asteroids in faster. Distance is accumulated per
@@ -246,7 +300,7 @@ public class AsteroidBehavior : MonoBehaviour
             if (depth > 0f) return;
             passedPlayer = true;
             closeCallGap = closeCalls.NearestGap(transform.position, HitRadius, out closeCallBody);
-            closeCallThreat = !CanBreak;
+            closeCallThreat = !CanBreak && !IsPhased;
         }
 
         if (depth > -(HitRadius + closeCalls.Reach)) return;

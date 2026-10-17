@@ -16,6 +16,7 @@ public class OrbitRing : MonoBehaviour
     [Header("Danger Arcs")]
     [SerializeField] private Color dangerColor = new Color(1f, 0.2f, 0.2f, 1f);
     [SerializeField] private Color breakableColor = new Color(0.2f, 1f, 0.3f, 1f); // destructible and fast enough to break it
+    [SerializeField] private Color phasedColor = new Color(0.2f, 0.5f, 1f, 1f); // phased out: safe, but can't be broken
     [SerializeField] private float arcWidth = 0.15f;
     [SerializeField] private float arcOffset = 0.6f; // drawn this far outside the ring so arcs don't cover the hamster
     [SerializeField] private float warnTime = 1.5f; // seconds before impact the arc starts fading in
@@ -107,7 +108,7 @@ public class OrbitRing : MonoBehaviour
             LineRenderer arc = arcs[used++];
             arc.enabled = true;
 
-            Color c = asteroid.CanBreak ? breakableColor : dangerColor;
+            Color c = asteroid.IsPhased ? phasedColor : asteroid.CanBreak ? breakableColor : dangerColor;
             c.a *= alpha;
             arc.startColor = arc.endColor = c;
 

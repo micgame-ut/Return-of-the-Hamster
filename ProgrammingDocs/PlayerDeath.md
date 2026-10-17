@@ -45,6 +45,12 @@ With the defaults:
 | 2 s | Explosion and camera shake; the ship disappears |
 | 3.5 s | `DeathSequenceFinished()` |
 
+### `Awake`
+
+Finds the player's **ring** with `GetComponentInChildren<BoostRing>(true)` (the `true` also finds it if it's
+switched off). The ring is a separate child of the player, not under `meshTransform`, so hiding the mesh
+alone would leave it floating where the ship exploded.
+
 ### `OnEnable` / `OnDisable` and `HandleGameOver`
 
 There's no `Update`. Instead it subscribes to GameManager's `OnGameOver` event in `OnEnable` and
@@ -102,8 +108,10 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 1. Spawns `explosionPrefab` at the ship, if one is assigned. This one isn't pooled (EffectPool): it only
    happens once per level.
 2. Shakes the camera with `CameraShake.Shake`.
-3. Hides the ship by switching off the **mesh child**. The root stays active, because switching off the
-   object this coroutine runs on would stop the coroutine.
+3. Hides the ship by switching off the **mesh child**, and the **ring** with it (if there is one; the exhaust
+   flame is a child of the ring, so it goes too). The root stays active, because switching off the object
+   this coroutine runs on would stop the coroutine. During the approach the ring rides along with the root
+   but doesn't shake, since only the mesh is shaken.
 4. Waits `endDelay` with `WaitForSecondsRealtime`. A plain `WaitForSeconds` counts scaled time and would
    wait forever while frozen.
 5. Calls `GameManager.Instance.DeathSequenceFinished()`, where the game-over screen will start.
@@ -115,6 +123,7 @@ After the loop, the last offset is removed so the mesh is back at rest, and the 
 - **CameraShake**: calls `Shake` at the explosion.
 - **PlayerMovement**: no direct link. PlayerMovement stops moving the ship at game over so this script
   can take over.
+- **BoostRing**: found in `Awake` only to locate the ring object, which is switched off at the explosion.
 
 ## Gotchas
 

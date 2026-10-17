@@ -28,6 +28,9 @@ public class SpawnableTemplate : ScriptableObject
     [ColorUsage(false, true)] public Color outlineTooSlow = Color.red;
     [ColorUsage(false, true)] public Color outlineCanBreak = Color.green;
 
+    [Header("Phase")]
+    public Material phasedMaterial; // the hologram look while a Phase asteroid is phased out
+
     [Header("Despawn")]
     public float despawnBehindCamera = 5f; // world units past the camera before removal
 
