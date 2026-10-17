@@ -74,6 +74,12 @@ they're meant to differ between asteroids.
 | `outlineTooSlow` | red | red | Outline color when the player is too slow to smash it |
 | `outlineCanBreak` | green | green | Outline color when the player is fast enough to smash it |
 
+### Phase
+
+| Field | Default | In the asset | What it changes |
+| --- | --- | --- | --- |
+| `phasedMaterial` | none | Asteroid Phase | The hologram look a Phase asteroid swaps to while phased (and during its flicker). See [AsteroidPhase.md](AsteroidPhase.md) |
+
 ### Despawn
 
 | Field | Default | In the asset | What it changes |

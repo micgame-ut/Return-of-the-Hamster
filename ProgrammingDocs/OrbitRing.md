@@ -27,6 +27,7 @@ of the circle is about to be dangerous.
 | `ringSegments` | 96 | 96 | How many straight pieces make up the circle. More is smoother |
 | `dangerColor` | red | red | Arc color for an asteroid that will hit the player |
 | `breakableColor` | green | green | Arc color for an asteroid the player would smash right now (fast enough, or invincible) |
+| `phasedColor` | blue | blue | Arc color for a Phase asteroid while it's phased out: safe, but it can't be broken |
 | `arcWidth` | 0.15 | 0.1 | Thickness of the danger arcs |
 | `arcOffset` | 0.6 | 0.5 | How far outside the ring the arcs are drawn, so they don't cover the hamster |
 | `warnTime` | 1.5 | 1.5 | Seconds before impact that an arc starts fading in |
@@ -111,8 +112,10 @@ redrawn every frame, since asteroids move and fade constantly.
   fast the asteroid is coming.
 - **Which part of the ring does it cover?** `TryGetArc` works this out (see below). If the asteroid doesn't
   reach the ring at all, it's skipped.
-- **Draw the arc.** Colored green if `CanBreak` (which includes the player being invincible), otherwise
-  red, faded by `alpha`. It's drawn at
+- **Draw the arc.** Colored blue if the asteroid `IsPhased`, otherwise green if `CanBreak` (which includes
+  the player being invincible), otherwise red, faded by `alpha`. Blue is checked first because `CanBreak` is
+  always false while phased. The arc follows the real phase state, not the asteroid's flicker, and keeps its
+  normal width because `HitRadius` is measured once, not from the (switched-off) collider. It's drawn at
   `radius + arcOffset`, a little outside the ring, but covers the angles worked out from the real ring.
 
 **3. Hide any leftover arcs.**
@@ -170,7 +173,7 @@ cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The 
 - **PlayerShell**: reads `HitRadius` once per frame.
 - **PlayerMovement**: reads `OrbitCenter`, `CircleRadius`, and the player's position every frame.
 - **AsteroidBehavior**: loops over the static `Active` list and reads `IsMoving`, `HitRadius`,
-  `ApproachSpeed`, and `CanBreak`.
+  `ApproachSpeed`, `CanBreak` and `IsPhased`.
 
 ## Gotchas
 

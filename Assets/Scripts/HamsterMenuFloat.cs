@@ -22,7 +22,15 @@ public class HamsterMenuFloat : MonoBehaviour
 
 
     void Start()
-    { 
+    {
+        // The menu float only belongs before play. If the game has already started (a level without
+        // the menu, or a restart), switch off so it can't fight PlayerMovement.
+        if (GameManager.Instance != null && GameManager.Instance.HasStarted)
+        {
+            enabled = false;
+            return;
+        }
+
         // all of these values set as their beginning values so that the hamster can float and rotate in a dynamic way
         startPosition = transform.position;
 

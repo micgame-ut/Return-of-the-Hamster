@@ -114,30 +114,26 @@ for the full walkthrough, and `GameManager.md` ("Starting: `HasStarted` and `Sta
 - `Mystery PowerUp` is the old `Twin PowerUp` prefab renamed (same GUID). The Health, Invincibility and Score
   prefabs still work as fixed types. See `PowerUp.md` (`RollType`).
 
-## Phase asteroid (planned, not started)
+## Phase asteroid
 
-Do this after the boost rework is merged. A new branch from `main` (`feature/phase-asteroid`).
+**Done and tested** (branch `feature/phase-asteroid`). An asteroid that phases in and out: while phased, its
+collider is off and it shows a hologram look. Otherwise it's a normal asteroid.
 
-An asteroid that phases in and out. While phased, its collider is off and it shows a hologram material.
-Otherwise it's a normal asteroid. **Variables are agreed; the names and defaults still need a final OK.** Then
-explain the logic (section 2) before any code.
-
-- **In `AsteroidBehavior`**, not a separate script: a new `public enum EffectType { None, Phase }` with an
-  `effectType` field ("Effect" header), separate from `MovementType`, so any movement can have any effect.
-- **Phase fields** ("Phase" header): `solidTime` 1.5, `phasedTime` 1, `flickerTime` 0.3 (flicker just
-  **before** each switch), `flickerInterval` 0.05. A public `IsPhased` property.
-- **Timing comes from `elapsed`** (time since it started moving). So it starts **solid** once moving, and a wave
-  that spawns together phases **in sync**. There's no random offset.
-- **While phased:** collider off, `CanBreak` false (not destructible), no close calls, no outline. Materials are
-  two arrays prepared once in `Awake` (solid, including any outline; and phased), swapped with no allocation.
-- **`HitRadius`** returns 0 while the collider is off. Remember the radius while it's on, so the danger arc
-  keeps its width.
-- **`SpawnableTemplate`**: `phasedMaterial` (shared, like `outlineMaterial`).
-- **`OrbitRing`**: `phasedColor` (blue, 0.2 / 0.5 / 1). A phased asteroid's arc shows blue: safe but not
-  breakable.
-- **Hologram Shader Graph** (section 13): Unlit, transparent, additive. A fresnel rim plus scrolling scan lines,
-  with editable color, strength and speed.
-- **Prefabs:** a phase asteroid prefab per movement type wanted (Linear and/or Wave).
+- **`AsteroidBehavior`**: a new `EffectType { None, Phase }` dropdown (`effectType`), separate from
+  `MovementType`, so any movement can have any effect.
+  - Phase timing: `solidTime` 1.5, `phasedTime` 1, `flickerTime` 0.3, `flickerInterval` 0.05.
+  - It runs from `elapsed`, so it starts solid once moving, and a wave revealed together phases in sync.
+  - While phased: `IsPhased` is true, `CanBreak` is false, there are no close calls, and no outline.
+  - `HitRadius` is measured once in `Awake`. The material arrays are prepared once.
+- **`SpawnableTemplate.phasedMaterial`**: the `Asteroid Phase` hologram Shader Graph (fresnel `rim` plus
+  world-space `scan` lines, additive). See `AsteroidPhase.md`.
+- **`OrbitRing.phasedColor`**: a phased asteroid's arc is blue.
+- Also on this branch:
+  - `HamsterMenuFloat` switches itself off if the game has already started (it was on the `hamter` prefab,
+    so it fought PlayerMovement in non-menu levels).
+  - `PlayerDeath` hides the ring when the ship explodes.
+- **Possible follow-up:** remove `HamsterMenuFloat` from the `hamter` prefab and add it only to Level 1's
+  player (the guard covers it meanwhile).
 
 ## Small cleanup
 
