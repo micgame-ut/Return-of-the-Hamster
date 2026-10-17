@@ -449,7 +449,7 @@ MonoBehaviour:
   innerLengthFraction: 0.6
   innerColor:
     serializedVersion: 2
-    key0: {r: 64, g: 64, b: 64, a: 1}
+    key0: {r: 766.99615, g: 766.99615, b: 766.99615, a: 1}
     key1: {r: 1, g: 1, b: 1, a: 0}
     key2: {r: 0, g: 0, b: 0, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
@@ -479,9 +479,9 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   normalColor:
     serializedVersion: 2
-    key0: {r: 1, g: 0.96246207, b: 0.051886797, a: 0.78431374}
-    key1: {r: 0.9411765, g: 0.3137255, b: 0.15686275, a: 0.5882353}
-    key2: {r: 1, g: 0, b: 0.09286976, a: 0}
+    key0: {r: 1.4980385, g: 1.4401034, b: 0, a: 1}
+    key1: {r: 1.4980392, g: 0.05370346, b: 0, a: 0.5882353}
+    key2: {r: 1.498039, g: 0, b: 0.027641352, a: 0.19607843}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
@@ -496,7 +496,7 @@ MonoBehaviour:
     ctime6: 0
     ctime7: 0
     atime0: 0
-    atime1: 32768
+    atime1: 32575
     atime2: 65535
     atime3: 0
     atime4: 0
@@ -509,11 +509,11 @@ MonoBehaviour:
     m_NumAlphaKeys: 3
   rainbowColor:
     serializedVersion: 2
-    key0: {r: 1, g: 0, b: 0, a: 0.78431374}
-    key1: {r: 0.5, g: 1, b: 0, a: 0.5882353}
-    key2: {r: 0, g: 1, b: 1, a: 0}
-    key3: {r: 0.5, g: 0, b: 1, a: 0}
-    key4: {r: 1, g: 0, b: 0, a: 0}
+    key0: {r: 4, g: 0, b: 0, a: 1}
+    key1: {r: 2, g: 4, b: 0, a: 0.5882353}
+    key2: {r: 0, g: 4, b: 4, a: 0}
+    key3: {r: 2, g: 0, b: 4, a: 0}
+    key4: {r: 8, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
@@ -537,6 +537,7 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 3
+  growTime: 0.6
 --- !u!120 &889868556379907387
 LineRenderer:
   serializedVersion: 3
@@ -667,6 +668,7 @@ GameObject:
   - component: {fileID: 2228397320396248408}
   - component: {fileID: 7558778612898610175}
   - component: {fileID: 6155494274981488334}
+  - component: {fileID: 7580633978410596037}
   m_Layer: 0
   m_Name: ring
   m_TagString: Untagged
@@ -723,7 +725,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -747,6 +749,19 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7580633978410596037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7696037294568156262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f0ec74d8d0af0f4fa77d690f41c9628, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostRing
+  spinAxis: {x: 0, y: 0, z: -1}
 --- !u!1001 &4375448244695830011
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -838,6 +853,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 612313549108183201}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7196910893856540532}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5201490852105861613}
   m_SourcePrefab: {fileID: 100100000, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
 --- !u!1 &3493068378728214698 stripped
 GameObject:
@@ -945,10 +966,11 @@ MonoBehaviour:
   maxSpeed: 100
   topSpeedDegrade: 10
   overdriveFraction: 0.8
-  boostForce: 3
+  boostForce: 12
   boostDecay: 3
   speedBoost: 20
   sideInputMemory: 0.1
+  boostCooldown: 3
   invulnerableTime: 1.5
   hitBlinkInterval: 0.1
 --- !u!114 &4482773579460537118
@@ -1036,6 +1058,37 @@ MonoBehaviour:
   destroyEffect: {fileID: 4060269408424394151, guid: 56164ab19b9131848ac7584443c2e3e0, type: 3}
   destroyShakeDuration: 0.2
   destroyShakeMagnitude: 0.3
+--- !u!114 &7196910893856540532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3493068378728214698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fda9a9c797498e24fbe62d96c4139d2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CloseCallZone
+  closeCallDistance: 0.5
+--- !u!114 &5201490852105861613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3493068378728214698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14ba3a247621b41d6aef1993447ba3a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HamsterMenuFloat
+  rotationSpeed: 20
+  floatHeight: 0.5
+  floatSpeed: 1
+  depthDistance: 0.5
+  depthSpeed: 1
+  xSpeed: 2
 --- !u!4 &4265488849847642640 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 12d20079a6274824a88ed43a634a499f, type: 3}

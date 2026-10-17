@@ -35,6 +35,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float speedBoost = 3f;
     [Tooltip("Seconds after the last sideways mouse movement that a click still gives a side boost.")]
     [SerializeField] private float sideInputMemory = 0.1f;
+    [Tooltip("Seconds after a boost (side or forward) before the next one can be used.")]
+    [SerializeField] private float boostCooldown = 3f;
 
     [Header("Hit")]
     [SerializeField] private float invulnerableTime = 1.5f; // seconds of no hits after being hit
@@ -81,6 +83,10 @@ public class PlayerMovement : MonoBehaviour
     // Boost
     private float boostVelocity;
     public event Action OnSpeedBoost;
+    private float cooldownTimer; // seconds until the next boost; 0 or below = ready
+    public event Action<float> OnSideBoost; // direction: +1 counter-clockwise, -1 clockwise
+    public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
+    public float BoostDecay => boostDecay;
     public event Action OnOrbitShifted;
     private float lastSideDirection;
     private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
@@ -152,6 +158,8 @@ public class PlayerMovement : MonoBehaviour
     {
         // Before the start, and once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
         if (InputLocked) return;
+
+        if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
 
         Roll();
         UpdateSpeed();
@@ -284,18 +292,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        if (!value.isPressed || InputLocked)
+        if (!value.isPressed || InputLocked || cooldownTimer > 0f)
             return;
 
         if (Time.time - lastSideInputTime <= sideInputMemory)
         {
             // Boost around the circle in whichever direction the mouse was last moving horizontally
             boostVelocity = lastSideDirection * boostForce;
+            cooldownTimer = boostCooldown;
+            OnSideBoost?.Invoke(lastSideDirection);
         }
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
+            cooldownTimer = boostCooldown;
             OnSpeedBoost?.Invoke();
         }
     }

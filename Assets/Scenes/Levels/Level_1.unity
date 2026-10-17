@@ -1643,7 +1643,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
   m_PrefabInstance: {fileID: 1499651218}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1607929020}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95d7a07d8b7866147850aec3d0cb23fc, type: 3}
@@ -1973,6 +1973,10 @@ MonoBehaviour:
   maxScale: 2
   pointsForMaxScale: 1000
   showMultiplierAbove: 1.5
+  healthLabel: +1 LIFE
+  invincibleLabel: INVINCIBLE
+  twinLabel: TWIN
+  scoreLabel: SCORE x2
 --- !u!1 &477350534
 GameObject:
   m_ObjectHideFlags: 0
@@ -6376,13 +6380,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1607929030}
-    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1607929031}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
 --- !u!1 &1540957277
 GameObject:
@@ -7259,42 +7257,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1604605935}
   m_CullTransparentMesh: 1
---- !u!1 &1607929020 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
-  m_PrefabInstance: {fileID: 1499651218}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1607929030
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1607929020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fda9a9c797498e24fbe62d96c4139d2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CloseCallZone
-  closeCallDistance: 0.5
---- !u!114 &1607929031
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1607929020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14ba3a247621b41d6aef1993447ba3a3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HamsterMenuFloat
-  rotationSpeed: 20
-  floatHeight: 0.5
-  floatSpeed: 1
-  depthDistance: 0.5
-  depthSpeed: 1
-  xSpeed: 2
 --- !u!1 &1663174933
 GameObject:
   m_ObjectHideFlags: 0
