@@ -21,6 +21,9 @@ public class SkyboxSpeedController : MonoBehaviour
     [SerializeField] private float streamIntensityCurve = 2f;
     [Tooltip("Highest random starting point for the clouds, in world units. 427 = one full repeat of the baked noise (64 cells / Cloud Scale 0.15); 0 = same sky every load.")]
     [SerializeField] private float randomStartRange = 427f;
+    [SerializeField] private float glowGrowTime = 2f; // seconds for the core glow to grow in after the game starts
+
+    private const float MinGlowSize = 0.00001f; // the shader's Smoothstep breaks at exactly 0 and lights the whole sky
 
     private Material skyboxInstance;
     private float scrollOffset;
@@ -49,15 +52,20 @@ public class SkyboxSpeedController : MonoBehaviour
         if (skyboxInstance == null)
             return;
 
+        GameManager gm = GameManager.Instance;
+
+        // The sky holds still on the menu and starts drifting once the game starts.
+        float drift = gm == null || gm.HasStarted ? Time.deltaTime : 0f;
+
         // Accumulated per frame so a change in speed alters the pace without making
         // the sky jump. deltaTime is 0 while paused, so the sky freezes where it is.
         float timeSpeed = baseTimeSpeed + PlayerMovement.Speed * speedInfluence;
-        scrollOffset += timeSpeed * Time.deltaTime;
+        scrollOffset += timeSpeed * drift;
 
         skyboxInstance.SetFloat(ScrollOffsetId, scrollOffset);
 
         float streamSpeed = baseStreamSpeed + PlayerMovement.Speed * streamSpeedInfluence;
-        streamOffset += streamSpeed * Time.deltaTime;
+        streamOffset += streamSpeed * drift;
         skyboxInstance.SetFloat(StreamOffsetId, streamOffset);
 
         float overdriveDepth = Mathf.InverseLerp(PlayerMovement.OverdriveFraction, 1f, PlayerMovement.Speed01);
@@ -65,13 +73,13 @@ public class SkyboxSpeedController : MonoBehaviour
         streamIntensity = Mathf.MoveTowards(streamIntensity, targetIntensity, Time.deltaTime / Mathf.Max(streamFadeTime, 0.01f));
         skyboxInstance.SetFloat(StreamIntensityId, streamIntensity);
 
-        GameManager gm = GameManager.Instance;
         if (gm != null && gm.Earth != null && gm.EarthCamera != null)
         {
             float earthDistance = Vector3.Distance(gm.EarthCamera.transform.position, gm.Earth.bounds.center);
             float glowRadius = gm.Earth.bounds.extents.x * glowEarthScale;
             float glowAngle = Mathf.Asin(Mathf.Clamp01(glowRadius / earthDistance));
-            skyboxInstance.SetFloat(CoreGlowSizeId, 1f - Mathf.Cos(glowAngle));
+            float grow = Mathf.SmoothStep(0f, 1f, gm.TimeSinceStart / Mathf.Max(glowGrowTime, 0.01f));
+            skyboxInstance.SetFloat(CoreGlowSizeId, Mathf.Max((1f - Mathf.Cos(glowAngle)) * grow, MinGlowSize));
         }
     }
 

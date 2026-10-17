@@ -97,6 +97,36 @@ frozen). Space (boost, `skipAction`) finishes it instantly.
 **Follow-up: per-level leaderboard**, ranked by score, with a details view (hamster name + RunStats
 snapshot at that moment). Round `Score.Total` down, like the HUD, when saving it.
 
+## Menu inside Level 1
+
+**Done and tested.** The menu lives in `Level_1`; there's no separate Menu scene any more. Pressing Start
+plays a transition (MenuTransition), and then the level starts with no scene change. See `MenuTransition.md`
+for the full walkthrough, and `GameManager.md` ("Starting: `HasStarted` and `StartGame`").
+
+- **Waiting at the menu:** GameManager has `HasStarted`, `StartGame()`, `OnGameStarted`, `TimeSinceStart`,
+  `startWithMenu` (ticked on Level 1 only), `SkipMenuOnce` (set by Restart) and `hud`. PlayerMovement
+  (`InputLocked`), LevelTimer, ObjectSpawner, RunStats, SkyboxSpeedController (sky still, no glow),
+  StarfieldStreamer (no stars) and OrbitRing wait for the start. The cursor stays visible on the menu.
+- **The transition:** the planets and UI blend over `duration`; the hamster glides over `hamsterDuration` to
+  `PlayerMovement.StartPosition` / `StartRotation`; the far planet goes to a `Far Planet Target` marker (a
+  stripped duplicate of `Planet`); the near planet goes to a `Near Planet Target` marker. Then `startDelay`,
+  then `StartGame()`. The cursor hides the moment Start is pressed.
+- **After the start:** the HUD and ring appear; the flame (`growTime`), stars (`rampTime`) and core glow
+  (`glowGrowTime`) ease in from `TimeSinceStart`. LevelTimer records the Earth's origin on the first frame
+  of play.
+- **Restart** skips the menu; **MENU** and Level 3's Next Level go back to it (`menuSceneName` = `Level_1`).
+- **HamsterMenuFloat** now spins on all three axes at `rotationSpeed`.
+
+**Still to do:**
+
+- **Unity:** take `Menu` out of Build Settings, set `LevelTemplate`'s (and `TestGame`'s) EndScreen Menu Scene
+  Name to `Level_1`, then delete `Assets/Scenes/Menu.unity`.
+- **Maybe later:** a noise wobble for the floating hamster instead of the steady spin (`wobbleAngles`
+  (25, 25, 25) max degrees per axis, `wobbleSpeed` 0.3, a random `noiseSeed`; Perlin noise per axis mapped to
+  ± the max angle).
+- **Backburner:** docs for `MainMenu`, `HamsterMenuFloat`, `PlanetMovement`, `TitleFaceFlash` and
+  `CreditsPanel`.
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

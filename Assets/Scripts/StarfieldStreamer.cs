@@ -11,6 +11,7 @@ public class StarfieldStreamer : MonoBehaviour
     [SerializeField] private float baseSpeed = 30f;
     [SerializeField] private float speedMultiplier = 15f;
     [SerializeField] private float sidewaysDrift = 2f;
+    [SerializeField] private float rampTime = 1f; // seconds for the stars to speed up from still once the game starts
 
     [Header("Field Shape")]
     [SerializeField] private float fieldRadius = 300f; // stars spawn up to this far from the center...
@@ -30,6 +31,8 @@ public class StarfieldStreamer : MonoBehaviour
 
     private ParticleSystem stars;
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
+    private ParticleSystem.EmissionModule emission;
+    private bool emitting = true; // last value given to emission.enabled
     private Material fallbackMaterial;
 
     private void Awake()
@@ -39,13 +42,24 @@ public class StarfieldStreamer : MonoBehaviour
         // per-frame allocation or lookup.
         stars = BuildParticleSystem();
         velocityModule = stars.velocityOverLifetime;
+        emission = stars.emission;
     }
 
     private void Update()
     {
+        // No stars spawn on the menu. Once the game starts they spawn again and speed up from still over rampTime.
+        GameManager gm = GameManager.Instance;
+        bool started = gm == null || gm.HasStarted;
+        if (started != emitting)
+        {
+            emission.enabled = started;
+            emitting = started;
+        }
+        float ramp = gm == null ? 1f : Mathf.SmoothStep(0f, 1f, gm.TimeSinceStart / Mathf.Max(rampTime, 0.01f));
+
         // Recompute forward streaming speed from the player's current speed
         // and push it into the cached velocity module.
-        float speed = baseSpeed + PlayerMovement.Speed * speedMultiplier;
+        float speed = (baseSpeed + PlayerMovement.Speed * speedMultiplier) * ramp;
         velocityModule.z = new ParticleSystem.MinMaxCurve(-speed, -speed);
     }
 

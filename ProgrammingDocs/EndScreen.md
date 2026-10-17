@@ -46,7 +46,7 @@ Each panel has the same layout:
 | --- | --- | --- |
 | `gameOver` | — | The Game Over screen's parts (see below) |
 | `win` | — | The Win screen's parts (see below) |
-| `menuSceneName` | Menu | The scene the Menu button loads, and Next Level's fallback. Must match the scene file's name and be in Build Settings |
+| `menuSceneName` | Level_1 | The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings |
 
 Each group (`ScreenParts`) has:
 
@@ -120,22 +120,25 @@ the label.
 
 ### `Restart` (Game Over)
 
-Reloads the current scene by its build index, so it still works if the scene is renamed. GameManager's
-`Awake` unfreezes time, PlayerHealth goes back to full lives, RunStats loads the next Apollo (with totals
-reset to 0), and PlayerMovement locks the cursor again.
+First it sets `GameManager.SkipMenuOnce` (a static flag, so it survives the reload), so a restarted Level 1
+goes straight into play instead of showing the menu. Then it reloads the current scene by its build index,
+so it still works if the scene is renamed. GameManager's `Awake` reads and clears the flag, unfreezes time
+and starts the game; PlayerHealth goes back to full lives, RunStats loads the next Apollo (with totals reset
+to 0), and PlayerMovement locks the cursor again. On Level 2 and 3 the flag changes nothing (they start
+straight away anyway).
 
 ### `NextLevel` (Win)
 
 Sets `Time.timeScale` back to 1, then loads the scene **after** the current one in Build Settings
 (build index + 1). If there isn't one (`next < SceneManager.sceneCountInBuildSettings` is false), it loads
-the menu instead. With Menu = 0 and Game = 1, Game's next index is 2, so for now it goes to the menu. A new
-level added at index 2 is picked up with no code change.
+the menu instead. The build order is Level_1 = 0, Level_2 = 1, Level_3 = 2, so Level 3's Next Level goes back
+to the menu (Level 1). A new level added after Level_3 is picked up with no code change.
 
 ### `Menu`
 
-Sets `Time.timeScale` back to 1, then loads `menuSceneName`. The time scale is global and survives scene
-loads. GameManager normally resets it, but the menu scene has no GameManager, so without this the menu
-would open frozen.
+Sets `Time.timeScale` back to 1, then loads `menuSceneName` (`Level_1`, where the menu lives). It doesn't set
+`SkipMenuOnce`, so Level 1 opens on the menu. GameManager's `Awake` also resets the time scale; setting it
+here as well keeps Menu working if `menuSceneName` ever points at a scene without a GameManager.
 
 ### `Quit`
 
@@ -145,7 +148,7 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
 ## Talks to
 
 - **GameManager**: calls `ShowGameOver()` and `ShowWin()`. FillStats reads `RunStats` and `LevelTimer`
-  through it.
+  through it. Restart sets the static `SkipMenuOnce`.
 - **RunStats**: reads `ApolloName` and every stat.
 - **LevelTimer**: reads `Progress`.
 - **PlayerMovement**: no direct link, but undoes its cursor lock.
@@ -157,9 +160,13 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
   either group throws an error when the scene starts.
 - **Duplicated buttons keep their old On Click targets.** Every button should point at the EndScreen
   canvas, and Next Level must call `NextLevel`, not `Restart`.
-- **Build order matters.** Menu must be index 0 and levels after it, in play order. Next Level just loads
-  the next index.
-- **The menu scene needs its own way back,** such as a Play button that loads `Game`.
+- **Build order matters.** Levels must be in play order, starting with Level_1. Next Level just loads the
+  next index.
+- **Every level's `menuSceneName` must be `Level_1`,** including `LevelTemplate`. A new `EndScreen` defaults to
+  it, but a scene keeps whatever value it saved.
+- **Keep the EndScreen object switched on.** The panels are its children, so if the `EndScreen` object is
+  off, `ShowWin` / `ShowGameOver` switch a panel on that can't be seen. `Awake` already hides both panels at
+  load, so there's no need to switch the parent off while editing; switch off the panels instead.
 - **Stats Text must stay left-aligned with wrapping off,** or the `<pos>` columns stop lining up.
 - **UI buttons need an EventSystem using the Input System UI module.** The scene has one; a new scene
   would need its own.

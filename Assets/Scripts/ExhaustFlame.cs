@@ -37,6 +37,9 @@ public class ExhaustFlame : MonoBehaviour
     [SerializeField, GradientUsage(true)] private Gradient normalColor;
     [SerializeField, GradientUsage(true)] private Gradient rainbowColor;
 
+    [Header("Start")]
+    [SerializeField] private float growTime = 0.6f; // seconds for the flame to grow from nothing once the game starts
+
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;
     private bool coreVisible; // last value given to both lines' enabled
@@ -94,7 +97,11 @@ public class ExhaustFlame : MonoBehaviour
 
     private void Update()
     {
-        bool visible = movement.MeshVisible;
+        // Hidden on the menu, then grows from nothing over growTime once the game starts.
+        GameManager gm = GameManager.Instance;
+        float grow = gm == null ? 1f : Mathf.SmoothStep(0f, 1f, gm.TimeSinceStart / Mathf.Max(growTime, 0.01f));
+
+        bool visible = movement.MeshVisible && grow > 0f;
         if (visible != coreVisible)
         {
             core.enabled = visible;
@@ -110,8 +117,8 @@ public class ExhaustFlame : MonoBehaviour
         }
 
         float t = PlayerMovement.Speed01;
-        float length = Mathf.Lerp(minLength, maxLength, t) * stretch;
-        float width = Mathf.Lerp(maxWidth, minWidth, t);
+        float length = Mathf.Lerp(minLength, maxLength, t) * stretch * grow;
+        float width = Mathf.Lerp(maxWidth, minWidth, t) * grow;
 
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f) * 2f - 1f;
         width *= 1f + noise * Mathf.Lerp(maxFlicker, minFlicker, t);

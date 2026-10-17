@@ -53,6 +53,6 @@ public class HamsterMenuFloat : MonoBehaviour
             xDirection = 1f; // change direction to go right
         }
         transform.position = startPosition + new Vector3(xOffset, yOffset, zOffset); // this updates the hamster's new position
-        transform.rotation = Quaternion.Euler(0f, rotationAngle, 0f); // updates the hamster's rotation along the y axis
+        transform.rotation = Quaternion.Euler(rotationAngle, rotationAngle, rotationAngle); // updates the hamster's rotation on all three axes
     }
 }

@@ -31,6 +31,7 @@ public class OrbitRing : MonoBehaviour
     private float drawnRadius;
     private float drawnZ;
     private int drawnSegments = -1; // -1 so the ring always draws on the first frame
+    private bool ringShown = true; // last value given to ring.enabled
 
     private void Start()
     {
@@ -53,6 +54,15 @@ public class OrbitRing : MonoBehaviour
     private void LateUpdate()
     {
         if (player == null) return;
+
+        // Hidden on the menu; the ring appears when the game starts.
+        bool started = GameManager.Instance == null || GameManager.Instance.HasStarted;
+        if (started != ringShown)
+        {
+            ring.enabled = started;
+            ringShown = started;
+        }
+        if (!started) return;
 
         Vector2 center = player.OrbitCenter;
         float radius = player.CircleRadius;
