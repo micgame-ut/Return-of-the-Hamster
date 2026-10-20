@@ -23,7 +23,7 @@ public class EndScreen : MonoBehaviour
     [SerializeField] private ScreenParts win;
     [SerializeField] private GameObject statsOverlay;
     [SerializeField] private GameObject scoreHud;
-    [SerializeField] private string menuSceneName = "Menu";
+    [SerializeField] private string menuSceneName = "Level_1";
 
     private ScoreBreakdown scoreBreakdown;
 
@@ -80,6 +80,7 @@ public class EndScreen : MonoBehaviour
 
     public void Restart()
     {
+        GameManager.SkipMenuOnce = true;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 

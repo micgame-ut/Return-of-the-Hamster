@@ -102,7 +102,7 @@ GameObject:
   - component: {fileID: 8652781573384099342}
   - component: {fileID: 6354562314283906079}
   m_Layer: 0
-  m_Name: Asteroid Wave
+  m_Name: Linear-Destructible-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -157,11 +157,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 320397d44b10e6241a498d41da92b2f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AsteroidBehavior
-  movementType: 1
+  movementType: 0
   speed: 5
-  amplitude: 30
-  frequency: 0.5
-  destructible: 0
+  amplitude: 5
+  frequency: 1
+  destructible: 1
   destroySpeed: 5
-  scorePoints: 150
+  scorePoints: 100
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}

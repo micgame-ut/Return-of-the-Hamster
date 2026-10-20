@@ -14,6 +14,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Script | Doc | Status |
 | --- | --- | --- |
 | AsteroidBehavior.cs | [AsteroidBehavior.md](AsteroidBehavior.md) | Done |
+| BoostRing.cs | [BoostRing.md](BoostRing.md) | Done |
 | CameraShake.cs | [CameraShake.md](CameraShake.md) | Done |
 | CloseCallZone.cs | [CloseCallZone.md](CloseCallZone.md) | Done |
 | Editor/CloudNoiseBaker.cs | [CloudNoiseBaker.md](CloudNoiseBaker.md) | Done |
@@ -24,6 +25,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| MenuTransition.cs | [MenuTransition.md](MenuTransition.md) | Done |
 | MultiplierDisplay.cs | [MultiplierDisplay.md](MultiplierDisplay.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
 | OrbitRing.cs | [OrbitRing.md](OrbitRing.md) | Done |
@@ -54,11 +56,13 @@ It lives outside `Assets/` so Unity does not import these files.
 | Graph | Doc | Status |
 | --- | --- | --- |
 | Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
+| Asteroid Phase.shadergraph | [AsteroidPhase.md](AsteroidPhase.md) | Done |
 | Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
 | Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
 | Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
 | Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |
 | Rainbow Overlay.shadergraph | [RainbowOverlay.md](RainbowOverlay.md) | Done |
+| Ring Glow.shadergraph | [RingGlow.md](RingGlow.md) | Done |
 | Starry Sky.shadergraph | [StarrySky.md](StarrySky.md) | Done |
 | Starry Sky Volume.shadergraph | [StarrySkyVolume.md](StarrySkyVolume.md) | Done |
 | Triplanar Noise.shadersubgraph | [TriplanarNoise.md](TriplanarNoise.md) | Done |

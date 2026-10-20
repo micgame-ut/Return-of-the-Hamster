@@ -28,6 +28,9 @@ public class SpawnableTemplate : ScriptableObject
     [ColorUsage(false, true)] public Color outlineTooSlow = Color.red;
     [ColorUsage(false, true)] public Color outlineCanBreak = Color.green;
 
+    [Header("Phase")]
+    public Material phasedMaterial; // the hologram look while a Phase asteroid is phased out
+
     [Header("Despawn")]
     public float despawnBehindCamera = 5f; // world units past the camera before removal
 
@@ -46,6 +49,12 @@ public class SpawnableTemplate : ScriptableObject
     public float pickupShakeDuration = 0f;      // seconds; 0 = no shake
     public float pickupShakeMagnitude = 0f;     // max camera offset in units
     public float invincibleDuration = 5f;       // seconds of invincibility per pickup
+
+    [Header("Random Power-Up Chances")]          // shares of the total, so 40/20/20/20 = 40%, 20%, 20%, 20%
+    public float healthChance = 40f;
+    public float invincibleChance = 20f;
+    public float twinChance = 20f;
+    public float scoreChance = 20f;
 
     public Color GetGlow(AsteroidBehavior.MovementType type) => type switch
     {

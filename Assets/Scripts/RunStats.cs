@@ -35,7 +35,7 @@ public class RunStats : MonoBehaviour
     private void Update()
     {
         GameManager gm = GameManager.Instance;
-        if (gm == null || gm.HasWon) return;
+        if (gm == null || !gm.HasStarted || gm.HasWon) return;
 
         TimeSurvived += Time.deltaTime;
         if (gm.Player != null && gm.Player.InOverdrive)

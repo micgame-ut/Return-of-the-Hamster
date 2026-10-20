@@ -24,6 +24,7 @@ MonoBehaviour:
   outlineMaterial: {fileID: 2100000, guid: 4934b75270d22af4288831a4e76b43e3, type: 2}
   outlineTooSlow: {r: 1, g: 0, b: 0, a: 1}
   outlineCanBreak: {r: 0, g: 1, b: 0, a: 1}
+  phasedMaterial: {fileID: 2100000, guid: 442ceb179a8ed1349a4d4dd70342112e, type: 2}
   despawnBehindCamera: 5
   knockbackForce: 4
   speedLoss: 3
@@ -34,3 +35,8 @@ MonoBehaviour:
   pickupEffectPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
   pickupShakeDuration: 0
   pickupShakeMagnitude: 0
+  invincibleDuration: 5
+  healthChance: 40
+  invincibleChance: 10
+  twinChance: 25
+  scoreChance: 25

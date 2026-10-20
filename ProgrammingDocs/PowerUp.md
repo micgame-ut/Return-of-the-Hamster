@@ -15,9 +15,17 @@ There are four types:
 - **ScoreMultiplier** adds +2 to the score multiplier for 10 seconds. Each pickup has its own timer, so
   overlapping pickups stack (see Score).
 
+A fifth type, **Random**, is the single collectible used in the patterns (`Mystery PowerUp`): on pickup it
+rolls one of the four at random, using adjustable chances from the SpawnableTemplate, and skips any that
+would do nothing right now. Every pickup announces what it gave (`OnCollected`), and ScorePopups shows a label
+for it ("+1 LIFE", "INVINCIBLE", ...).
+
 ## Where it lives
 
-- **Attached to:** each power-up prefab, e.g. `Assets/Prefabs/Health PowerUp.prefab`. The prefab also needs
+- **Attached to:** each power-up prefab: `Mystery PowerUp` (type Random, the one the patterns use) and the
+  fixed ones (`Health PowerUp`, `Invincibility PowerUp`, `Score Powerup`). `Mystery PowerUp` is the old
+  `Twin PowerUp` renamed (same GUID), so patterns that placed the Twin prefab now place it; there's no fixed
+  Twin prefab any more. The prefab also needs
   a collider with **Is Trigger** on, and no Rigidbody (the player has the Rigidbody, the same as with
   asteroids).
 - **Placed in:** wave pattern prefabs, as **direct children** of the pattern root, using the pattern
@@ -32,7 +40,7 @@ There are four types:
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType` |
+| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls one on pickup |
 | `speed` | 20 | Base approach speed, before the player's speed is added |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
 
@@ -52,9 +60,53 @@ Adding a new type takes three things:
 
 Without the method and the case, the new type can be picked in the Inspector but does nothing.
 
+To make a new type rollable by Random as well, also add it to `RollTypes` (and give `rollWeights` one more
+slot), give it a chance in SpawnableTemplate and a line in `ChanceOf`, a line in `IsWasted` if it can be
+wasted, and a label in ScorePopups.
+
 **Add new types at the end of the enum.** Unity saves an enum field as its position number (Health = 0,
-Invincible = 1, Twin = 2, ScoreMultiplier = 3). Inserting a type earlier in the list would shift those
-numbers and quietly change the type of every existing power-up prefab.
+Invincible = 1, Twin = 2, ScoreMultiplier = 3, Random = 4). Inserting a type earlier in the list would shift
+those numbers and quietly change the type of every existing power-up prefab. That's why Random went at the
+end, even though it's the main one now.
+
+### `RollType`: the random pick (Random type)
+
+A **weighted random pick**. Picture each type's chance laid end to end on a ruler: each type owns a stretch
+as long as its chance, and a random number is a dart thrown at the ruler.
+
+1. **`FillWeights(true)`** fills `rollWeights` with each type's chance (`ChanceOf`, from the template), or 0
+   if picking it up right now would be wasted (`IsWasted`). Negative chances count as 0. It returns the
+   total, the ruler's length.
+2. **If the total is 0** (everything with a chance is wasted), `FillWeights(false)` fills it again from the
+   plain chances, ignoring the wasted rule, so the pickup still does something.
+3. **The dart:** `roll = Random.Range(0, total)`.
+4. **The walk:** for each type in `RollTypes` order, skipping weights of 0: if `roll` is under its weight,
+   that type wins; otherwise subtract its weight and move on. `Random.Range` with decimals can return the
+   total itself, which no stretch contains, so if the walk ends without a winner, the last type with a
+   weight wins.
+
+With the template's defaults (40 / 20 / 20 / 20):
+
+| Situation | Health | Invincible | Twin | Score |
+| --- | --- | --- | --- | --- |
+| Normal | 0 – 40 (40%) | 40 – 60 (20%) | 60 – 80 (20%) | 80 – 100 (20%) |
+| Full lives (Health wasted) | — | 0 – 20 (33%) | 20 – 40 (33%) | 40 – 60 (33%) |
+
+A dart at 57.3 in the normal case: Health? 57.3 isn't under 40, so 17.3 is left. Invincible? 17.3 is under
+20, so Invincible wins. The chances are **shares of the total**, so they don't have to add up to 100; when
+one is wasted the others keep their sizes relative to each other.
+
+**`IsWasted`** uses the same conditions that make the effect do nothing:
+
+| Type | Wasted when |
+| --- | --- |
+| Health | no PlayerHealth, lives are full (`CurrentLives >= MaxLives`), or the twin is active (`IsTwinned`) |
+| Twin | no PlayerTwins, or it's at the cap (`!CanAddBody`) |
+| Invincible, ScoreMultiplier | never (a second pickup restarts or stacks) |
+
+`RollTypes` is `static readonly` (the same for every power-up). `rollWeights` is one array per power-up,
+made once and refilled each roll; power-ups are pooled, so a pickup makes no garbage. `ChanceOf` and
+`IsWasted` are **switch expressions** (`t switch { case => value, _ => default }`).
 
 ### `ApproachSpeed`
 
@@ -106,7 +158,10 @@ When something touches it:
    touch, and the power-up flies on through the ship without being used up.
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
    that does nothing (Health at full lives) still counts.
-4. **Apply the effect** with `ApplyEffect()`.
+4. **Pick the type and apply it.** `picked` is `RollType()` for a Random power-up (with a template), or
+   its own `type` otherwise. `ApplyEffect(picked)` runs that effect, then `OnCollected` is raised with
+   `picked` and the power-up's position. A Random power-up with no template passes through as Random, which
+   has no effect and no label.
 5. **Feedback** from the template's Power-Up section: play `pickupEffectPrefab` through `EffectPool.Play`,
    and shake the camera only if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling
    `Shake` would restart the timer of a shake already running.)
@@ -118,7 +173,15 @@ second explosion at the power-up's home spot.
 
 ### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin` and `AddScoreMultiplier`
 
-`ApplyEffect()` runs the effect method for this power-up's `type`. The effect methods take no
+### `OnCollected`
+
+A `public static event System.Action<PowerUpType, Vector3>`, raised on every pickup with the type that was
+applied and where. Static, so a listener subscribes once to the class and hears every power-up, like the
+static `Active` list. ScorePopups listens to show the label. It's written `System.Action` in full because
+`using System;` would make `Random` ambiguous (`System.Random` vs `UnityEngine.Random`). A static event
+outlives the scene, so every subscriber must unsubscribe in `OnDisable`.
+
+`ApplyEffect(picked)` runs the effect method for the type it's given (the rolled one for Random). The effect methods take no
 parameters: whatever they need from the player was already cached from GameManager in `Awake`. A new
 effect that needs another player component gets it the same way (expose it on GameManager if it isn't yet).
 
@@ -152,16 +215,19 @@ as it's picked up.
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
-  `pickupEffectPrefab`, the pickup shake settings and `invincibleDuration`.
+  `pickupEffectPrefab`, the pickup shake settings, `invincibleDuration` and the four Random chances.
+- **ScorePopups**: listens to `OnCollected` and shows the picked type's label.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`,
   `PlayerTwins` and `Score` in `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
 - **PlayerMovement**: checks whether what touched the power-up is the player, and reads its static `Speed`.
-- **PlayerHealth**: calls `GainLife()` (Health type).
+- **PlayerHealth**: calls `GainLife()` (Health type); reads `CurrentLives` and `MaxLives` to skip Health in a
+  roll at full lives.
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
 - **PlayerTwins**: `FindBody` decides whether the player or a twin copy touched it; calls `AddBody()` (Twin
-  type); reads `IsTwinned` so Health gives no life during the twin.
+  type); reads `IsTwinned` so Health gives no life during the twin (and is skipped in a roll), and
+  `CanAddBody` to skip Twin in a roll at the cap.
 - **Score**: calls `AddMultiplierPowerUp()` (ScoreMultiplier type).
 - **CameraShake**: calls `Shake` on pickup, if a pickup shake is set.
 - **PatternGizmos / PatternGizmosEditor**: the builder places power-ups, and the gizmo labels count them.
@@ -183,5 +249,9 @@ as it's picked up.
 - **New enum entries go at the end.** Unity saves the `type` dropdown as a position number (Health = 0,
   Invincible = 1). Inserting a new type before an existing one would quietly change which type every
   existing prefab is.
+- **A Random power-up needs the template.** The chances live there; without it, a Random pickup does nothing.
+- **`IsWasted` must match the effects.** If an effect's "does nothing" rule changes (say Health stops working
+  during invincibility), update `IsWasted` too, or the roll will hand out wasted picks.
+- **Every chance at 0 always gives Health** (the walk finds no stretch and falls back to the first slot).
 - **It can't be smashed or hit.** Asteroids' smash and knockback logic doesn't apply; touching it is always
   a pickup (unless the level is won).

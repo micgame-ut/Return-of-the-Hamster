@@ -71,6 +71,10 @@ Each frame it adds `Time.deltaTime` to `TimeSurvived`, and also to `OverdriveTim
 `InOverdrive` is true. These are running totals: 10 seconds in overdrive, 5 slower, then 3 more in
 overdrive gives 13 seconds of overdrive and 18 survived.
 
+It doesn't count during Level 1's menu: `Update` returns early while GameManager's `HasStarted` is false.
+These totals are saved between runs, so without this, every second on the menu would be added to the
+Apollo's time survived.
+
 It stops counting in two ways:
 
 - **On a win:** `Update` returns early once GameManager's `HasWon` is set.
@@ -108,7 +112,7 @@ planned "top 5 Apollos" screen.
 
 ## Talks to
 
-- **GameManager**: reads `HasWon` and `Player` every frame. GameManager calls `RecordWin()` and
+- **GameManager**: reads `HasStarted`, `HasWon` and `Player` every frame. GameManager calls `RecordWin()` and
   `RecordDeath()`, and keeps a `RunStats` reference that other scripts use to reach it.
 - **PlayerMovement**: reads `InOverdrive` (through GameManager's `Player`).
 - **AsteroidBehavior**: calls `AddAsteroidDestroyed()`.

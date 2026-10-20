@@ -15,7 +15,7 @@ the same way you would handle a mouse.
 - **Requires:**
   - `meshTransform`: the visual mesh (a child), which is rotated and blinked separately from the root/collider
   - A `PlayerInput` component sending `OnMove` and `OnButton` messages
-  - `GameManager.Instance`, which provides the `LevelTimer` and `IsGameOver`
+  - `GameManager.Instance`, which provides the `LevelTimer`, `HasStarted` and `IsGameOver`
   - A `PlayerHealth` on the same GameObject, for lives (read by AsteroidBehavior, not this script)
   - A `PlayerDeath` on the same GameObject, which moves the ship after game over (no direct link either)
   - The `OrbitSettings` asset, for the orbit's radius and center and the player's depth
@@ -38,6 +38,7 @@ the same way you would handle a mouse.
 | `boostDecay` | 3 | How fast a sideways boost or knockback fades out |
 | `speedBoost` | 3 | How much `Speed` a forward boost adds |
 | `sideInputMemory` | 0.1 | Seconds after the last sideways mouse movement that a click still gives a side boost |
+| `boostCooldown` | 3 | Seconds after a boost (side or forward) before the next one can be used. 0 = no cooldown |
 | `invulnerableTime` | 1.5 | Seconds of no hits after being hit |
 | `hitBlinkInterval` | 0.1 | Seconds between blink flips while invulnerable |
 
@@ -71,20 +72,44 @@ Example, a 360 px mouse sweep with sensitivity 5: at 60 fps that's 60 × 6 px, a
 `mouseSensitivity` and `acceleration` are entered **in thousandths** (the constant `SensitivityScale` = 0.001
 multiplies them), so the Inspector shows friendly numbers like 5 instead of 0.005.
 
-### Game over and win (`InputLocked`)
+### Before the start, game over and win (`InputLocked`)
 
-`InputLocked` is a private property that's true once GameManager's `IsGameOver` **or** `HasWon` is set
-(the brackets around `IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes
-first). Either way GameManager freezes time (`Time.timeScale = 0`). On a death, PlayerDeath then takes over
-the ship; on a win, the ship just stays put while the win screen is up. While it's true, PlayerMovement
-gets out of the way:
+`InputLocked` is a private property that's true **before the game starts** (GameManager's `HasStarted` is
+`false`), and once GameManager's `IsGameOver` **or** `HasWon` is set. The brackets around
+`!HasStarted || IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes first.
+
+- **Before the start** (Level 1's menu), HamsterMenuFloat and then MenuTransition's glide move the player.
+- **On a death,** GameManager freezes time (`Time.timeScale = 0`) and PlayerDeath takes over the ship.
+- **On a win,** time freezes too, and the ship just stays put while the win screen is up.
+
+While it's true, PlayerMovement gets out of the way:
 
 - **`Update` returns straight away.** Roll, speed, the orbit and the invulnerability blink all stop where
-  they are, so `Movement` stops putting the ship back on the ring while PlayerDeath moves it. The blink
-  could freeze with the ship hidden, which is why PlayerDeath switches the renderers back on.
-- **`OnButton` returns straight away,** so no boosts.
+  they are, so `Movement` doesn't put the ship on the ring while something else moves it. The blink could
+  freeze with the ship hidden, which is why PlayerDeath switches the renderers back on.
+- **`OnButton` returns straight away,** so no boosts. Clicking the menu's Start button can't trigger one.
 
 The name stayed `InputLocked`, although it now stops movement as well as input.
+
+### `Start`: the cursor lock and the start angle
+
+`Start` gets the LevelTimer and sets `orbitAngle` from `startAngle`. It also locks and hides the cursor
+(`LockCursor`), but **only once play begins**, because the menu needs a visible cursor for its buttons:
+
+- If the game has already started (Level 2 / 3, a restart), or there's no GameManager, it locks now.
+- Otherwise it subscribes `LockCursor` to GameManager's `OnGameStarted`.
+
+The check comes first because on levels without a menu, `StartGame` has already run in GameManager's `Awake`,
+so subscribing would wait for an event that already happened. The subscription isn't removed: GameManager and
+the player are destroyed together with the scene. (MainMenu also locks the cursor the moment Start is pressed.)
+
+### Where the player starts (`StartPosition`, `StartRotation`)
+
+Two read-only properties give the position and rotation `PlaceOnOrbit` will use at `startAngle`. They use the
+same maths as the orbit below (centre + cos/sin × radius, at `playerZ`; rotation `startAngle + 90` on z if
+`faceCenter`, otherwise the current rotation). With the default settings that's (0, −2, −4) and (0, 0, 0).
+MenuTransition glides the menu hamster to exactly this pose, so when play begins and `Update` places the
+player on the orbit, it doesn't move.
 
 ### The orbit (`Movement`)
 
@@ -209,14 +234,41 @@ everything else reacts to `Speed`:
 
 ### Boost (`OnButton`)
 
-Pressing the button boosts, depending on the current input:
+Pressing the button boosts, depending on the current input, unless the boost is cooling down (below):
 
 - **Moved the mouse sideways in the last `sideInputMemory` seconds:** boosts around the circle in that
-  direction (`lastSideDirection`). This *sets* `boostVelocity` to `boostForce`, so spamming it restarts the
-  boost rather than stacking it.
-- **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). This one does stack
-  with each press. It does nothing once the level is complete. It raises **`OnSpeedBoost`**, which
-  ExhaustFlame uses to stretch the flame.
+  direction (`lastSideDirection`). This *sets* `boostVelocity` to `boostForce`. It raises
+  **`OnSideBoost(direction)`** (+1 counter-clockwise, −1 clockwise), which BoostRing uses to roll the ring.
+- **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). It does nothing once
+  the level is complete. It raises **`OnSpeedBoost`**, which ExhaustFlame uses to stretch the flame.
+
+**How far a side boost goes.** `boostVelocity` fades by `boostDecay` per second (the `1 − e^(−k·dt)` fade in
+`Movement`), and a speed fading like that covers a total distance of **`boostForce ÷ boostDecay`**: 5 ÷ 3 ≈ 1.7
+units along the orbit, about 32° on a radius-3 orbit. After `t` seconds it has covered `1 − e^(−boostDecay·t)`
+of that. `BoostDecay` is exposed (read-only) so BoostRing can roll the ring by the same share.
+
+### Boost cooldown
+
+Both boosts share one cooldown:
+
+1. **`cooldownTimer`** counts down by `Time.deltaTime` in `Update`, after the `InputLocked` check, so it's
+   frozen at game over and win, and 0 (ready) during the menu.
+2. **`OnButton` ignores presses while `cooldownTimer > 0`.** Each boost that happens sets it to
+   `boostCooldown`. A forward press that does nothing (after the earth has arrived) doesn't start it.
+3. **`BoostCharge01`** = `1 − cooldownTimer ÷ boostCooldown`, clamped to 0–1: 0 just after a boost, 1 when
+   ready. BoostRing sends it to the ring's Ring Glow shader.
+
+| Time since boost (cooldown 3) | `cooldownTimer` | `BoostCharge01` |
+| --- | --- | --- |
+| 0 s | 3 | 0 |
+| 1 s | 2 | 0.33 |
+| 2 s | 1 | 0.67 |
+| 3 s | 0 or just below | 1 (ready) |
+
+The last frame usually takes `cooldownTimer` slightly below 0; the `> 0` check counts that as ready, and the
+clamp keeps `BoostCharge01` at exactly 1, which matters to the shader's "below 1 means charging" test.
+Knockback sets `boostVelocity` in `TakeHit`, not through `OnButton`, so a hit neither starts the cooldown nor
+spins the ring.
 
 `OnMove` records `lastSideDirection` (−1 or +1) and `lastSideInputTime` whenever the mouse moves sideways.
 The memory is needed because at high frame rates many frames report zero sideways movement even mid-sweep;
@@ -224,8 +276,6 @@ checking only this frame's input turned some side boosts into forward boosts. `l
 negative infinity, meaning "long ago", so the first 0.1 s of a level doesn't count as recent.
 
 After game over, the button does nothing at all (see `InputLocked`).
-
-There is currently no cooldown, so the player can spam boost endlessly.
 
 ### Getting hit (`TakeHit`)
 
@@ -260,8 +310,12 @@ Side effects of doing it this way:
 
 ## Talks to
 
-- **GameManager**: gets the LevelTimer from it, and reads `IsGameOver` (through `InputLocked`) every
-  frame and on the boost button
+- **GameManager**: gets the LevelTimer from it, and reads `HasStarted`, `IsGameOver` and `HasWon` (through
+  `InputLocked`) every frame and on the boost button. Subscribes `LockCursor` to `OnGameStarted` if the game
+  hasn't started yet
+- **MenuTransition**: reads `StartPosition` and `StartRotation` for the menu glide's target
+- **HamsterMenuFloat**: no direct link, but on Level 1 it moves the same object during the menu, while
+  `InputLocked` keeps PlayerMovement out of the way
 - **OrbitSettings**: reads the orbit's radius and center every frame, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
@@ -275,6 +329,8 @@ Side effects of doing it this way:
 - **PlayerTwins**: calls `ShiftOrbit` when the player is hit during the twin
 - **ExhaustFlame**: reads `Speed01` and `MeshVisible`; subscribes to `OnSpeedBoost` and (on the player's own
   flame) `OnOrbitShifted`
+- **BoostRing**: subscribes to `OnSideBoost` to roll the ring, and reads `BoostDecay` and `BoostCharge01` (on
+  the player's ring and every twin copy's)
 - **Score**: reads the static `Speed01` for its speed multiplier
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
@@ -292,7 +348,11 @@ Side effects of doing it this way:
 - The player's z comes from `OrbitSettings`. Moving the player in the scene does nothing, because it moves
   itself back to the asset's `playerZ` when the game starts.
 - `meshTransform` must be assigned. `Roll` uses it without a null check.
-- Boost has no cooldown yet.
+- **`StartPosition` must match `PlaceOnOrbit`.** If the orbit maths changes, change both, or the menu glide
+  will end in the wrong spot and the player will jump when play begins.
+- **Low `boostDecay` makes the ring's spin outlast the cooldown.** The spin takes about 4.6 ÷ `boostDecay`
+  seconds, so below about 1.5 (with a 3 s cooldown) a new side boost can land mid-spin and BoostRing snaps the
+  ring back to start a new roll.
 - After game over, PlayerMovement does nothing. Anything that should happen to the ship then belongs in
   PlayerDeath. The collider stays on, but physics is frozen, so no hits can happen.
 - Invulnerability ignores hits in code, it doesn't disable the collider. Anything else that reacts to

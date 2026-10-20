@@ -7,6 +7,10 @@ toward the camera, either in a straight line or swinging back and forth around t
 wave). When it touches the player, it
 either breaks (if the player is fast enough) or knocks the player back.
 
+Each asteroid has a **movement type** (how it travels) and, separately, an **effect type** (extra behavior on
+top), so any movement can have any effect. The one effect so far is **Phase**: the asteroid phases in and out,
+and while phased its collider is off and it shows a hologram look.
+
 ## Where it lives
 
 - **Attached to:** the root of each asteroid prefab (in `Assets/Prefabs/Asteroid Types/`).
@@ -31,6 +35,11 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 | `speed` | 20 | Base approach speed in units/sec, before the player's `Speed` is added on |
 | `amplitude` | 30 | Wave: how many degrees it swings each way around the player's circle. Unused by Linear |
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
+| `effectType` | None | Extra behavior on top of the movement: None or Phase. A separate dropdown from `movementType` |
+| `solidTime` | 1.5 | Phase: seconds solid in each cycle |
+| `phasedTime` | 1 | Phase: seconds phased (collider off, hologram look) in each cycle |
+| `flickerTime` | 0.3 | Phase: seconds of flicker just before each switch, as a warning |
+| `flickerInterval` | 0.05 | Phase: seconds between flicker flips. 0 = no flicker |
 | `destructible` | false | Whether the player can smash it by being fast enough. Also gives it the outline |
 | `destroySpeed` | 5 | The player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
 | `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
@@ -67,6 +76,13 @@ though both feed into how fast the asteroid approaches.
   material slot on the renderer. A mesh with two materials gets drawn twice, and the outline shader
   draws the second copy slightly larger and inside out (an "inverted hull"), so only a rim shows around
   the edge. Doing this in code means ticking `destructible` is all it takes to get an outline.
+- **`hitRadius`:** the collider's on-screen footprint (`Max(bounds.extents.x, bounds.extents.y)`), measured
+  once here while the collider is still on. The collider is on the root, which never spins, so its size never
+  changes. `HitRadius` returns this, so it stays right while the collider is off (warning, phased).
+- **The two looks for Phase:** `solidMaterials` is the renderer's materials after the outline is added, and
+  `phasedMaterials` is just the template's `phasedMaterial` (only for a Phase asteroid with one assigned;
+  otherwise null, and the look never swaps). They're made once so swapping costs no allocation.
+  `rend.sharedMaterials` returns a new copy of the array each time it's read, which is why it's read once.
 
 ### `OnEnable`: reset when revealed
 
@@ -78,6 +94,8 @@ with `SetActive(true)`. That fires `OnEnable`, which:
 - Resets its timers and sets `isMoving = false`.
 - Resets the close-call state (`passedPlayer`, `closeCallJudged`, `hitPlayer`). Asteroids are pooled, so
   each reveal is a fresh flight that gets its own close-call check.
+- Resets the phase: `IsPhased = false` and `SetLook(false)` (solid materials), in case it was despawned while
+  phased. The collider needs no reset: `WarnThenMove` switches it off and back on.
 - Picks a random `spinAxis` so every asteroid tumbles differently.
 - Works out `baseAngle`, the angle it sits at around the orbit center, for Wave movement. It uses
   `Mathf.Atan2(y, x)`, the reverse of cos/sin: cos/sin take an angle and give you an x/y, and Atan2 takes
@@ -112,7 +130,32 @@ the warning too, so asteroids appear already tumbling.
 
 **Outline color (`UpdateOutline`).** Destructible asteroids only. The outline is green when `CanBreak` is
 true (the player is invincible, or fast enough to smash it) and red when it isn't. It only touches the
-renderer when that changes, not every frame.
+renderer when that changes, not every frame. It's skipped while the hologram look is showing
+(`showingPhased`), which has no outline slot; when the solid look comes back, `outlineState = -1` makes it
+re-apply the color.
+
+**Phase (`UpdatePhase`).** For a Phase asteroid, once moving, right after `elapsed` is advanced:
+
+1. `cycle = solidTime + phasedTime`, and `t = elapsed % cycle` (the remainder, so it repeats).
+2. **Real state:** `IsPhased = t >= solidTime`. The **collider** follows it exactly (off while phased),
+   touched only when it needs to change.
+3. **Look:** `untilSwitch` is the time to the next switch. In the last `flickerTime`, `untilSwitch ÷
+   flickerInterval` (rounded down) counts down in steps, and on every even step the look shows the
+   **opposite** of the real state. Otherwise the look matches the real state. The collider doesn't flicker.
+4. `SetLook` assigns `phasedMaterials` or `solidMaterials`, only on frames the look changes.
+
+`elapsed` only runs while moving, so every Phase asteroid starts solid when it starts moving, and a wave
+revealed together phases in sync. With 1.5 / 1 / 0.3 / 0.05 (cycle 2.5 s):
+
+| `elapsed` | `t` | Real state (collider) | Look |
+| --- | --- | --- | --- |
+| 0.5 s | 0.5 | solid (on) | solid |
+| 1.25 s | 1.25 | solid (on) | flickering, 0.25 s before the switch |
+| 1.6 s | 1.6 | phased (off) | hologram |
+| 2.3 s | 2.3 | phased (off) | flickering |
+| 2.6 s | 0.1 | solid (on) | solid, next cycle |
+
+If it turns solid while overlapping the player, that's a normal hit; the flicker is the warning.
 
 **Moving.** Once `isMoving` is true:
 
@@ -152,7 +195,8 @@ asteroids fly toward −Z).
 
 1. **Measure once, on the frame it crosses the player's depth** (`depth` reaches 0 or less, `passedPlayer`
    not yet set): store the gap from `CloseCallZone.NearestGap`, the nearest body's position, and whether it
-   was a threat (`!CanBreak`, so invincibility and breakable-at-this-speed asteroids don't count).
+   was a threat (`!CanBreak && !IsPhased`, so invincibility, breakable-at-this-speed asteroids, and phased
+   asteroids that couldn't have hurt the player don't count).
 2. **Wait** until it's more than its `HitRadius` + the player's `Reach` behind the player. Before that it could
    still touch, and a physics hit can be reported a frame after the crossing.
 3. **Judge once** (`closeCallJudged`): if it never touched a body (`hitPlayer`), was a threat, and the gap is
@@ -209,9 +253,11 @@ scene for asteroids every frame. The public properties exist for it:
 | `IsMoving` | Whether it has finished warning and started moving |
 | `ApproachSpeed` | How fast it's closing in right now |
 | `CanBreak` | Whether touching it right now would smash it |
-| `HitRadius` | How wide its collider is on screen (0 while the collider is off during the warning) |
+| `HitRadius` | How wide its collider is on screen, measured once in `Awake`, so it's right even while the collider is off |
+| `IsPhased` | Whether a Phase asteroid is phased out right now (collider off). OrbitRing draws its arc blue then |
 
-`CanBreak` is the one rule for "would this break?": `(invincible) || (destructible && Speed >= destroySpeed)`.
+`CanBreak` is the one rule for "would this break?": `!IsPhased && ((invincible) || (destructible && Speed >=
+destroySpeed))`. A phased asteroid can never be broken.
 The outline color, OrbitRing's arc color and `OnTriggerEnter` all use it, so what the player sees always
 matches what happens. "Invincible" comes from the PlayerInvincibility reference each asteroid grabs from
 GameManager once in `Awake`, so checking it costs no searching. If there's no GameManager or no
@@ -222,6 +268,8 @@ PlayerInvincibility, that part is just false.
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`.
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).
 - **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
+  A Phase asteroid gets its hologram look from `phasedMaterial` (the Asteroid Phase shader, see
+  [AsteroidPhase.md](AsteroidPhase.md)).
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
@@ -249,6 +297,11 @@ PlayerInvincibility, that part is just false.
   `Deg2Rad` right where it's used.
 - **Wave speed is based on time, not distance.** At higher player speed, the asteroid covers more
   distance per swing, so its wave looks stretched out along the Z axis.
+- **`effectType` is only read in `Awake` for the materials.** Switching a live asteroid to Phase in Play mode
+  makes it phase, but without the hologram look until the next Play.
+- **A Phase asteroid needs the template's `phasedMaterial`** for its look. Without it, it still phases (the
+  collider switches) but never looks different, which is unfair to the player.
+- **`phasedTime` 0** means it never phases, but it still flickers near the end of each cycle.
 - **`destructible` is only read in `Awake`.** Ticking it on a live asteroid in Play mode lets it be smashed,
   but it won't get an outline.
 - **`blinkInterval` is only read into `blinkWait` in `Awake`.** Changing it on the template in Play mode

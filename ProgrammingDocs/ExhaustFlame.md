@@ -45,6 +45,7 @@ core** inside it.
 | `innerColor` | white | white at HDR intensity 6, fading out | The inner core's gradient, head to tail. Never changes |
 | `normalColor` | white | (set in the prefab) | The outer flame's gradient, head to tail |
 | `rainbowColor` | white | (set in the prefab) | The outer flame's gradient while the rainbow shows |
+| `growTime` | 0.6 | 0.6 | Seconds for the flame to grow from nothing to its normal size once the game starts |
 
 The three gradients are `[GradientUsage(true)]` (HDR), so their colors can go brighter than white and glow
 with Bloom. They replace the LineRenderers' own Color setting, which the script overwrites.
@@ -82,8 +83,13 @@ four events, and `OnDisable` unsubscribes from them so nothing calls into a disa
 Reads the player's speed and blink state, and works out each line's size. The bending itself happens in
 `FollowLine`.
 
-1. **Blink:** copies PlayerMovement's `MeshVisible` onto both lines' `enabled`, only on frames where it
-   changes.
+0. **Grow in at the start:** `grow = SmoothStep(0, 1, GameManager.TimeSinceStart / growTime)`. During
+   Level 1's menu `TimeSinceStart` is 0, so `grow` is 0: the flame is hidden. When play begins it eases to 1
+   over `growTime`, and the length and width below are multiplied by it, so the flame grows from a point. The
+   inner core is sized from the outer flame, so it grows too. A twin copy reads the same game clock, so a
+   copy made mid-level is already at full size. On levels without a menu it grows in from the load.
+1. **Blink:** copies PlayerMovement's `MeshVisible` **and `grow > 0`** onto both lines' `enabled`, only on
+   frames where it changes. So on the menu both lines are off, not just zero-sized.
 2. **Boost stretch:** while `boostTimer` is above 0, it counts down and
    `stretch = Lerp(1, boostLengthMultiplier, boostTimer ÷ boostDuration)`. `Lerp` clamps, so the last
    frame's slightly negative timer gives exactly 1.
@@ -94,8 +100,9 @@ Reads the player's speed and blink state, and works out each line's size. The be
    | 0.15 | 1.25 |
    | 0 | 1 |
 
-3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch` and
-   `width = Lerp(maxWidth, minWidth, Speed01)`. Faster means longer and narrower.
+3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch × grow` and
+   `width = Lerp(maxWidth, minWidth, Speed01) × grow`. Faster means longer and narrower. The table below is
+   once `grow` has reached 1.
 4. **Flicker:** Perlin noise (−1 to 1) wobbles the width by up to `Lerp(maxFlicker, minFlicker, Speed01)`.
 
    | `Speed01` | Length (prefab) | Width before flicker | Flicker | Width range |
@@ -162,7 +169,7 @@ unsubscribes from the events.
   and (player's flame only) `OnOrbitShifted`.
 - **PlayerInvincibility**: subscribes to `OnRainbowChanged`.
 - **GameManager**: subscribes to `OnGameOver` and `OnWin`. On a twin copy, gets `Player` and
-  `PlayerInvincibility` in `Awake`.
+  `PlayerInvincibility` in `Awake`. Reads `TimeSinceStart` every frame to grow in at the start.
 
 ## Gotchas
 

@@ -34,10 +34,17 @@ only LevelTimer can change it, but any script can read it.
 `LevelTime` is a read-only property that hands back `levelTime`, so other scripts can read the setting
 without being able to change it. Score uses it to work out the time score.
 
-### `Start`: working out the earth's path
+### `RecordOrigin`: working out the earth's path
 
 The earth moves in a straight line from where it starts to a **stop point** just in front of the earth
-camera.
+camera. `RecordOrigin` works that line out, and runs once, on the **first frame of play** (called from
+`Update` while `hasOrigin` is false).
+
+It used to be `Start`. It moved because on Level 1 the menu can move the earth (MenuTransition's far planet
+glides from its menu spot to its gameplay spot). `Start` would have recorded the menu spot, and the earth would
+approach diagonally from there. On the first frame of play the earth is always at its gameplay spot: the glide
+has finished, or on a restart MenuTransition snapped it there in `Awake`. On levels without a menu, the first
+frame of play is the first frame after loading, so nothing changes there.
 
 1. Remember the earth's starting position (`origin`).
 2. Get the direction from the earth to the earth camera: `toCamera = camera − origin`.
@@ -51,8 +58,10 @@ doesn't move, so this is only worked out once.
 
 ### `Update`: moving the earth
 
-Once the level is complete, or once GameManager's `IsGameOver` is set, it does nothing, so at game over
-the earth stays where it is. Otherwise, every frame:
+Before the game starts (GameManager's `HasStarted` is false), once the level is complete, or once
+GameManager's `IsGameOver` is set, it does nothing. So during the menu the earth hasn't started its approach
+(`Progress` stays 0, which also holds back Score's time score), and at game over the earth stays where it is.
+On the first frame of play it calls `RecordOrigin`. Then, every frame:
 
 **1. How long the level should take right now.**
 
@@ -90,8 +99,10 @@ LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is o
 
 ## Talks to
 
-- **GameManager**: gets the earth and earth camera in `Start`, and reads `IsGameOver` every frame.
-  GameManager reads `IsComplete` as part of deciding the win.
+- **GameManager**: gets the earth and earth camera in `RecordOrigin`, and reads `HasStarted` and
+  `IsGameOver` every frame. GameManager reads `IsComplete` as part of deciding the win.
+- **MenuTransition**: no direct link, but it moves the earth into place before the first frame of play, which
+  is why the origin is recorded then.
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`
   to stop the player accelerating.
 - **ObjectSpawner**: reads `IsComplete` to stop spawning.
@@ -102,11 +113,12 @@ LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is o
 - **The earth arriving isn't the win.** `IsComplete` stops spawning and stops the player speeding up, but
   the level is only won once the field is clear too (GameManager's `LevelCleared`). Code that should run
   on the win should check `HasWon`, not `IsComplete`.
-- **No null checks.** A scene with LevelTimer but no GameManager, or with `earth` / `earthCamera` left
-  empty, throws an error in `Start`. With no GameManager, `Update` also throws every frame when it reads
-  `IsGameOver`. With no earth, `Update` also throws every frame. With no earth
-  camera, the stop point is never set, so the earth drifts toward the world origin (0, 0, 0) instead.
+- **No null checks.** With no GameManager, `Update` throws every frame when it reads `HasStarted`. With
+  `earth` / `earthCamera` left empty, `RecordOrigin` throws on the first frame of play, and every frame after,
+  since `hasOrigin` never gets set.
+- **Don't move the earth after the first frame of play** (other than through LevelTimer). The origin is only
+  recorded once.
 - **`stopDistance` must be less than the earth's starting distance from the camera.** If it's larger, the
   stop point ends up behind where the earth starts, and the earth moves away from the camera instead.
-- **The earth camera must stay put.** The stop point is worked out once in `Start`, so moving the camera
+- **The earth camera must stay put.** The stop point is worked out once in `RecordOrigin`, so moving the camera
   afterward doesn't move where the earth stops.

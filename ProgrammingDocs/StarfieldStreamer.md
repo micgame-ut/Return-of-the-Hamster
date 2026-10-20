@@ -46,6 +46,7 @@ Only `baseSpeed` and `speedMultiplier` are read while the game runs. Everything 
 | --- | --- | --- |
 | `baseSpeed` | 30 | How fast stars stream past when the player's `Speed` is 0, in units/sec |
 | `speedMultiplier` | 15 | How much faster they go for each point of player `Speed` |
+| `rampTime` | 1 | Seconds for the stars to speed up from still to normal once the game starts. Read every frame |
 | `sidewaysDrift` | 2 | Each star also drifts **outward** (away from the middle) at a random speed up to this, so they don't all move in perfect parallel lines |
 
 ### Field Shape
@@ -131,11 +132,30 @@ how they're drawn. Normally you'd set these in the Inspector. This script sets t
    `OnDestroy` destroys it. A material made with `new` isn't cleaned up with the scene, and the scene
    leaves `starMaterial` empty, so this runs every scene load.
 
-It also saves the velocity module, so `Update` doesn't have to look it up each frame.
+It also saves the velocity and emission modules, so `Update` doesn't have to look them up each frame.
+
+### `Update`: no stars on the menu, then ramping in
+
+During Level 1's menu there are no stars at all. Once the game starts they come in gently instead of
+arriving at full rush:
+
+1. **`started`** is true once GameManager's `HasStarted` is set (or if there's no GameManager).
+2. **Emission follows `started`:** off on the menu, on from the start. `emitting` remembers the last value
+   set, so the emission module is only touched on the frame it changes (ExhaustFlame does the same with
+   `coreVisible`). The particle system builds itself in `Awake`, but `Update` runs before Unity's first
+   particle update, so not even one frame of stars gets out.
+3. **`ramp = SmoothStep(0, 1, GameManager.TimeSinceStart / rampTime)`**, from 0 to 1 over `rampTime`, eased.
+   The stream speed below is multiplied by it. So when play begins, stars appear out at the spawn ring
+   (fading in, as always) and gather speed over the first second.
+
+On levels without a menu, and restarts, `started` is true from the first frame and the same ramp plays from
+the load. A `rampTime` of 0 is kept at 0.01, so the stars start at full speed without dividing by zero.
 
 ### `Update`: matching the player's speed
 
-`speed = baseSpeed + PlayerMovement.Speed × speedMultiplier`
+`speed = (baseSpeed + PlayerMovement.Speed × speedMultiplier) × ramp`
+
+Once the ramp has finished (`ramp` = 1):
 
 | Player `Speed` | Star speed |
 | --- | --- |
@@ -166,6 +186,7 @@ flying into the earth; the starfield never reaches the earth, so that check was 
 ## Talks to
 
 - **PlayerMovement**: reads the static `Speed` every frame.
+- **GameManager**: reads `HasStarted` and `TimeSinceStart` every frame for the menu and the ramp.
 - **Earth Camera** (indirectly): draws the stars, through the Camera Rig's layer.
 
 ## Gotchas
@@ -174,7 +195,7 @@ flying into the earth; the starfield never reaches the earth, so that check was 
   only live about 8 seconds. At 30 units/sec, they get about 240 units before fading out. Stars only
   stream all the way past the camera once the player is moving. Raising `lifetime` fixes this, but keeps
   more stars alive at once.
-- **Most settings only apply at startup.** Only `baseSpeed` and `speedMultiplier` can be tuned in Play mode.
+- **Most settings only apply at startup.** Only `baseSpeed`, `speedMultiplier` and `rampTime` can be tuned in Play mode.
   Everything else is baked into the particle system in `Awake`.
 - **No stars at all?** Check Earth Camera's Culling Mask includes the Camera Rig's layer (Background). The stars
   are put on the rig's layer.

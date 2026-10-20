@@ -22,7 +22,15 @@ public class HamsterMenuFloat : MonoBehaviour
 
 
     void Start()
-    { 
+    {
+        // The menu float only belongs before play. If the game has already started (a level without
+        // the menu, or a restart), switch off so it can't fight PlayerMovement.
+        if (GameManager.Instance != null && GameManager.Instance.HasStarted)
+        {
+            enabled = false;
+            return;
+        }
+
         // all of these values set as their beginning values so that the hamster can float and rotate in a dynamic way
         startPosition = transform.position;
 
@@ -53,6 +61,6 @@ public class HamsterMenuFloat : MonoBehaviour
             xDirection = 1f; // change direction to go right
         }
         transform.position = startPosition + new Vector3(xOffset, yOffset, zOffset); // this updates the hamster's new position
-        transform.rotation = Quaternion.Euler(0f, rotationAngle, 0f); // updates the hamster's rotation along the y axis
+        transform.rotation = Quaternion.Euler(rotationAngle, rotationAngle, rotationAngle); // updates the hamster's rotation on all three axes
     }
 }

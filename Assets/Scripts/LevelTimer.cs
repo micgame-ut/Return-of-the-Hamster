@@ -19,8 +19,25 @@ public class LevelTimer : MonoBehaviour
     private Transform earth;
     private Vector3 origin;
     private Vector3 stopPoint;
+    private bool hasOrigin;
 
-    void Start()
+    void Update()
+    {
+        if (!GameManager.Instance.HasStarted || IsComplete || GameManager.Instance.IsGameOver) return;
+
+        // Recorded on the first frame of play, not in Start, because the menu can move the earth into place first.
+        if (!hasOrigin) RecordOrigin();
+
+        // Player speed divides the level time: at Speed 10 with factor 0.1,
+        // the level takes half as long. Progress is accumulated per frame
+        // so a change in speed alters the pace without making the earth jump.
+        float effectiveTime = levelTime / (1f + PlayerMovement.Speed * speedTimeFactor);
+        Progress = Mathf.Min(Progress + Time.deltaTime / effectiveTime, 1f);
+
+        earth.position = Vector3.Lerp(origin, stopPoint, Progress);
+    }
+
+    private void RecordOrigin()
     {
         earth = GameManager.Instance.Earth.transform;
         origin = earth.position;
@@ -31,18 +48,7 @@ public class LevelTimer : MonoBehaviour
         Vector3 cameraPosition = GameManager.Instance.EarthCamera.transform.position;
         Vector3 toCamera = cameraPosition - origin;
         stopPoint = cameraPosition - toCamera.normalized * stopDistance;
-    }
 
-    void Update()
-    {
-        if (IsComplete || GameManager.Instance.IsGameOver) return;
-
-        // Player speed divides the level time: at Speed 10 with factor 0.1,
-        // the level takes half as long. Progress is accumulated per frame
-        // so a change in speed alters the pace without making the earth jump.
-        float effectiveTime = levelTime / (1f + PlayerMovement.Speed * speedTimeFactor);
-        Progress = Mathf.Min(Progress + Time.deltaTime / effectiveTime, 1f);
-
-        earth.position = Vector3.Lerp(origin, stopPoint, Progress);
+        hasOrigin = true;
     }
 }

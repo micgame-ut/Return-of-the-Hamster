@@ -36,6 +36,11 @@ HUD Canvas                  ← MultiplierDisplay
 Gets the reference to the `Score` component from GameManager. It's a reference to the component, not the
 score value, so `Update` can read live values every frame.
 
+Then it hides `indicator`. On Level 1 the HUD (and this script with it) is switched off during the menu, so
+nothing runs until GameManager's `StartGame` switches the HUD on. The indicator is switched on in the scene,
+so without this it would show for a frame before `Update` hid it. A script on a switched-off object gets its
+`Awake` the moment the object is switched on, before anything is drawn, so hiding it here prevents the flash.
+
 ### `Update`
 
 1. **Read how many score power-ups are active** (`Score.ActivePowerUps`, 0 without a Score).
