@@ -16,6 +16,12 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private float pointsForMaxScale = 1000f;
     [SerializeField] private float showMultiplierAbove = 1.5f;
 
+    [Header("Power-Up Labels")]
+    [SerializeField] private string healthLabel = "+1 LIFE";
+    [SerializeField] private string invincibleLabel = "INVINCIBLE";
+    [SerializeField] private string twinLabel = "TWIN";
+    [SerializeField] private string scoreLabel = "SCORE x2";
+
     private class Popup
     {
         public TMP_Text text;
@@ -42,11 +48,13 @@ public class ScorePopups : MonoBehaviour
     private void OnEnable()
     {
         if (score != null) score.OnPointsAdded += Show;
+        PowerUp.OnCollected += ShowPowerUp;
     }
 
     private void OnDisable()
     {
         if (score != null) score.OnPointsAdded -= Show;
+        PowerUp.OnCollected -= ShowPowerUp;
     }
 
     private void Update()
@@ -79,6 +87,27 @@ public class ScorePopups : MonoBehaviour
 
     private void Show(float points, float multiplier, Vector3 worldPosition, string label)
     {
+        int whole = Mathf.RoundToInt(points);
+        string value = multiplier > showMultiplierAbove ? $"+{whole}x{multiplier:0.0}" : $"+{whole}";
+        Spawn(string.IsNullOrEmpty(label) ? value : $"{label} {value}",
+              Mathf.Lerp(minScale, maxScale, points * multiplier / pointsForMaxScale), worldPosition);
+    }
+
+    private void ShowPowerUp(PowerUp.PowerUpType type, Vector3 worldPosition)
+    {
+        string label = type switch
+        {
+            PowerUp.PowerUpType.Health => healthLabel,
+            PowerUp.PowerUpType.Invincible => invincibleLabel,
+            PowerUp.PowerUpType.Twin => twinLabel,
+            PowerUp.PowerUpType.ScoreMultiplier => scoreLabel,
+            _ => null,
+        };
+        if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition);
+    }
+
+    private void Spawn(string text, float scale, Vector3 worldPosition)
+    {
         Popup popup = free.Count > 0 ? free.Pop() : CreatePopup();
 
         Vector2 screenPoint = cam.WorldToScreenPoint(worldPosition);
@@ -86,10 +115,8 @@ public class ScorePopups : MonoBehaviour
         popup.start = local + Vector2.up * startOffset;
         popup.age = 0f;
 
-        int whole = Mathf.RoundToInt(points);
-        string value = multiplier > showMultiplierAbove ? $"+{whole}x{multiplier:0.0}" : $"+{whole}";
-        popup.text.text = string.IsNullOrEmpty(label) ? value : $"{label} {value}";
-        popup.text.rectTransform.localScale = Vector3.one * Mathf.Lerp(minScale, maxScale, points * multiplier / pointsForMaxScale);
+        popup.text.text = text;
+        popup.text.rectTransform.localScale = Vector3.one * scale;
         popup.text.rectTransform.localPosition = popup.start;
         popup.text.alpha = 1f;
 

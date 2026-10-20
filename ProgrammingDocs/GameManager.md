@@ -42,6 +42,8 @@ the matching end screen. It doesn't stop other scripts itself. It announces the 
 | `score` | Score | This level's score and its HUD counter. Can be left empty if Score is on the same GameObject |
 | `endScreen` | EndScreen | The EndScreen component on the `EndScreen` canvas, which holds both the Game Over and Win screens. **Must be assigned**: it isn't on this GameObject, so there's no `GetComponent` fallback. It has no public property, since only GameManager uses it |
 | `showOrbitRing` | bool (default on) | Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts. Meant to be set from a menu setting later |
+| `hud` | GameObject | The HUD. Hidden while the menu shows, shown by `StartGame`. Optional. Keep the menu buttons out of it |
+| `startWithMenu` | bool (default off) | Ticked on Level 1 only: the level waits at the menu until MenuTransition calls `StartGame`. Off = starts straight away |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
 `LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `RunStats`, `Score`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
@@ -81,9 +83,40 @@ or `Start` runs, `Instance` is ready.
    assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
    another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
+6. **Start now, or wait for the menu.** If `startWithMenu` is off, or `SkipMenuOnce` is set (a restart), it
+   calls `StartGame()` straight away. Otherwise it hides `hud` and waits. Either way, it clears
+   `SkipMenuOnce`. See "Starting: `HasStarted` and `StartGame`".
 
 `[DisallowMultipleComponent]` also stops two GameManagers from being added to the same GameObject in the
 editor. The duplicate check in `Awake` covers two on *different* GameObjects.
+
+### Starting: `HasStarted` and `StartGame`
+
+Level 1 has the menu inside it (see MenuTransition), so a level can be loaded but not yet playing.
+
+- **`HasStarted`** (`bool`, `private set`) is `false` until `StartGame()` runs. Scripts that would start the
+  level check it and wait: PlayerMovement (through `InputLocked`), LevelTimer, ObjectSpawner, RunStats,
+  SkyboxSpeedController, StarfieldStreamer and OrbitRing.
+- **`StartGame()`** sets `HasStarted`, records `Time.time` as the start time, shows `hud` and raises
+  `OnGameStarted`. If it has already run, it returns straight away, like `GameOver` and `Win`. MenuTransition
+  calls it at the end of the transition. On every other load, `Awake` calls it.
+- **`TimeSinceStart`** is `Time.time` minus the start time, or 0 before the start. It's calculated fresh each
+  time it's read. ExhaustFlame, StarfieldStreamer and SkyboxSpeedController use it to ease the flame, the
+  stars and the core glow in. It's one shared clock so that a twin copy's flame, made mid-level, is already
+  at full size. `Time.time` stops while `timeScale` is 0, so pausing pauses it too.
+- **`OnGameStarted`** (`Action`) fires once, inside `StartGame`. PlayerMovement uses it to lock the cursor.
+  On levels without a menu, `StartGame` runs in this `Awake`, **before** any other script can subscribe. So a
+  subscriber must check `HasStarted` first and only subscribe if it's still `false` (see PlayerMovement's
+  `Start`). Most scripts simply read `HasStarted` instead.
+- **`SkipMenuOnce`** (`public static bool`) is set by EndScreen's Restart. It's static, so it survives the
+  reload, and `Awake` clears it after reading it. So a restart of Level 1 skips the menu, while the MENU
+  button (which doesn't set it) shows the menu.
+
+| Load | `startWithMenu` | `SkipMenuOnce` | Result |
+| --- | --- | --- | --- |
+| Level 1, fresh or from MENU | on | off | Waits at the menu |
+| Level 1, Restart | on | on | Starts straight away |
+| Level 2 / 3 | off | either | Starts straight away |
 
 ### End state: `IsGameOver` and `HasWon`
 
@@ -163,25 +196,27 @@ anything. Other scripts read from it or call it:
 
 | Script | What it gets or calls | When |
 | --- | --- | --- |
-| **PlayerMovement** | `LevelTimer`; reads `IsGameOver` | `Start`; every frame and on the boost button |
+| **MenuTransition** | reads `HasStarted`; calls `StartGame()` | `Awake`; at the end of the transition |
+| **PlayerMovement** | `LevelTimer`; reads `HasStarted` and `IsGameOver`; subscribes to `OnGameStarted` (if not started yet) | `Start`; every frame and on the boost button |
 | **PlayerHealth** | reads `IsGameOver` and `HasWon`, calls `GameOver()` | when it loses a life |
 | **PlayerDeath** | subscribes to `OnGameOver`; gets `GameplayCamera`, calls `DeathSequenceFinished()` | at game over; at the end of the sequence |
-| **EndScreen** | GameManager calls `ShowGameOver()` / `ShowWin()`; it reads `RunStats` and `LevelTimer` | when the death sequence finishes; on a win |
+| **EndScreen** | GameManager calls `ShowGameOver()` / `ShowWin()`; it reads `RunStats` and `LevelTimer`, and sets `SkipMenuOnce` | when the death sequence finishes; on a win; on Restart |
 | **PlayerInvincibility** | subscribes to `OnGameOver` and `OnWin` | at game over or win |
-| **ExhaustFlame** | subscribes to `OnGameOver` and `OnWin`; on a twin copy, gets `Player` and `PlayerInvincibility` | `Awake`; at game over or win |
+| **ExhaustFlame** | subscribes to `OnGameOver` and `OnWin`; on a twin copy, gets `Player` and `PlayerInvincibility`; reads `TimeSinceStart` | `Awake`; at game over or win; every frame |
 | **TwinCopy** | `Player`, `PlayerShell` | `Awake` |
 | **DangerWarning** | gets `PlayerHealth` and `PlayerTwins`; subscribes to `OnWin` | `Awake`; on a win |
 | **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`, `CloseCallZone`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
 | **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `Score`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
-| **RunStats** | reads `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
+| **RunStats** | reads `HasStarted`, `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |
 | **ScorePopups** | `GameplayCamera`, `Score` | `Awake` |
 | **MultiplierDisplay** | `Score` | `Awake` |
 | **OverdriveTally** | `Player`, `Score`; subscribes to `OnGameOver` and `OnWin` | `Awake`; at game over or win |
-| **ObjectSpawner** | `LevelTimer`, `Score`, `GameplayCamera`; reads `IsGameOver` | `Start`, and when spawning |
-| **LevelTimer** | `Earth`, `EarthCamera`; reads `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | `Start`; every frame |
-| **OrbitRing** | `ShowOrbitRing`, `Player`, `PlayerShell` | `Start` |
-| **StarfieldStreamer** | `Earth` | `Start` |
+| **ObjectSpawner** | `LevelTimer`, `Score`, `GameplayCamera`; waits for `HasStarted`; reads `IsGameOver` | `Start`; before the first wave; when spawning |
+| **LevelTimer** | `Earth`, `EarthCamera`; reads `HasStarted` and `IsGameOver`. GameManager reads its `IsComplete` for `LevelCleared` | the first frame of play; every frame |
+| **OrbitRing** | `ShowOrbitRing`, `Player`, `PlayerShell`; reads `HasStarted` | `Start`; every frame |
+| **StarfieldStreamer** | reads `HasStarted` and `TimeSinceStart` | every frame |
+| **SkyboxSpeedController** | `Earth`, `EarthCamera`; reads `HasStarted` and `TimeSinceStart` | every frame |
 
 ## Gotchas
 
@@ -203,6 +238,10 @@ anything. Other scripts read from it or call it:
 - **A spawnable that isn't in an `Active` list can't hold up the win.** A new kind of object sent at the
   player (other than asteroids and power-ups) needs its own list, added to `LevelCleared`, or the level
   can be won while it's still flying.
+- **`OnGameStarted` can fire before you subscribe.** On levels without a menu, `StartGame` runs in this
+  `Awake`. Check `HasStarted` first, or just read `HasStarted` each frame.
+- **Anything new that shouldn't run during the menu** must check `HasStarted` itself. GameManager doesn't
+  pause other scripts.
 - **Nothing resets the end state during play.** Once `IsGameOver` or `HasWon` is set, it stays set until
   the scene reloads.
 - **Many scripts depend on `player` being assigned.** OrbitRing, RunStats, AsteroidBehavior and PowerUp

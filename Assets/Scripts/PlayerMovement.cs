@@ -35,6 +35,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float speedBoost = 3f;
     [Tooltip("Seconds after the last sideways mouse movement that a click still gives a side boost.")]
     [SerializeField] private float sideInputMemory = 0.1f;
+    [Tooltip("Seconds after a boost (side or forward) before the next one can be used.")]
+    [SerializeField] private float boostCooldown = 3f;
 
     [Header("Hit")]
     [SerializeField] private float invulnerableTime = 1.5f; // seconds of no hits after being hit
@@ -68,12 +70,23 @@ public class PlayerMovement : MonoBehaviour
     public float OrbitAngle => orbitAngle;
     public Transform MeshTransform => meshTransform;
 
+    // Where PlaceOnOrbit puts the player at startAngle, so the menu's glide can end exactly there.
+    public Vector3 StartPosition => new Vector3(
+        OrbitCenter.x + Mathf.Cos(startAngle * Mathf.Deg2Rad) * CircleRadius,
+        OrbitCenter.y + Mathf.Sin(startAngle * Mathf.Deg2Rad) * CircleRadius,
+        orbit.PlayerZ);
+    public Quaternion StartRotation => faceCenter ? Quaternion.Euler(0f, 0f, startAngle + 90f) : transform.rotation;
+
     // Roll
     private Vector2 rollInput;
 
     // Boost
     private float boostVelocity;
     public event Action OnSpeedBoost;
+    private float cooldownTimer; // seconds until the next boost; 0 or below = ready
+    public event Action<float> OnSideBoost; // direction: +1 counter-clockwise, -1 clockwise
+    public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
+    public float BoostDecay => boostDecay;
     public event Action OnOrbitShifted;
     private float lastSideDirection;
     private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
@@ -91,9 +104,9 @@ public class PlayerMovement : MonoBehaviour
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
 
-    // Once the game is over or won, all input is ignored.
+    // Before the game starts, and once it's over or won, all input is ignored.
     private bool InputLocked => GameManager.Instance != null &&
-                                (GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
+                                (!GameManager.Instance.HasStarted || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
     public static float OverdriveFraction { get; private set; }
@@ -124,19 +137,29 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
-        // Lock the cursor to the center of the screen and make it invisible
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
 
         orbitAngle = startAngle * Mathf.Deg2Rad;
+
+        // Lock the cursor when play begins. Levels without a menu have already started, so lock now.
+        GameManager gm = GameManager.Instance;
+        if (gm == null || gm.HasStarted) LockCursor();
+        else gm.OnGameStarted += LockCursor;
+    }
+
+    private void LockCursor()
+    {
+        // Lock the cursor to the center of the screen and make it invisible
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void Update()
     {
-        // Once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
+        // Before the start, and once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
         if (InputLocked) return;
+
+        if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
 
         Roll();
         UpdateSpeed();
@@ -269,18 +292,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        if (!value.isPressed || InputLocked)
+        if (!value.isPressed || InputLocked || cooldownTimer > 0f)
             return;
 
         if (Time.time - lastSideInputTime <= sideInputMemory)
         {
             // Boost around the circle in whichever direction the mouse was last moving horizontally
             boostVelocity = lastSideDirection * boostForce;
+            cooldownTimer = boostCooldown;
+            OnSideBoost?.Invoke(lastSideDirection);
         }
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
+            cooldownTimer = boostCooldown;
             OnSpeedBoost?.Invoke();
         }
     }

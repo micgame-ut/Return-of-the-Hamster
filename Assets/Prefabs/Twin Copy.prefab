@@ -537,6 +537,7 @@ MonoBehaviour:
     m_ColorSpace: -1
     m_NumColorKeys: 5
     m_NumAlphaKeys: 3
+  growTime: 0.6
 --- !u!120 &889868556379907387
 LineRenderer:
   serializedVersion: 3
@@ -667,6 +668,7 @@ GameObject:
   - component: {fileID: 2228397320396248408}
   - component: {fileID: 7558778612898610175}
   - component: {fileID: 6155494274981488334}
+  - component: {fileID: 5740728640391823120}
   m_Layer: 0
   m_Name: ring
   m_TagString: Untagged
@@ -723,7 +725,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -747,6 +749,19 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &5740728640391823120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7696037294568156262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f0ec74d8d0af0f4fa77d690f41c9628, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostRing
+  spinAxis: {x: 0, y: 0, z: -1}
 --- !u!1001 &4375448244695830011
 PrefabInstance:
   m_ObjectHideFlags: 0

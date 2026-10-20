@@ -1010,6 +1010,7 @@ MonoBehaviour:
   streamFadeTime: 1.5
   streamIntensityCurve: 2
   randomStartRange: 427
+  glowGrowTime: 2
 --- !u!1 &359426624
 GameObject:
   m_ObjectHideFlags: 0
@@ -3057,6 +3058,7 @@ MonoBehaviour:
   baseSpeed: 30
   speedMultiplier: 15
   sidewaysDrift: 2
+  rampTime: 1
   fieldRadius: 300
   clearRadius: 20
   spawnDistance: 300
@@ -4318,6 +4320,8 @@ MonoBehaviour:
   score: {fileID: 0}
   endScreen: {fileID: 1540957282}
   showOrbitRing: 0
+  hud: {fileID: 0}
+  startWithMenu: 0
 --- !u!4 &1402038715
 Transform:
   m_ObjectHideFlags: 0
@@ -4856,7 +4860,7 @@ MonoBehaviour:
     scoreRowContainer: {fileID: 2058944833}
   statsOverlay: {fileID: 489366544}
   scoreHud: {fileID: 476096543}
-  menuSceneName: Menu
+  menuSceneName: Level_1
 --- !u!114 &1540957283
 MonoBehaviour:
   m_ObjectHideFlags: 0

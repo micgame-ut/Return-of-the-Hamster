@@ -16,6 +16,9 @@ public class MultiplierDisplay : MonoBehaviour
     private void Awake()
     {
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+
+        // Start hidden, so the HUD appearing at the start never shows it for a frame before Update runs.
+        if (indicator != null) indicator.SetActive(false);
     }
 
     private void Update()

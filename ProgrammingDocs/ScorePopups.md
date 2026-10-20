@@ -4,7 +4,8 @@
 
 Controls the visual HUD popups that appear when the player earns points. It listens to Score's
 `OnPointsAdded` event and shows a `+points` popup above where the points were earned, which rises and fades
-out. Popups are reused from a pool.
+out. It also listens to PowerUp's `OnCollected` event and shows a label for the power-up that was picked
+up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are reused from a pool.
 
 ## Where it lives
 
@@ -28,6 +29,10 @@ out. Popups are reused from a pool.
 | `maxScale` | 2 | Size at `pointsForMaxScale` and above |
 | `pointsForMaxScale` | 1000 | The final gain (points × multiplier) that reaches `maxScale` |
 | `showMultiplierAbove` | 1.5 | The multiplier is added to the text (`+325x2.0`) only when it's above this |
+| `healthLabel` | +1 LIFE | Shown when a Health power-up (or a Random one that rolled Health) is picked up. Empty = no popup |
+| `invincibleLabel` | INVINCIBLE | Shown for Invincible |
+| `twinLabel` | TWIN | Shown for Twin |
+| `scoreLabel` | SCORE x2 | Shown for Score Multiplier |
 
 ## How it works
 
@@ -57,14 +62,19 @@ up with it.
 
 Subscribes `Show` to `Score.OnPointsAdded`, and unsubscribes it. `Show`'s parameters
 `(float, float, Vector3, string)` match the event's `Action<float, float, Vector3, string>`. With no Score, both are skipped
-and no popups show.
+and no points popups show.
+
+It also subscribes `ShowPowerUp` to the static `PowerUp.OnCollected`, and unsubscribes in `OnDisable`. That
+unsubscribe really matters: a static event belongs to the class and outlives the scene, so without it a
+restart would leave the old, destroyed ScorePopups subscribed, and the next pickup would call into it.
 
 ### `Show`
 
-Called by the event, right when Score adds points. It:
+Called by Score's event, right when Score adds points. It works out the text and size (steps 3 and 4 below),
+then hands them to `Spawn`, which does steps 1, 2 and 5.
 
-1. Takes a free popup, or creates one if they're all busy.
-2. Converts the world position to a screen point (`WorldToScreenPoint`), then to a point on the canvas
+1. `Spawn` takes a free popup, or creates one if they're all busy.
+2. `Spawn` converts the world position to a screen point (`WorldToScreenPoint`), then to a point on the canvas
    (`ScreenPointToLocalPointInRectangle`, with `null` for the camera because the canvas is Overlay). The
    second step handles the Canvas Scaler. `start` is that point plus `startOffset` up, and `age` is 0.
 3. Sets the text: `+` and the points rounded to a whole number, plus `x` and the multiplier to one decimal
@@ -73,7 +83,21 @@ Called by the event, right when Score adds points. It:
    `string.IsNullOrEmpty` treats both `null` (asteroids pass no label) and `""` (a label cleared in the
    Inspector) as no label, so there's never a stray space in front of the number.
 4. Sets the size: `Lerp(minScale, maxScale, points × multiplier ÷ pointsForMaxScale)`, capped at `maxScale`.
-5. Places it, sets full opacity (a reused popup was faded out), switches it on, and adds it to `active`.
+5. `Spawn` sets the text and size, places it, sets full opacity (a reused popup was faded out), switches it
+   on, and adds it to `active`.
+
+### `ShowPowerUp`
+
+Called by `PowerUp.OnCollected` with the type that was applied (for a Random power-up, the rolled one) and
+where. A switch expression picks that type's label; any other type (Random with no template) gets `null`.
+If the label isn't empty, it calls `Spawn(label, minScale, position)`: the same rise and fade as a points
+popup, at the smallest size, with no `+points` part. Clearing a label in the Inspector hides that popup.
+
+### `Spawn`
+
+The shared part of every popup: take one from the pool, place it `startOffset` above the world position on
+the canvas, set its text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp`
+both use it, so points popups and labels behave the same.
 
 | Gain | Text | Final | Size |
 | --- | --- | --- | --- |
@@ -100,6 +124,7 @@ slid into the removed slot.
 - **Score**: subscribes to `OnPointsAdded`. Score raises it for every gain (after the game-over guard), so
   every gain makes a popup and nothing appears after the level ends. Wave clears come with a label and a
   ×1 multiplier, so they never show an `x` part.
+- **PowerUp**: subscribes to the static `OnCollected` to show power-up labels.
 - **GameManager**: gets `GameplayCamera` and `Score` in `Awake`.
 - **AsteroidBehavior**: no direct link, but it passes the smashing body's position through Score, which is
   why popups appear above the body that earned them.
@@ -117,4 +142,7 @@ slid into the removed slot.
   popups grow off to one side.
 - **Labels make popups much wider.** If `PERFECT WAVE +500` wraps onto two lines, widen the prefab's Rect
   Transform or turn off Wrapping.
+- **Keep the `OnCollected` unsubscribe in `OnDisable`.** It's a static event; removing the `-=` leaves
+  destroyed popups subscribed after every restart.
+- **A new power-up type needs a label here** (a field and a line in `ShowPowerUp`), or it shows no popup.
 - **Overdrive won't use these popups.** It will get its own running-tally popup (stage 6 in TODO.md).

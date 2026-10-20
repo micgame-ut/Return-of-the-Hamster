@@ -19,7 +19,8 @@ player (GameManager, the camera, the shell, the flame) keeps working.
   - **PlayerMovement** on the same GameObject, found in `Awake`.
   - A **`Twin Copy` prefab** with TwinCopy on its root, the ship's visuals and flame, a shell, two trigger
     colliders, and a kinematic **Rigidbody** (trigger events need one on at least one side).
-  - A **Twin PowerUp** (a PowerUp with Type = Twin) to start it.
+  - A PowerUp that gives Twin to start it: a `Mystery PowerUp` (Type = Random) that rolls Twin. The old
+    `Twin PowerUp` prefab was renamed to `Mystery PowerUp`.
 
 ## Inspector settings
 
@@ -40,6 +41,11 @@ player (GameManager, the camera, the shell, the flame) keeps working.
 copies that actually exist. `OnTwinChanged(true)` is raised when the first copy is added, and
 `OnTwinChanged(false)` when the last one is gone. DangerWarning and PlayerShell listen to pause and resume the
 life-based visuals.
+
+`CanAddBody` is true while another body fits: there's a `twinPrefab` and `copies.Count + 1 < maxBodies`
+(with `maxBodies` 4: true at 0–2 copies, false at 3). `AddBody` uses it as its guard, and PowerUp reads it to
+leave Twin out of a Random roll when a pickup would do nothing. The rule is written once, so the two can't
+disagree.
 
 `Copies` hands out the list as an `IReadOnlyList<TwinCopy>`: other scripts can count, index and loop over the
 copies, but only PlayerTwins can add or remove them. It's the same list, not a copy, so it makes no garbage.
@@ -65,7 +71,7 @@ contact.
 
 ### `AddBody`: a twin pickup
 
-1. If the bodies are already at `maxBodies`, do nothing.
+1. If `CanAddBody` is false (already at `maxBodies`, or no prefab), do nothing.
 2. Remember whether we were already twinned (read **before** adding, since `IsTwinned` comes from the list).
 3. Create one copy at the player's position and rotation. Its offset starts at 0, so it's exactly on the player.
 4. Add it to `copies` and `Respace()`: the new copy splits off the ship and glides out.
@@ -129,7 +135,7 @@ shortest signed gap (−180° to 180°), and `Abs` drops the direction. A copy a
 - **CameraShake**: `Shake` when a body is destroyed.
 - **AsteroidBehavior**: calls `FindBody` on every contact and `LoseBody` on a hit while twinned.
 - **PowerUp**: calls `FindBody` on contact, `AddBody` for the Twin type, and reads `IsTwinned` (Health gives
-  nothing while twinned).
+  nothing while twinned) and `CanAddBody` (to skip wasted picks in a Random roll).
 - **DangerWarning** and **PlayerShell**: subscribe to `OnTwinChanged`, read `IsTwinned`.
 - **CloseCallZone**: reads `Copies` to measure close calls from every body and draw its gizmo around them.
 - **GameManager**: exposes it as `PlayerTwins` for scripts not on the player.
