@@ -2463,7 +2463,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -10.0000305}
+  m_AnchoredPosition: {x: 0, y: -10.000015}
   m_SizeDelta: {x: 0, y: -20.000008}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1566903243
@@ -3116,7 +3116,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 85ab3456e4e8e4bfa9db4e9544cb855c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
-  _gameSceneName: Level_1
   menuTransition: {fileID: 2111135768}
   startButton: {fileID: 322731929}
   creditsButton: {fileID: 1148761476}
@@ -3138,8 +3137,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MenuTransition
   duration: 1
+  hamsterDuration: 2.5
+  startDelay: 0.5
   hamster: {fileID: 20651193}
-  hamsterTarget: {fileID: 1859537812}
   farPlanet: {fileID: 116161943}
   farPlanetTarget: {fileID: 1715014353}
   nearPlanet: {fileID: 68657911}
