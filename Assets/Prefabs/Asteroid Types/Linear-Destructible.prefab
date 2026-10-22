@@ -66,7 +66,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: ca3ceb0100cbe72499281d892eb5d316, type: 2}
+  - {fileID: 2100000, guid: 041dac6517d5b83409578dc37bea4d61, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -161,7 +161,16 @@ MonoBehaviour:
   speed: 5
   amplitude: 5
   frequency: 1
+  effectType: 0
+  solidTime: 1.5
+  phasedTime: 1
+  flickerTime: 0.3
+  flickerInterval: 0.05
   destructible: 1
   destroySpeed: 40
   scorePoints: 100
+  meshes:
+  - {fileID: 6114365656914333752, guid: 8a03360d76f735446bb8b288ed60b64d, type: 3}
+  - {fileID: 8188141086545248054, guid: 939a2bc8320d5b344aaa2c7ddc5def9f, type: 3}
+  - {fileID: 4975500546403665748, guid: a5237d78dae41d547ae4965a6595b25c, type: 3}
   template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}

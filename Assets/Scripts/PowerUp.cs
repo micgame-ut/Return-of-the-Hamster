@@ -14,6 +14,7 @@ public class PowerUp : MonoBehaviour
 
     private Vector3 origin;
     private float distance;
+    private float waited; // seconds spent still since it was revealed
     private Transform cam;
     private PlayerMovement player;
     private PlayerHealth health;
@@ -51,6 +52,7 @@ public class PowerUp : MonoBehaviour
         Active.Add(this);
         origin = transform.position;
         distance = 0f;
+        waited = 0f;
     }
 
     private void OnDisable()
@@ -60,7 +62,10 @@ public class PowerUp : MonoBehaviour
 
     private void Update()
     {
-        distance += ApproachSpeed * Time.deltaTime;
+        if (template != null && waited < template.warningTime)
+            waited += Time.deltaTime;
+        else
+            distance += ApproachSpeed * Time.deltaTime;
         transform.position = origin + Vector3.back * distance;
 
         if (template == null) return;

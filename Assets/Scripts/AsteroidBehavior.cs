@@ -32,6 +32,9 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
     [SerializeField] private int scorePoints = 10; // base points when broken, before the speed multiplier
 
+    [Header("Mesh")]
+    [SerializeField] private Mesh[] meshes; // models to pick from; empty keeps the prefab's own mesh
+
     [Header("Template")]
     [SerializeField] private SpawnableTemplate template;
 
@@ -39,6 +42,7 @@ public class AsteroidBehavior : MonoBehaviour
     private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
 
     private Renderer rend;
+    private MeshFilter meshFilter;
     private Collider col;
     private MaterialPropertyBlock block;
     private MaterialPropertyBlock outlineBlock;
@@ -91,6 +95,12 @@ public class AsteroidBehavior : MonoBehaviour
     private void Awake()
     {
         rend = GetComponentInChildren<Renderer>();
+        meshFilter = GetComponentInChildren<MeshFilter>();
+        if (meshFilter != null && meshes.Length > 0)
+        {
+            Mesh picked = meshes[Random.Range(0, meshes.Length)];
+            if (picked != null) meshFilter.sharedMesh = picked;
+        }
         col = GetComponent<Collider>();
 
         // Measured now, while the collider is still on (WarnThenMove switches it off). The collider is on
