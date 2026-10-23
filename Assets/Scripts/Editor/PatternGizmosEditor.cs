@@ -43,8 +43,10 @@ public class PatternGizmosEditor : Editor
     private const string PowerUpPrefKey = "PatternBuilder.PowerUpPrefab";
     private const string DefaultPowerUpPath = "Assets/Prefabs/Health PowerUp.prefab";
     private const string PatternFolder = "Assets/Prefabs/Patterns";
-    private const string TestScenePath = "Assets/Scenes/PatternTest.unity";
+    private const string PlayerPrefabPath = "Assets/Prefabs/hamter.prefab";
+    private const string TestScenePath ="Assets/Scenes/PatternTest.unity";
     private const string ReopenKey = "PatternBuilder.ReopenPattern"; // the pattern to reopen in Prefab Mode when the test ends
+    private const string ReturnSceneKey = "PatternBuilder.ReturnScene"; // the scene to go back to when the test ends
 
     // Preview colors: translucent green reads as "not placed yet".
     private static readonly Color PreviewColor = new Color(0.3f, 1f, 0.4f, 0.5f);
@@ -109,6 +111,7 @@ public class PatternGizmosEditor : Editor
     private static bool clearAfterSave = true; // Save Pattern As empties the open pattern afterwards
     private static float testLoopDelay = 3f;   // seconds between test runs
     private static float rotateBy = 30f;       // degrees; positive = counter-clockwise
+    private static float timingSpeed = 50f;    // player Speed the middle Timing column and the Scene labels use
 
     static PatternGizmosEditor()
     {
@@ -127,9 +130,18 @@ public class PatternGizmosEditor : Editor
 
         // Back where you were: reopen the pattern in Prefab Mode.
         string path = EditorPrefs.GetString(ReopenKey, "");
+        string scenePath = EditorPrefs.GetString(ReturnSceneKey, "");
         EditorPrefs.DeleteKey(ReopenKey);
+        EditorPrefs.DeleteKey(ReturnSceneKey);
         if (path != "")
-            EditorApplication.delayCall += () => PrefabStageUtility.OpenPrefab(path);
+            EditorApplication.delayCall += () =>
+            {
+                // Back where you were: the scene first, then the pattern in Prefab Mode.
+                if (scenePath != "" && EditorSceneManager.GetActiveScene().path != scenePath
+                    && EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                    EditorSceneManager.OpenScene(scenePath);
+                PrefabStageUtility.OpenPrefab(path);
+            };
     }
 
     // Random: objects at random angles and depths, repeatable from a seed.
@@ -260,6 +272,8 @@ public class PatternGizmosEditor : Editor
                 Build(addName);
         }
 
+        DrawTiming((PatternGizmos)target);
+
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Waves", EditorStyles.miniBoldLabel);
         clearAfterSave = EditorGUILayout.Toggle("Clear After Save", clearAfterSave);
@@ -289,6 +303,70 @@ public class PatternGizmosEditor : Editor
 
         if (GUILayout.Button("Delete All Children"))
             DeleteAll();
+    }
+
+    // The player's top Speed, read from the player prefab so it stays in sync. 10 if the prefab can't be read.
+    private static float PlayerMaxSpeed()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+        PlayerMovement movement = prefab != null ? prefab.GetComponent<PlayerMovement>() : null;
+        if (movement == null) return 10f;
+
+        using var movementObject = new SerializedObject(movement);
+        return movementObject.FindProperty("maxSpeed").floatValue;
+    }
+
+    // One row of the Timing table: a label, then the value at each of the three speeds.
+    private static void TimingRow(string label, float[] speeds, Func<float, string> value)
+    {
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            EditorGUILayout.LabelField(label, GUILayout.Width(170));
+            foreach (float speed in speeds)
+                EditorGUILayout.LabelField(value(speed));
+        }
+    }
+
+    // The shortest or longest wait between two steps in a row, in seconds, at a player Speed ("-" for a one-step pattern).
+    private static string StepWait(PatternGizmos.Step[] steps, float speed, bool longest)
+    {
+        if (steps.Length < 2) return "-";
+
+        float result = longest ? 0f : float.MaxValue;
+        for (int k = 1; k < steps.Length; k++)
+        {
+            float wait = PatternGizmos.SecondsBetween(steps[k - 1], steps[k], speed);
+            result = longest ? Mathf.Max(result, wait) : Mathf.Min(result, wait);
+        }
+        return result.ToString("0.00") + " s";
+    }
+
+    // The Timing section: step times for the children already in the pattern, at a slow, a chosen and a fast player Speed.
+    private static void DrawTiming(PatternGizmos pattern)
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Timing", EditorStyles.miniBoldLabel);
+
+        float maxSpeed = PlayerMaxSpeed();
+        EditorGUI.BeginChangeCheck();
+        timingSpeed = EditorGUILayout.Slider("Speed", Mathf.Clamp(timingSpeed, 0f, maxSpeed), 0f, maxSpeed);
+        if (EditorGUI.EndChangeCheck()) SceneView.RepaintAll();
+        PatternGizmos.PreviewSpeed = timingSpeed; // the Scene view labels use this too
+
+        PatternGizmos.Step[] steps = pattern.GetSteps();
+        if (steps.Length == 0 || PatternGizmos.ApproachSpeedAt(0f) <= 0f)
+        {
+            EditorGUILayout.HelpBox(steps.Length == 0 ? "No children yet." : "No SpawnableTemplate found in Assets/Resources, so no times can be worked out.", MessageType.None);
+            return;
+        }
+
+        float[] speeds = { 0f, timingSpeed, maxSpeed };
+        TimingRow("", speeds, s => $"Speed {s:0}");
+        TimingRow("Approach speed (units/s)", speeds, s => PatternGizmos.ApproachSpeedAt(s).ToString("0.0"));
+        TimingRow("Appears → reaches player", speeds, s => PatternGizmos.SecondsToPlayer(steps[0].z, s).ToString("0.00") + " s");
+        TimingRow("Between steps, shortest", speeds, s => StepWait(steps, s, false));
+        TimingRow("Between steps, longest", speeds, s => StepWait(steps, s, true));
+        TimingRow("Total length", speeds, s => PatternGizmos.SecondsBetween(steps[0], steps[steps.Length - 1], s).ToString("0.00") + " s");
     }
 
     // Gap Width and Gap Center, shared by Ring and Arc.
@@ -596,6 +674,7 @@ public class PatternGizmosEditor : Editor
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
         StageUtility.GoToMainStage(); // leave Prefab Mode
+        EditorPrefs.SetString(ReturnSceneKey, EditorSceneManager.GetActiveScene().path);
         PatternTest.Request(path, testLoopDelay);
         EditorPrefs.SetString(ReopenKey, path);
         EditorSceneManager.OpenScene(TestScenePath);

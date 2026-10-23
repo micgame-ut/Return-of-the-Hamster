@@ -106,7 +106,7 @@ The panel, top to bottom:
    range.") shows under the fields.
 5. **Add [Asteroid/Power-Up] [Shape]**, e.g. "Add Power-Up Arc". Greyed out while the selected slot is
    empty (`DisabledScope`). The same text is used as the Undo name.
-6. **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
+6. **Timing** (see "The Timing section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
    **Test This Pattern** and **Add to Spawner** (see "The Waves tools" below).
 7. **Snap All to Circle**, then **Rotate By** with **Rotate All** and **Mirror All**, then **Delete All
    Children.**
@@ -286,6 +286,29 @@ pattern in a way that can be undone (one Ctrl+Z, named "Clear Pattern"). It loop
 child. Deleting child 0 first would shift every other child's number down by one, and the loop would skip
 every second asteroid. Save Pattern As uses `ClearChildren` too.
 
+### The Timing section (`DrawTiming`)
+
+Shows how the pattern **already in the prefab** is paced, at three player `Speed`s: slow (0), the **Speed**
+slider's value (default 50) and fast (the player's top speed). The same step times appear on the Scene view
+labels (see PatternGizmos). The slider runs from 0 to the player's `maxSpeed`, read from
+`Assets/Prefabs/hamter.prefab` (`PlayerMaxSpeed`, through a `SerializedObject`, so it stays in sync; 10 if the
+prefab can't be read), and moving it redraws the Scene view.
+
+| Row | Meaning |
+| --- | --- |
+| Approach speed (units/s) | `baseApproachSpeed + Speed × speedMultiplier`, from the SpawnableTemplate |
+| Appears → reaches player | `warningTime` plus the distance from the spawn plane to the player, divided by the approach speed |
+| Between steps, shortest / longest | The smallest and largest wait between two steps in a row (`StepWait`). The shortest is your tightest reaction window. "-" for a one-step pattern |
+| Total length | From the first step to the last step arriving, `(last Z − first Z) ÷ approach speed` |
+
+Example (template: base 20, multiplier 0.3, warning 0; spawner at z 40 so the player is 44 units from the
+spawn plane): a pattern with steps at depths 0, 10 and 25 shows 20 / 35 / 50 units/s, appears → reaches player
+2.20 / 1.26 / 0.88 s, shortest 0.50 / 0.29 / 0.20 s, longest 0.75 / 0.43 / 0.30 s, and total 1.25 / 0.71 / 0.50 s.
+
+How it's drawn: `TimingRow(label, speeds, value)` draws one row of the table. Its `value` argument is a small
+function that turns a speed into text, and the row calls it once per column. With no children it says "No
+children yet."; with no template found, it says so.
+
 ### The Waves tools
 
 All three work on the pattern open in Prefab Mode. `OpenPatternStage` returns that session (a `PrefabStage`),
@@ -305,11 +328,13 @@ This replaces the old manual loop of duplicating `Pattern_Builder` and clearing 
 1. Saves the open pattern, so the test uses what is on screen. If there are unsaved scene changes, Unity asks
    about them first; cancelling stops everything.
 2. Leaves Prefab Mode, stores the request with `PatternTest.Request(path, testLoopDelay)` (see below), and
-   remembers the pattern's path under `ReopenKey`.
+   remembers the pattern's path under `ReopenKey` and the scene you were on (`GetActiveScene().path`, taken after
+   leaving Prefab Mode) under `ReturnSceneKey`. An unsaved new scene has no path, so it isn't remembered.
 3. Opens `Assets/Scenes/PatternTest.unity` and starts Play.
 4. In Play, ObjectSpawner spawns only this pattern, in a loop (see its doc), and GameManager skips the menu if
    the scene has one (`PatternTest` doesn't). You have the full game: the whole range of speed, boosts and hits.
-5. When Play stops, the request is cleared and the pattern reopens in Prefab Mode.
+5. When Play stops, the request is cleared, you go back to the scene you started from (if it isn't already
+   open; Unity asks first if the open scene has unsaved changes), and the pattern reopens in Prefab Mode.
 
 `Test Loop Delay` (default 3 s) is the pause after a run has fully cleared before the next one starts.
 
@@ -323,7 +348,9 @@ This replaces the old manual loop of duplicating `Pattern_Builder` and clearing 
 
 **Clean-up (`[InitializeOnLoad]`).** The class has a static constructor, which Unity runs when the editor
 loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `playModeStateChanged`:
-- On `EnteredEditMode` it clears the test request and reopens the pattern. This is how a test ends.
+- On `EnteredEditMode` it clears the test request, returns to the scene you started from, and reopens the
+  pattern. This is how a test ends. The scene and pattern are reopened on the editor's next update
+  (`delayCall`), scene first.
 - The constructor also clears a leftover request if the editor isn't entering Play. That covers an editor
   crash during a test, which would otherwise make the next normal Play a test. It skips the clear when
   `isPlayingOrWillChangePlaymode` is true, because entering Play also runs the constructor and would erase the
@@ -332,7 +359,10 @@ loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `play
 ## Talks to
 
 - **PatternGizmos**: the component this panel is for. Reads its `OrbitRadius` and `OrbitCenter` (which
-  come from `OrbitSettings`).
+  come from `OrbitSettings`), and for the Timing section calls `GetSteps`, `ApproachSpeedAt`, `SecondsBetween`
+  and `SecondsToPlayer`, and sets `PreviewSpeed`.
+- **The player prefab** (`Assets/Prefabs/hamter.prefab`): the Timing slider reads its `PlayerMovement`'s
+  `maxSpeed`.
 - **The asteroid and power-up prefabs**: places copies of the selected one, linked to the prefab.
 - **PatternTest**: `TestPattern` stores the request with `Request`, and `OnPlayModeChanged` clears it.
 - **ObjectSpawner**: Add to Spawner edits its `waves` list. In a test, it reads the request (see its doc).
@@ -373,6 +403,9 @@ The game's scripts only read the test request, and only inside `#if UNITY_EDITOR
 - **The gap width is measured between the two asteroids' centers.** The lane you can actually fly through is
   narrower, because the edge asteroids have their own size. On the radius-3 orbit 1° is about 0.05 units of
   arc, so a 60° gap is about 3.1 units between centers, minus an asteroid's width.
+- **The Timing numbers assume a steady `Speed` and the template in `Assets/Resources/`.** Real spacing
+  changes if the player speeds up or slows down in flight, so treat them as the design target. They describe
+  the children already in the prefab, not the Add preview.
 - **A Mirrored Wave asteroid isn't an exact mirror image.** Its position is flipped, but it always swings
   counter-clockwise first (its sine starts positive), so its motion isn't.
 - **Rotate and Mirror move children, not the pattern's settings.** Gap Center and the shape fields aren't

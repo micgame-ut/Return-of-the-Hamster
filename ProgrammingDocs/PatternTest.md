@@ -61,7 +61,8 @@ editor crash during a test, so it has to be cleared deliberately (see `Clear`).
    one wave holding that pattern, on a loop. In `RunWaves`, after each run it waits until no asteroids or
    power-ups are left, then `LoopDelay` seconds, then spawns the pattern again.
 4. **You press Stop.** The builder's play-mode handler calls `Clear()`, so the next Play is normal, and reopens
-   the pattern in Prefab Mode. The scene stays `PatternTest`.
+   the pattern in Prefab Mode. It also takes you back to the scene you pressed Test from (it reopens that scene
+   if it isn't the open one), not `PatternTest`. Neither of these is done by `PatternTest` itself.
 
 A **Restart** on the game-over screen reloads the level during a test. The request is still stored, so the test
 carries on.

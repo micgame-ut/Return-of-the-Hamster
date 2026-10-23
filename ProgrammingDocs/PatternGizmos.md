@@ -9,6 +9,8 @@ the editor, it draws:
 - a copy of the orbit ring at **every depth a child sits at**, labeled in the order ObjectSpawner will
   reveal them, with a count of any power-ups at that depth
 - a dotted line through the middle of the rings, to show how deep the pattern is
+- on every step after the first, how many seconds it comes after the one before, at the Speed chosen in the
+  builder's Timing section (for example "Step 3 (4), +0.43 s")
 
 That way you can see where each asteroid is relative to the circle the player can reach, and in what
 order they'll arrive.
@@ -89,7 +91,12 @@ affected.
 It also adds the pattern root's own position (`rootOffset`), so if you move the whole pattern, the rings
 move with it.
 
-### `OnDrawGizmos`, step by step
+### The steps (`Step` and `GetSteps`)
+
+`GetSteps()` returns the pattern's children grouped into **steps**, as an array of `Step` records. A
+`Step` is a small **struct** (a value type, like `Vector3`) holding the step's `z` in spawner space, how many
+children share it (`count`) and how many of those are power-ups (`powerUps`). Both the labels and the
+builder's Timing section use it, so they always agree.
 
 1. **Collect the children.** For every child, store a **tuple** `(z, powerUp)`: its z in spawner space
    (the root's z plus the child's z) and whether it has a `PowerUp` component. A tuple bundles two values
@@ -100,12 +107,35 @@ move with it.
    the same order ObjectSpawner reveals them in.
 3. **Group them into steps.** Walk through the sorted list. If a depth is within `SameZTolerance` of the one
    before, it's the same step, so add 1 to that step's count (and 1 to its power-up count if it's a
-   power-up). Otherwise, start a new step. Children in the same step spawn together.
-4. **Draw the player ring** at `PlayerZ`, labeled "Player".
-5. **Draw a ring for each step**, labeled with its step number and how many children are in it, e.g.
+   power-up). Otherwise, start a new `Step`. Children in the same step spawn together. Because `Step` is a
+   struct, changing the last one means copying it into a local, changing that, and writing it back into the
+   list.
+
+### The timing helpers
+
+All of these are `static`, inside `#if UNITY_EDITOR`, and read the `SpawnableTemplate` asset in
+`Assets/Resources/` (`Resources.Load`; Unity caches it, so reading it on every redraw is cheap):
+
+| Member | What it gives |
+| --- | --- |
+| `PreviewSpeed` (field, default 50) | The player `Speed` the labels use. The builder's Timing slider sets it |
+| `ApproachSpeedAt(speed)` | `baseApproachSpeed + speed × speedMultiplier`, units per second, like `AsteroidBehavior.ApproachSpeed`. 0 if the asset isn't found |
+| `SecondsBetween(from, to, speed)` | The Z gap between two steps divided by the approach speed: the wait `ObjectSpawner.SpawnPattern` uses between steps |
+| `SecondsToPlayer(spawnZ, speed)` | `warningTime` plus `(spawnZ − PlayerZ) ÷ approach speed`: from a step appearing at the spawn plane to reaching the player |
+
+Everything appears at the first step's depth and waits to fly its gap, so each step reaches the player the
+same number of seconds after it appears, and arrives the gap time after the one before. The numbers assume a
+steady `Speed`: if the player speeds up or slows down in flight, the real spacing changes.
+
+### `OnDrawGizmos`, step by step
+
+1. **Get the steps** with `GetSteps()`.
+2. **Draw the player ring** at `PlayerZ`, labeled "Player".
+3. **Draw a ring for each step**, labeled with its step number and how many children are in it, e.g.
    "Step 2 (6)". If the step has power-ups, they're added: "Step 3 (4, 1 power-up)" means 4 children in
-   total, one of them a power-up.
-6. **Draw the dotted spine** from the first step's center to the last, if there's more than one step.
+   total, one of them a power-up. Every step after the first also gets the time after the previous step at
+   `PreviewSpeed`, e.g. "Step 3 (4), +0.43 s".
+4. **Draw the dotted spine** from the first step's center to the last, if there's more than one step.
 
 Each ring is a flat circle (`DrawWireDisc`) facing along z, centered on `OrbitCenter` at that depth, with a
 radius of `OrbitRadius`. The label sits at the top of the ring.
@@ -117,7 +147,10 @@ radius of `OrbitRadius`. The label sits at the top of the ring.
 - **ObjectSpawner**: reads `SameZTolerance`. The step order copies the spawner's logic, so the labels
   match the order it reveals asteroids in.
 - **PatternGizmosEditor**: reads `OrbitRadius` and `OrbitCenter` to place asteroids and power-ups on the
-  ring, and draws this component's Inspector.
+  ring, and draws this component's Inspector. Its Timing section calls `GetSteps`, the timing helpers, and
+  sets `PreviewSpeed`.
+- **SpawnableTemplate**: the timing helpers read `baseApproachSpeed`, `speedMultiplier` and `warningTime` from
+  the asset in `Assets/Resources/`.
 - **PowerUp**: checks each child for the component, to count power-ups in the labels.
 
 ## Gotchas
@@ -129,3 +162,7 @@ radius of `OrbitRadius`. The label sits at the top of the ring.
   or spawner moved so that wasn't true, the labels would be wrong.
 - **Only direct children are counted.** A sub-group counts as one step at the group's own depth, whatever
   is inside it. That matches how ObjectSpawner treats it (see its gotchas).
+- **The times use the template in `Assets/Resources/`.** If asteroid prefabs point at a different
+  SpawnableTemplate, the game's numbers differ from the labels. If the asset isn't found, the labels show
+  "+0.00 s".
+- **`PreviewSpeed` resets to 50 when scripts recompile,** until the builder panel is drawn again and sets it.

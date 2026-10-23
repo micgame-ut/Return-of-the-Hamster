@@ -173,8 +173,10 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   not yet tested.** Still to do: Lane, Twist, Zigzag, Burst, Shift / Reverse Z, Distribute selected evenly
   (Tools menu).
 - **Jitter** on any shape (same seed and Reroll as Random) and a **random prefab per slot** with weights.
-- **Timing readout:** seconds between steps and total length at a chosen player `Speed`, plus a Speed slider for
-  the preview, and a Wave sweep preview.
+- **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
+  reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
+  player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing
+  helpers. Still to do: a Wave sweep preview.
 - **Fairness checks (warnings only):** overlapping objects, a step with no safe lane, an unreachable power-up.
   The patterns stay within the player's limits for now; harder, limit-testing waves come later.
 - **Presets** for builder settings, and **auto-naming** children ("Step 3, Asteroid 2").
