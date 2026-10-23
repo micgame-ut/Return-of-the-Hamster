@@ -43,22 +43,28 @@ public class MusicManager : MonoBehaviour
     [Header("Clips")]
     [SerializeField] private AudioClip titleMusic;
     [SerializeField] private AudioClip levelMusic;
+    [SerializeField] private AudioClip creditsMusic;
 
     [Header("Volumes")]
     [Range(0f, 1f)] [SerializeField] private float titleVolume = 0.8f;
     [Range(0f, 1f)] [SerializeField] private float levelVolume = 0.7f;
+    [Range(0f, 1f)] [SerializeField] private float creditsVolume = 1f;
 
     [Header("Behaviour")]
     [SerializeField] private bool playTitleOnStart = true;
     [SerializeField] private float titleFadeOutTime = 1.0f;
     [SerializeField] private float levelFadeInTime = 1.5f;
     [SerializeField] private float levelFadeOutTime = 1.0f;
+    [SerializeField] private float creditsFadeInTime = 0.5f;
+    [SerializeField] private float creditsFadeOutTime = 0.7f;
+    [SerializeField] private float creditsStartDelay = 0.5f;
+    private Coroutine creditsStartRoutine;
 
     [Header("Buttons (optional auto-wiring)")]
     [Tooltip("Stops title music AND starts level music.")]
     [SerializeField] private Button[] startButtons;
     [Tooltip("Only stops title music (e.g. Options, Quit, Credits).")]
-    [SerializeField] private Button[] otherButtons;
+    [SerializeField] private Button[] creditButtons;
 
     [Header("Speed / Pitch limits")]
     [SerializeField] private float minSpeed = 0.25f;
@@ -73,15 +79,20 @@ public class MusicManager : MonoBehaviour
 
     private AudioSource titleSource;
     private AudioSource levelSource;
+    private AudioSource creditsSource;
 
     private float speed = 1f;
     private float pitch = 1f;
-    private bool levelFadingOut;
+    
 
     private Coroutine titleFadeRoutine;
     private Coroutine levelFadeRoutine;
+    private Coroutine creditsFadeRoutine;
     private Coroutine speedRoutine;
     private Coroutine continuousSpeedRoutine;
+
+    public bool GameStarted { get; private set; }
+    private bool levelFadingOut;
 
     // ---------- Public read-only state ----------
     public float Speed => speed;
@@ -103,6 +114,7 @@ public class MusicManager : MonoBehaviour
 
         titleSource = CreateSource("TitleMusicSource", null);
         levelSource = CreateSource("LevelMusicSource", levelMixerGroup);
+        creditsSource = CreateSource("CreditsMusicSource", null);
 
         titleSource.clip = titleMusic;
         levelSource.clip = levelMusic;
@@ -113,7 +125,7 @@ public class MusicManager : MonoBehaviour
         if (Instance != this) return;
 
         WireButtons(startButtons, StartGame);
-        WireButtons(otherButtons, StopTitleMusic);
+        WireButtons(creditButtons, StartCredits);
 
         if (playTitleOnStart) PlayTitleMusic();
     }
@@ -122,7 +134,7 @@ public class MusicManager : MonoBehaviour
     {
         if (Instance != this) return;
         UnwireButtons(startButtons, StartGame);
-        UnwireButtons(otherButtons, StopTitleMusic);
+        UnwireButtons(creditButtons, StartCredits);
         Instance = null;
     }
 
@@ -159,15 +171,13 @@ public class MusicManager : MonoBehaviour
 
     public void PlayTitleMusic()
     {
+        GameStarted = false;
         if (titleMusic == null) return;
         if (titleSource.isPlaying) return;
 
         titleSource.clip = titleMusic;
         titleSource.volume = titleVolume;
         titleSource.Play();
-
-        Debug.Log($"Title playing: {titleSource.isPlaying}, volume: {titleSource.volume}, clip: {titleSource.clip}");
-        Debug.Log($"Title playing: {titleSource.isPlaying}, volume: {titleSource.volume}, clip: {titleSource.clip}");
     }
 
     /// <summary>Fades out and stops the title music (safe to call repeatedly).</summary>
@@ -177,11 +187,65 @@ public class MusicManager : MonoBehaviour
         RestartRoutine(ref titleFadeRoutine, FadeOutAndStop(titleSource, titleFadeOutTime));
     }
 
-    /// <summary>Hook this to your Start button: stops title music and begins level music.</summary>
+    /// <summary>Hook this to your Credits button: stops title music and begins level music.</summary>
     public void StartGame()
     {
+        GameStarted = true;
         StopTitleMusic();
         PlayLevelMusic();
+    }
+
+     // =====================================================
+    //  CREDITS MUSIC
+    // =====================================================
+
+    public void PlayCreditsMusic()
+    {
+        if (creditsMusic == null) return;
+
+        StopRoutine(ref creditsFadeRoutine);   // cancel any fade-out in progress
+        StopRoutine(ref creditsStartRoutine);  // cancel any pending start
+
+        if (creditsSource.isPlaying)
+        {
+            creditsSource.volume = creditsVolume;
+            return;
+        }
+        creditsStartRoutine = StartCoroutine(StartCreditsAfterDelay());
+    }
+
+    private IEnumerator StartCreditsAfterDelay()
+    {
+        if (creditsStartDelay > 0f)
+            yield return new WaitForSecondsRealtime(creditsStartDelay);
+
+        creditsSource.clip = creditsMusic;
+        creditsSource.volume = 0f;
+        creditsSource.Play();
+
+        yield return FadeVolume(creditsSource, creditsVolume, creditsFadeInTime);
+        creditsStartRoutine = null;
+    }
+
+    public void StopCreditsMusic()
+    {
+        StopRoutine(ref creditsStartRoutine);  // also cancels a start that hasn't happened yet
+        if (!creditsSource.isPlaying) return;
+        RestartRoutine(ref creditsFadeRoutine, FadeOutAndStop(creditsSource, creditsFadeOutTime));
+    }
+
+    /// <summary>Hook this to your Credits button: stops title music and begins credits music.</summary>
+    public void StartCredits()
+    {
+        StopTitleMusic();
+        PlayCreditsMusic();
+    }
+
+    /// <summary>Stops the credits music and brings the title music back.</summary>
+    public void ReturnToTitle()
+    {
+        StopCreditsMusic();
+        PlayTitleMusic();
     }
 
     // =====================================================
@@ -237,7 +301,7 @@ public class MusicManager : MonoBehaviour
 
     public void PauseLevelMusic()  => levelSource.Pause();
     public void ResumeLevelMusic() => levelSource.UnPause();
-    
+
 /// <summary>Death effect: speed and pitch wind down while the music fades out.</summary>
 public void TrailOffAndStop(float duration = 1.5f, float endSpeed = 0.4f, float endPitch = 0.6f)
 {

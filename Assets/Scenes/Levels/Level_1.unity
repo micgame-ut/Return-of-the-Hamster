@@ -6601,7 +6601,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -10}
+  m_AnchoredPosition: {x: 0, y: -9.9999695}
   m_SizeDelta: {x: 0, y: -20.000008}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1566903243
@@ -8017,6 +8017,133 @@ RectTransform:
   m_AnchoredPosition: {x: 430, y: -400}
   m_SizeDelta: {x: 300, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1809026620
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1809026623}
+  - component: {fileID: 1809026622}
+  - component: {fileID: 1809026621}
+  - component: {fileID: 1809026624}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1809026621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e1731ab123ab894abb3c814037f0239, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicSpeedDriver
+  overdriveSpeed: 30
+  response:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  idleSpeed: 1
+  overdriveMusicSpeed: 2
+  idlePitch: 1
+  overdriveMusicPitch: 3
+  riseRate: 0.5
+  fallRate: 0.25
+  reverseFallRate: 1
+  overdriveThreshold: 0.95
+--- !u!114 &1809026622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e0dc9b7b585274cb8691134b2a3c54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  titleMusic: {fileID: 8300000, guid: 72f546b6b247ad94ebdbfdfe7c8c1978, type: 3}
+  levelMusic: {fileID: 8300000, guid: d8e9960ec6dca67459ff885f3d732484, type: 3}
+  creditsMusic: {fileID: 8300000, guid: 99adb6fcf26e1184ea3f909496b0805e, type: 3}
+  titleVolume: 0.8
+  levelVolume: 0.7
+  creditsVolume: 1
+  playTitleOnStart: 1
+  titleFadeOutTime: 1.5
+  levelFadeInTime: 1.5
+  levelFadeOutTime: 1
+  creditsFadeInTime: 2.5
+  creditsFadeOutTime: 1
+  creditsStartDelay: 0.5
+  startButtons:
+  - {fileID: 322731929}
+  creditButtons:
+  - {fileID: 1148761476}
+  minSpeed: 0.25
+  maxSpeed: 3
+  minPitch: 0.5
+  maxPitch: 2
+  levelMixer: {fileID: 0}
+  levelMixerGroup: {fileID: 0}
+  pitchShifterParam: LevelPitchShift
+--- !u!4 &1809026623
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1809026624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71917dbad5321854196f290b85c71eb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelMusicStarter
 --- !u!1 &1811917838
 GameObject:
   m_ObjectHideFlags: 0
@@ -8664,3 +8791,4 @@ SceneRoots:
   - {fileID: 367037847}
   - {fileID: 68657911}
   - {fileID: 1811917839}
+  - {fileID: 1809026623}

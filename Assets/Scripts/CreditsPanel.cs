@@ -35,5 +35,7 @@ public class CreditsPanel : MonoBehaviour
         _creditsContent.anchoredPosition = new Vector2(_creditsContent.anchoredPosition.x, endPositionY); // this ensures the final position is set to the end position
         yield return new WaitForSeconds(pauseDuration); // waits for the pause duration before hiding the credits panel
         gameObject.SetActive(false); // hides the credits panel after the pause duration
+
+        MusicManager.Instance.ReturnToTitle();   // stops credits, brings the title music back
     }
 }
