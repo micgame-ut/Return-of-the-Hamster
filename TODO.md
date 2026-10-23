@@ -169,9 +169,10 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   `PatternTest` scene, with the full range of speed) and Add to Spawner, all also under Tools → Pattern Builder. New script
   `PatternTest.cs`. Changed: ObjectSpawner, GameManager (editor-only lines), PatternGizmosEditor. Docs written,
   including `PatternTest.md`.
-- **Editing: Gap / safe lane on Ring and Arc, Rotate (all and selected) and Mirror (all and selected) are built,
-  not yet tested.** Still to do: Lane, Twist, Zigzag, Burst, Shift / Reverse Z, Distribute selected evenly
-  (Tools menu).
+- **Editing: Gap / safe lane on Ring and Arc, Rotate and Mirror are built and tested.** New, not yet tested:
+  the Zigzag and Twist shapes (a Twist gap turns with each ring), Shift Z and Reverse Z (all and selected), and
+  Distribute Selected by Depth / by Angle (Tools menu). Lane and Burst are Spiral with Angle Step 0 / Z Step 0
+  (a note in the panel says so). Possible follow-up: draw the red gap wedge on a gapped Twist.
 - **Jitter** on any shape (same seed and Reroll as Random) and a **random prefab per slot** with weights.
 - **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
   reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the

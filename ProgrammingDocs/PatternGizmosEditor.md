@@ -3,7 +3,7 @@
 ## Purpose
 
 The **Pattern Builder**: a panel in the Inspector for laying out wave patterns quickly. Choose whether to
-place asteroids or power-ups, pick a shape (Ring, Arc, Row, Spiral, or Random), set how many and how deep, see a
+place asteroids or power-ups, pick a shape (Ring, Arc, Row, Spiral, Zigzag, Twist, or Random), set how many and how deep, see a
 preview in the Scene view (green for asteroids, yellow for power-ups), and click **Add** to place them
 exactly on the player's orbit. Ring and Arc can leave a **gap** (a lane to fly through). It also has buttons to
 snap existing children onto the orbit, rotate or mirror them, and clear a pattern, and a **Waves** section that speeds up the loop of making a wave: save the pattern as a new prefab
@@ -16,9 +16,11 @@ It's an editor tool only. It isn't part of the game and isn't included in builds
 - **File:** `Assets/Scripts/Editor/PatternGizmosEditor.cs`.
 - **Shows up:** in the Inspector, under the PatternGizmos fields, whenever a pattern prefab's root is
   selected (usually in Prefab Mode).
-- **Menu items:** Tools → Pattern Builder → Snap Selected to Circle, Rotate Selected, Mirror Selected, Save
-  Pattern As..., Test This Pattern and Add to Spawner. Save, Test and Add to Spawner also have buttons in the
-  **Waves** section of the panel, and Rotate and Mirror have **Rotate All** and **Mirror All** buttons.
+- **Menu items:** Tools → Pattern Builder → Snap Selected to Circle, Rotate Selected, Mirror Selected, Shift
+  Selected Z, Reverse Selected Z, Distribute Selected by Depth, Distribute Selected by Angle, Save Pattern As...,
+  Test This Pattern and Add to Spawner. Save, Test and Add to Spawner also have buttons in the **Waves**
+  section of the panel, and Rotate, Mirror, Shift Z and Reverse Z have **Rotate All**, **Mirror All**,
+  **Shift Z All** and **Reverse Z All** buttons. (Distribute is menu-only.)
 - **Requires:**
   - A pattern root with PatternGizmos on it.
   - An asteroid prefab to place (defaults to `Assets/Prefabs/Asteroid Types/Asteroid.prefab`) and a
@@ -61,7 +63,9 @@ so everything always lands exactly on the player's orbit.
 | **Ring** | Start Angle (-90), Gap Width (0), Gap Center (-90) | `Count` asteroids evenly spaced all the way around the orbit. With a gap, they fill the rest of the circle instead (see "The gap" below) |
 | **Arc** | From Angle (-135), To Angle (-45), Gap Width (0), Gap Center (-90) | `Count` asteroids spread evenly along part of the orbit, including both ends. With a gap, a wedge is cut out of the arc |
 | **Row** | Height Above Bottom (0), Spacing (1) | A straight horizontal line, centered left-to-right on the orbit. 0 is level with the bottom of the orbit, where the player starts |
-| **Spiral** | Start Angle (-90), Angle Step (30), Z Step (2) | Each asteroid steps around the orbit by `Angle Step` degrees *and* back by `Z Step`, so each one is its own spawn step and they arrive one after another |
+| **Spiral** | Start Angle (-90), Angle Step (30), Z Step (2) | Each asteroid steps around the orbit by `Angle Step` degrees *and* back by `Z Step`, so each one is its own spawn step and they arrive one after another. **Angle Step 0 = a Lane** (the same angle, going deeper) and **Z Step 0 = a Burst** (the same depth, spaced by Angle Step); a note in the panel says so |
+| **Zigzag** | Angle A (-135), Angle B (-45), Z Step (2) | Asteroids alternate between angle A (even numbers) and angle B (odd), each `Z Step` deeper, so the player swings left and right |
+| **Twist** | Rings (5), Z Step (3), Twist Per Ring (15), Start Angle (-90), Gap Width (0), Gap Center (-90) | `Count` asteroids per ring, `Rings` rings stacked in depth, each ring turned `Twist Per Ring` more than the one before. It uses the Ring's start angle and gap, and a gap turns with its ring, so the safe lane spirals down the tunnel |
 | **Random** | From Angle (-180), To Angle (180), Z Range (0), Min Gap (20), Seed (1), Reroll button | Up to `Count` objects at random angles between From and To, at least `Min Gap` degrees apart, each at depth `Z` plus a random amount up to `Z Range`. The same seed always gives the same layout. See "Random layout" below |
 
 **Angles** are in degrees and work the same as PlayerMovement's `startAngle`: 0 is right (3 o'clock), 90 is
@@ -108,7 +112,8 @@ The panel, top to bottom:
    empty (`DisabledScope`). The same text is used as the Undo name.
 6. **Timing** and **Fairness** (see "The Timing section" and "The Fairness section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
    **Test This Pattern** and **Add to Spawner** (see "The Waves tools" below).
-7. **Snap All to Circle**, then **Rotate By** with **Rotate All** and **Mirror All**, then **Delete All
+7. **Snap All to Circle**, then **Rotate By** with **Rotate All** and **Mirror All**, then **Shift Z By** with
+   **Shift Z All** and **Reverse Z All**, then **Delete All
    Children.**
 
 `BeginChangeCheck` / `EndChangeCheck` wrap a group of fields and report whether any of them changed.
@@ -145,6 +150,8 @@ the editor's GUI is ready). Its color is set every time the style is read, so it
 | Arc | Angle `Lerp(from, to, i / (count − 1))`, which puts the first exactly at `from` and the last exactly at `to`. A single asteroid goes at `from`. With `Gap Width` above 0, see `ArcAngleWithGap` below |
 | Row | x = center + `(i − (count − 1) / 2) × spacing`. That runs from `-half` to `+half`, so the row is centered. y = bottom of the orbit + height |
 | Spiral | Angle `startAngle + angleStep × i`, at depth `z + zStep × i` |
+| Zigzag | Angle `zigzagAngleA` if `i % 2 == 0`, otherwise `zigzagAngleB`, at depth `z + zStep × i`. Example: A -135°, B -45°, Z step 2, Count 5 gives -135° at depth 0, -45° at 2, -135° at 4, -45° at 6, -135° at 8 |
+| Twist | Object `i` is in ring `i / Count` (whole-number division), at place `i % Count` in it. Its angle is the Ring angle for that place (the gap version if a gap is set) plus `twistAngle × ring`, at depth `z + twistZStep × ring`. `PlacedCount` is `Count × Rings`. Example: Count 8, 3 rings, twist 15°: ring 0 at -90°, -45°, 0°…; ring 1 at -75°, -30°, 15°… (3 deeper); ring 2 at -60°, -15°, 30°… (6 deeper) |
 | Random | The `i`th stored angle from the random layout, at depth `z + (its stored 0–1 fraction) × Z Range` |
 
 Also, `PlacedCount` is how many objects the selected shape places. It's `count` for every shape except Random,
@@ -279,6 +286,30 @@ asteroids spin on their own.
   reason as Snap Selected, and they use the same `Rotate By` value. If the selection spans two patterns, only
   the first one found is changed.
 
+### Depth edits and Distribute
+
+`ChangeDepth(children, undoName, newZ)` is the depth-only sibling of `MoveChildren`: it takes a function that
+turns each child's old local Z into a new one, and writes back only the Z (angle and distance from the center
+stay). One undo step.
+
+- **Shift Z** (`ShiftChildrenZ`): `z => z + shiftZBy`. Depths 0, 3, 10 with a shift of 5 become 5, 8, 15. The
+  nearest step is also where everything appears, so shifting everything deeper moves the spawn depth and changes
+  the Timing table's "Appears → reaches player" time.
+- **Reverse Z** (`ReverseChildrenZ`): finds the smallest and largest depth among the children given, then
+  `z => min + max − z`. Depths 0, 3, 10 become 10, 7, 0. The range doesn't change, so the spawn depth doesn't
+  either.
+- **Shift Z All / Reverse Z All** (buttons) act on every child. **Shift Selected Z / Reverse Selected Z** (Tools
+  menu) act on the selected children (`SelectedPatternChildren`). **Shift Z By** (default 5) is the panel field.
+
+**Distribute** (Tools menu only, for the selected children):
+- **Distribute Selected by Depth** (`DistributeDepth`): sorts the children by depth, keeps the nearest and the
+  furthest where they are, and respaces the ones between evenly with `Mathf.Lerp(first, last, i / (n − 1))`.
+  Depths 0, 1, 10, 12 become 0, 4, 8, 12. It needs at least 3 children.
+- **Distribute Selected by Angle** (`DistributeAngle`): records each child's angle and distance from the orbit
+  center as a named tuple `(t, angle, distance)`, sorts by angle, and gives child `k` the angle
+  `lowest angle + 360 × k / n`. Each keeps its depth and its distance, so a child off the circle stays at its own
+  distance. 4 objects with the lowest at -90° become -90°, 0°, 90°, 180°. It needs at least 2 children.
+
 ### Deleting (`DeleteAll` and `ClearChildren`)
 
 `DeleteAll` asks for confirmation with a popup, then calls `ClearChildren`, which deletes every child of the
@@ -382,10 +413,14 @@ loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `play
 - On `EnteredEditMode` it clears the test request, returns to the scene you started from, and reopens the
   pattern. This is how a test ends. The scene and pattern are reopened on the editor's next update
   (`delayCall`), scene first.
-- The constructor also clears a leftover request if the editor isn't entering Play. That covers an editor
-  crash during a test, which would otherwise make the next normal Play a test. It skips the clear when
-  `isPlayingOrWillChangePlaymode` is true, because entering Play also runs the constructor and would erase the
-  request it just made.
+- The constructor also queues (with `delayCall`, so it runs on the editor's next update) a clear of any leftover
+  request if the editor isn't entering Play. That covers an editor crash during a test, which would otherwise
+  make the next normal Play a test. It skips the clear when `isPlayingOrWillChangePlaymode` is true, because
+  entering Play also runs the constructor and would erase the request it just made. The check is *not* made
+  inside the constructor itself: Unity refuses `isPlayingOrWillChangePlaymode` while it is constructing a
+  ScriptableObject (an `Editor` is one), and the constructor can run at exactly that moment, for example when
+  scripts recompile with a pattern selected. That threw a `TypeInitializationException` and filled the Console
+  with errors until the check was moved.
 
 ## Talks to
 
@@ -445,6 +480,8 @@ The game's scripts only read the test request, and only inside `#if UNITY_EDITOR
 - **The Timing numbers assume a steady `Speed` and the template in `Assets/Resources/`.** Real spacing
   changes if the player speeds up or slows down in flight, so treat them as the design target. They describe
   the children already in the prefab, not the Add preview.
+- **The red gap wedge is only drawn for Ring and Arc,** not Twist, even though a gapped Twist leaves the gap.
+- **In Twist, `Count` is the number per ring,** not the total. The total is `Count × Rings`.
 - **A Mirrored Wave asteroid isn't an exact mirror image.** Its position is flipped, but it always swings
   counter-clockwise first (its sine starts positive), so its motion isn't.
 - **Rotate and Mirror move children, not the pattern's settings.** Gap Center and the shape fields aren't

@@ -32,8 +32,8 @@ public class PatternGizmosEditor : Editor
 {
     // The shapes the builder knows how to lay out. The tab bar in the
     // inspector picks one, and both the preview and the Add button use it.
-    private enum Shape { Ring, Arc, Row, Spiral, Random }
-    private static readonly string[] ShapeNames = { "Ring", "Arc", "Row", "Spiral", "Random" };
+    private enum Shape { Ring, Arc, Row, Spiral, Zigzag, Twist, Random }
+    private static readonly string[] ShapeNames = { "Ring", "Arc", "Row", "Spiral", "Zigzag", "Twist", "Random" };
 
     // EditorPrefs is a small key/value store saved on your machine (not in the
     // project). We use it to remember which asteroid prefab you picked, so you
@@ -110,10 +110,21 @@ public class PatternGizmosEditor : Editor
     private static float spiralAngleStep = 30f;
     private static float spiralZStep = 2f;
 
+    // Zigzag: objects alternate between two angles, going deeper each time.
+    private static float zigzagAngleA = -135f;
+    private static float zigzagAngleB = -45f;
+    private static float zigzagZStep = 2f;
+
+    // Twist: rings stacked in depth, each turned a bit more than the one before. Uses the Ring's start angle and gap.
+    private static int twistRings = 5;
+    private static float twistZStep = 3f;
+    private static float twistAngle = 15f; // degrees each ring is turned more than the one before
+
     // Wave tools: Save Pattern As, Test This Pattern, Add to Spawner.
     private static bool clearAfterSave = true; // Save Pattern As empties the open pattern afterwards
     private static float testLoopDelay = 3f;   // seconds between test runs
     private static float rotateBy = 30f;       // degrees; positive = counter-clockwise
+    private static float shiftZBy = 5f;        // depth added by Shift Z; positive = further away
     private static float timingSpeed = 50f;    // player Speed the middle Timing column and the Scene labels use
     private static float playerRadius = 0.3f;      // the player's hitbox radius; 0.3 is the shield's, the biggest
     private static float laneMargin = 5f;          // degrees of room a gap needs, on top of the bare minimum
@@ -125,8 +136,12 @@ public class PatternGizmosEditor : Editor
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
 
         // A request left over from an editor crash would turn the next normal Play into a test.
-        if (!EditorApplication.isPlayingOrWillChangePlaymode)
-            PatternTest.Clear();
+        // Done on the next editor update, because Unity doesn't allow this check inside a constructor.
+        EditorApplication.delayCall += () =>
+        {
+            if (!EditorApplication.isPlayingOrWillChangePlaymode)
+                PatternTest.Clear();
+        };
     }
 
     private static void OnPlayModeChanged(PlayModeStateChange state)
@@ -246,6 +261,22 @@ public class PatternGizmosEditor : Editor
                 spiralStartAngle = EditorGUILayout.FloatField("Start Angle", spiralStartAngle);
                 spiralAngleStep = EditorGUILayout.FloatField("Angle Step", spiralAngleStep);
                 spiralZStep = EditorGUILayout.FloatField("Z Step", spiralZStep);
+                EditorGUILayout.HelpBox("Angle Step 0 = a Lane (same angle, going deeper). Z Step 0 = a Burst (same depth, spaced by Angle Step).", MessageType.None);
+                break;
+            case Shape.Zigzag:
+                zigzagAngleA = EditorGUILayout.FloatField("Angle A", zigzagAngleA);
+                zigzagAngleB = EditorGUILayout.FloatField("Angle B", zigzagAngleB);
+                zigzagZStep = EditorGUILayout.FloatField("Z Step", zigzagZStep);
+                break;
+            case Shape.Twist:
+                EditorGUILayout.HelpBox("Count is the number of objects in each ring.", MessageType.None);
+                twistRings = Mathf.Max(1, EditorGUILayout.IntField("Rings", twistRings));
+                twistZStep = EditorGUILayout.FloatField("Z Step", twistZStep);
+                twistAngle = EditorGUILayout.FloatField("Twist Per Ring", twistAngle);
+                ringStartAngle = EditorGUILayout.FloatField("Start Angle", ringStartAngle);
+                DrawGapFields();
+                if (gapWidth > 0f)
+                    EditorGUILayout.HelpBox("Start Angle is ignored while Gap Width is above 0: the gap sets where each ring begins, and it turns with the ring.", MessageType.None);
                 break;
             case Shape.Random:
                 randomFromAngle = EditorGUILayout.FloatField("From Angle", randomFromAngle);
@@ -308,6 +339,12 @@ public class PatternGizmosEditor : Editor
             RotateChildren(openPattern, ChildrenOf(openPattern.transform));
         if (GUILayout.Button("Mirror All"))
             MirrorChildren(openPattern, ChildrenOf(openPattern.transform));
+
+        shiftZBy = EditorGUILayout.FloatField("Shift Z By", shiftZBy);
+        if (GUILayout.Button("Shift Z All"))
+            ShiftChildrenZ(ChildrenOf(openPattern.transform));
+        if (GUILayout.Button("Reverse Z All"))
+            ReverseChildrenZ(ChildrenOf(openPattern.transform));
 
         if (GUILayout.Button("Delete All Children"))
             DeleteAll();
@@ -491,11 +528,12 @@ public class PatternGizmosEditor : Editor
     // Shape math
     // -----------------------------------------------------------------------
 
-    // How many objects the selected shape places. Random can place fewer than Count if the gap doesn't fit.
+    // How many objects the selected shape places. Twist places Count per ring, and Random can place fewer than Count if the gap doesn't fit.
     private static int PlacedCount
     {
         get
         {
+            if (shape == Shape.Twist) return count * twistRings;
             if (shape != Shape.Random) return count;
             if (randomDirty) BuildRandomLayout();
             return randomAngles.Length;
@@ -529,6 +567,15 @@ public class PatternGizmosEditor : Editor
 
             case Shape.Spiral:
                 return OnCircle(spiralStartAngle + spiralAngleStep * i, z + spiralZStep * i);
+
+            case Shape.Zigzag:
+                return OnCircle(i % 2 == 0 ? zigzagAngleA : zigzagAngleB, z + zigzagZStep * i);
+
+            case Shape.Twist:
+                int ring = i / count;   // which ring this object is in
+                int inRing = i % count; // its place within that ring
+                float ringAngle = gapWidth > 0f ? RingAngleWithGap(inRing) : ringStartAngle + 360f * inRing / count;
+                return OnCircle(ringAngle + twistAngle * ring, z + twistZStep * ring);
 
             case Shape.Random:
                 if (randomDirty) BuildRandomLayout();
@@ -894,5 +941,122 @@ public class PatternGizmosEditor : Editor
     {
         Transform[] selected = SelectedPatternChildren(out PatternGizmos pattern);
         if (pattern != null) MirrorChildren(pattern, selected);
+    }
+
+    // Gives each child a new depth (its local Z), keeping its angle and distance from the center. One undo step.
+    private static void ChangeDepth(Transform[] children, string undoName, Func<float, float> newZ)
+    {
+        Undo.SetCurrentGroupName(undoName);
+        int group = Undo.GetCurrentGroup();
+
+        foreach (Transform t in children)
+        {
+            Undo.RecordObject(t, undoName);
+            Vector3 p = t.localPosition;
+            t.localPosition = new Vector3(p.x, p.y, newZ(p.z));
+        }
+
+        Undo.CollapseUndoOperations(group);
+    }
+
+    // Moves the given children shiftZBy deeper.
+    private static void ShiftChildrenZ(Transform[] children)
+    {
+        ChangeDepth(children, "Shift Pattern Z", z => z + shiftZBy);
+    }
+
+    // Flips the depth order of the given children: the nearest becomes the furthest, and the middle stays put.
+    private static void ReverseChildrenZ(Transform[] children)
+    {
+        if (children.Length == 0) return;
+
+        float min = float.MaxValue;
+        float max = float.MinValue;
+        foreach (Transform t in children)
+        {
+            min = Mathf.Min(min, t.localPosition.z);
+            max = Mathf.Max(max, t.localPosition.z);
+        }
+        ChangeDepth(children, "Reverse Pattern Z", z => min + max - z);
+    }
+
+    [MenuItem("Tools/Pattern Builder/Shift Selected Z")]
+    private static void ShiftSelectedZ()
+    {
+        Transform[] selected = SelectedPatternChildren(out PatternGizmos pattern);
+        if (pattern != null) ShiftChildrenZ(selected);
+    }
+
+    [MenuItem("Tools/Pattern Builder/Reverse Selected Z")]
+    private static void ReverseSelectedZ()
+    {
+        Transform[] selected = SelectedPatternChildren(out PatternGizmos pattern);
+        if (pattern != null) ReverseChildrenZ(selected);
+    }
+
+    // Spaces the given children evenly in depth: the nearest and furthest stay put, and the ones between are respaced.
+    private static void DistributeDepth(Transform[] children)
+    {
+        if (children.Length < 3) return;
+
+        Transform[] sorted = (Transform[])children.Clone();
+        Array.Sort(sorted, (a, b) => a.localPosition.z.CompareTo(b.localPosition.z));
+        float first = sorted[0].localPosition.z;
+        float last = sorted[sorted.Length - 1].localPosition.z;
+
+        Undo.SetCurrentGroupName("Distribute Z");
+        int group = Undo.GetCurrentGroup();
+        for (int i = 1; i < sorted.Length - 1; i++)
+        {
+            Undo.RecordObject(sorted[i], "Distribute Z");
+            Vector3 p = sorted[i].localPosition;
+            sorted[i].localPosition = new Vector3(p.x, p.y, Mathf.Lerp(first, last, i / (float)(sorted.Length - 1)));
+        }
+        Undo.CollapseUndoOperations(group);
+    }
+
+    // Spaces the given children evenly round the circle, starting at the one with the lowest angle (-180 to 180).
+    // Each keeps its depth and its distance from the orbit center.
+    private static void DistributeAngle(PatternGizmos pattern, Transform[] children)
+    {
+        if (children.Length < 2) return;
+
+        Vector3 rootOffset = pattern.transform.localPosition;
+        Vector2 center = PatternGizmos.OrbitCenter;
+
+        // Each child's angle and distance from the center, in spawner space.
+        var polar = new (Transform t, float angle, float distance)[children.Length];
+        for (int i = 0; i < children.Length; i++)
+        {
+            Vector2 offset = (Vector2)(rootOffset + children[i].localPosition) - center;
+            polar[i] = (children[i], Mathf.Atan2(offset.y, offset.x) * Mathf.Rad2Deg, offset.magnitude);
+        }
+        Array.Sort(polar, (a, b) => a.angle.CompareTo(b.angle));
+
+        Undo.SetCurrentGroupName("Distribute Angle");
+        int group = Undo.GetCurrentGroup();
+        for (int k = 0; k < polar.Length; k++)
+        {
+            float angle = (polar[0].angle + 360f * k / polar.Length) * Mathf.Deg2Rad;
+            Vector2 spot = center + polar[k].distance * new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+
+            Undo.RecordObject(polar[k].t, "Distribute Angle");
+            polar[k].t.localPosition = new Vector3(spot.x - rootOffset.x, spot.y - rootOffset.y, polar[k].t.localPosition.z);
+        }
+        Undo.CollapseUndoOperations(group);
+    }
+
+    [MenuItem("Tools/Pattern Builder/Distribute Selected by Depth")]
+    private static void DistributeSelectedDepth()
+    {
+        Transform[] selected = SelectedPatternChildren(out PatternGizmos pattern);
+        if (pattern != null) DistributeDepth(selected);
+    }
+
+    [MenuItem("Tools/Pattern Builder/Distribute Selected by Angle")]
+    private static void DistributeSelectedAngle()
+    {
+        Transform[] selected = SelectedPatternChildren(out PatternGizmos pattern);
+        if (pattern != null) DistributeAngle(pattern, selected);
     }
 }
