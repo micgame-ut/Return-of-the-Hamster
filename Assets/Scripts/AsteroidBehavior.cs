@@ -99,6 +99,7 @@ public class AsteroidBehavior : MonoBehaviour
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
 
     public bool IsMoving => isMoving;
+    public MovementType Movement => movementType;
     public bool IsPhased { get; private set; }
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||

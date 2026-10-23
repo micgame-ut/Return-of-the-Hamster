@@ -106,7 +106,7 @@ The panel, top to bottom:
    range.") shows under the fields.
 5. **Add [Asteroid/Power-Up] [Shape]**, e.g. "Add Power-Up Arc". Greyed out while the selected slot is
    empty (`DisabledScope`). The same text is used as the Undo name.
-6. **Timing** (see "The Timing section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
+6. **Timing** and **Fairness** (see "The Timing section" and "The Fairness section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
    **Test This Pattern** and **Add to Spawner** (see "The Waves tools" below).
 7. **Snap All to Circle**, then **Rotate By** with **Rotate All** and **Mirror All**, then **Delete All
    Children.**
@@ -309,6 +309,37 @@ How it's drawn: `TimingRow(label, speeds, value)` draws one row of the table. It
 function that turns a speed into text, and the row calls it once per column. With no children it says "No
 children yet."; with no template found, it says so.
 
+### The Fairness section (`DrawFairness`)
+
+Warns about problems in the children already in the prefab. It is warnings only, and it assumes the patterns
+stay within the player's limits for now. The checks themselves are in PatternFairness (see
+[PatternFairness.md](PatternFairness.md)); this section holds the settings, calls them every time the Inspector
+draws, and shows the result.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| Player Radius | 0.3 | The player's hitbox radius. 0.3 is the shield's collider, the biggest, so it's the worst case. The player prefab has colliders of 0.3, about 0.26 (0.5 on a 0.51-scale object) and 0.2 |
+| Lane Margin (degrees) | 5 | Room a gap needs, on top of the bare minimum, to count as a lane |
+| Player Move Speed (deg/s) | 90 | How fast the player is assumed to move around the orbit. It sets the "can they get there in time" checks, so tune it by feel |
+
+The player `Speed` for the time-based checks is the Timing section's **Speed** slider.
+
+**What it reports** (each as a yellow box, and with red rings on the objects involved in the Scene view):
+- *Step N: two asteroids overlap.*
+- *Step N: no gap wide enough for the player.*
+- *Step N → N+1: the nearest gap is X° away, but only Y° can be covered in Z s.*
+- *Step N: a power-up is too far from the orbit to collect / is blocked by an asteroid / is X° from the nearest gap before it, but only Y° can be covered in Z s.*
+
+"No problems found." in a blue box means all the checks passed. An empty pattern says "No children yet."
+
+Not checked: **Wave asteroids** (they swing sideways, so they aren't treated as obstacles), step 1 for
+reach (the player is assumed to be able to be in any of its gaps), and anything beyond the Z steps themselves.
+Destructible and Phase asteroids count as obstacles (the worst case).
+
+The latest result is kept in `fairnessWarnings` (a static array), which `OnSceneGUI` reads to draw a red wire
+ring (`WarningColor`) on each warning's objects, at the same spawner-space position the checks used. The rings
+update whenever the Inspector redraws.
+
 ### The Waves tools
 
 All three work on the pattern open in Prefab Mode. `OpenPatternStage` returns that session (a `PrefabStage`),
@@ -361,6 +392,8 @@ loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `play
 - **PatternGizmos**: the component this panel is for. Reads its `OrbitRadius` and `OrbitCenter` (which
   come from `OrbitSettings`), and for the Timing section calls `GetSteps`, `ApproachSpeedAt`, `SecondsBetween`
   and `SecondsToPlayer`, and sets `PreviewSpeed`.
+- **PatternFairness**: the Fairness section builds a `PatternFairness.Settings` and calls `Check`, then shows the
+  returned `Warning`s.
 - **The player prefab** (`Assets/Prefabs/hamter.prefab`): the Timing slider reads its `PlayerMovement`'s
   `maxSpeed`.
 - **The asteroid and power-up prefabs**: places copies of the selected one, linked to the prefab.
@@ -403,6 +436,12 @@ The game's scripts only read the test request, and only inside `#if UNITY_EDITOR
 - **The gap width is measured between the two asteroids' centers.** The lane you can actually fly through is
   narrower, because the edge asteroids have their own size. On the radius-3 orbit 1° is about 0.05 units of
   arc, so a 60° gap is about 3.1 units between centers, minus an asteroid's width.
+- **The Fairness checks run on every Inspector redraw.** They are cheap enough for that, but a very large
+  pattern (hundreds of objects) may make the panel feel slow.
+- **The fairness numbers are design targets.** The player hitbox, the move speed and the margin are all
+  assumptions, and a pattern the checks call fair can still be hard, or unfair in a way they don't look for.
+  The collider sizes they use are the ones on the prefabs in Prefab Mode, so an asteroid scaled in the pattern
+  counts at its real size.
 - **The Timing numbers assume a steady `Speed` and the template in `Assets/Resources/`.** Real spacing
   changes if the player speeds up or slows down in flight, so treat them as the design target. They describe
   the children already in the prefab, not the Add preview.

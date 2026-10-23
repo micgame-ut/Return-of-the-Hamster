@@ -177,8 +177,11 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
   player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing
   helpers. Still to do: a Wave sweep preview.
-- **Fairness checks (warnings only):** overlapping objects, a step with no safe lane, an unreachable power-up.
-  The patterns stay within the player's limits for now; harder, limit-testing waves come later.
+- **Fairness checks (warnings only): built and tested.** New editor script `PatternFairness.cs` plus a
+  Fairness section in the builder: overlapping asteroids, a step with no safe lane, a gap too far from the one
+  before (lane reach), and power-ups that are too far from the orbit, blocked or out of reach. Red rings mark
+  the objects in the Scene view. Wave asteroids aren't checked yet. `AsteroidBehavior` has a new read-only
+  `Movement` property. Docs written, including `PatternFairness.md`. The patterns stay within the player's limits for now; harder, limit-testing waves come later.
 - **Presets** for builder settings, and **auto-naming** children ("Step 3, Asteroid 2").
 
 ## Wave phases and runtime variation (ObjectSpawner)

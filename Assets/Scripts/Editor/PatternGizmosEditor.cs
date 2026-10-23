@@ -59,6 +59,9 @@ public class PatternGizmosEditor : Editor
     // The gap on a Ring or Arc is drawn as a translucent red wedge.
     private static readonly Color GapColor = new Color(1f, 0.25f, 0.25f, 0.3f);
 
+    // Rings drawn on the objects a Fairness warning is about.
+    private static readonly Color WarningColor = new Color(1f, 0.15f, 0.15f, 1f);
+
     // -----------------------------------------------------------------------
     // Builder settings
     //
@@ -112,6 +115,10 @@ public class PatternGizmosEditor : Editor
     private static float testLoopDelay = 3f;   // seconds between test runs
     private static float rotateBy = 30f;       // degrees; positive = counter-clockwise
     private static float timingSpeed = 50f;    // player Speed the middle Timing column and the Scene labels use
+    private static float playerRadius = 0.3f;      // the player's hitbox radius; 0.3 is the shield's, the biggest
+    private static float laneMargin = 5f;          // degrees of room a gap needs, on top of the bare minimum
+    private static float playerAngularSpeed = 90f; // degrees per second the player is assumed to move around the orbit
+    private static PatternFairness.Warning[] fairnessWarnings = new PatternFairness.Warning[0]; // the latest result, for the Scene view markers
 
     static PatternGizmosEditor()
     {
@@ -273,6 +280,7 @@ public class PatternGizmosEditor : Editor
         }
 
         DrawTiming((PatternGizmos)target);
+        DrawFairness((PatternGizmos)target);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Waves", EditorStyles.miniBoldLabel);
@@ -369,6 +377,38 @@ public class PatternGizmosEditor : Editor
         TimingRow("Total length", speeds, s => PatternGizmos.SecondsBetween(steps[0], steps[steps.Length - 1], s).ToString("0.00") + " s");
     }
 
+    // The Fairness section: the assumptions about the player, then any problems found in the children already in the pattern.
+    private static void DrawFairness(PatternGizmos pattern)
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Fairness", EditorStyles.miniBoldLabel);
+        playerRadius = Mathf.Max(0f, EditorGUILayout.FloatField("Player Radius", playerRadius));
+        laneMargin = Mathf.Max(0f, EditorGUILayout.FloatField("Lane Margin (degrees)", laneMargin));
+        playerAngularSpeed = Mathf.Max(0f, EditorGUILayout.FloatField("Player Move Speed (deg/s)", playerAngularSpeed));
+
+        if (pattern.transform.childCount == 0)
+        {
+            fairnessWarnings = new PatternFairness.Warning[0];
+            EditorGUILayout.HelpBox("No children yet.", MessageType.None);
+            return;
+        }
+
+        var settings = new PatternFairness.Settings
+        {
+            playerRadius = playerRadius,
+            laneMargin = laneMargin,
+            playerAngularSpeed = playerAngularSpeed,
+            playerSpeed = timingSpeed // the Timing section's Speed
+        };
+        var found = PatternFairness.Check(pattern, settings);
+        fairnessWarnings = found.ToArray();
+
+        if (found.Count == 0)
+            EditorGUILayout.HelpBox("No problems found.", MessageType.Info);
+        foreach (var warning in found)
+            EditorGUILayout.HelpBox(warning.message, MessageType.Warning);
+    }
+
     // Gap Width and Gap Center, shared by Ring and Arc.
     private static void DrawGapFields()
     {
@@ -397,6 +437,13 @@ public class PatternGizmosEditor : Editor
         Color previewColor = placing == Placing.Asteroid ? PreviewColor : PowerUpPreviewColor;
         using (new Handles.DrawingScope(previewColor, SpawnerSpace(pattern)))
         {
+            Handles.color = WarningColor;
+            foreach (var warning in fairnessWarnings)
+                foreach (Transform t in warning.objects)
+                    if (t != null)
+                        Handles.DrawWireDisc(pattern.transform.localPosition + t.localPosition, Vector3.forward, previewSize * 0.7f);
+            Handles.color = previewColor;
+
             if (gapWidth > 0f && (shape == Shape.Ring || shape == Shape.Arc))
             {
                 var center = new Vector3(PatternGizmos.OrbitCenter.x, PatternGizmos.OrbitCenter.y, z);

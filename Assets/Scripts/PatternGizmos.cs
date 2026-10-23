@@ -27,6 +27,7 @@ public class PatternGizmos : MonoBehaviour
         public float z;
         public int count;
         public int powerUps;
+        public Transform[] children; // the objects in this step
     }
 
     // The pattern's children grouped into steps, nearest the camera (lowest Z) first, same order as ObjectSpawner.
@@ -34,13 +35,14 @@ public class PatternGizmos : MonoBehaviour
     {
         Vector3 rootOffset = transform.localPosition;
 
-        var items = new List<(float z, bool powerUp)>();
+        var items = new List<(float z, bool powerUp, Transform child)>();
         foreach (Transform child in transform)
-            items.Add((rootOffset.z + child.localPosition.z, child.GetComponent<PowerUp>() != null));
+            items.Add((rootOffset.z + child.localPosition.z, child.GetComponent<PowerUp>() != null, child));
         items.Sort((a, b) => a.z.CompareTo(b.z));
 
         // Group equal Zs into one step, since they spawn together.
         var steps = new List<Step>();
+        var members = new List<List<Transform>>(); // the children of each step, in the same order as steps
         for (int i = 0; i < items.Count; i++)
         {
             int powerUp = items[i].powerUp ? 1 : 0;
@@ -50,11 +52,20 @@ public class PatternGizmos : MonoBehaviour
                 last.count++;
                 last.powerUps += powerUp;
                 steps[steps.Count - 1] = last;
+                members[members.Count - 1].Add(items[i].child);
             }
             else
             {
                 steps.Add(new Step { z = items[i].z, count = 1, powerUps = powerUp });
+                members.Add(new List<Transform> { items[i].child });
             }
+        }
+
+        for (int s = 0; s < steps.Count; s++)
+        {
+            Step step = steps[s];
+            step.children = members[s].ToArray();
+            steps[s] = step;
         }
         return steps.ToArray();
     }

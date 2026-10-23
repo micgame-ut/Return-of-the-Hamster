@@ -265,6 +265,7 @@ scene for asteroids every frame. The public properties exist for it:
 | Property | What it tells you |
 | --- | --- |
 | `IsMoving` | Whether it has finished warning and started moving |
+| `Movement` | Its `MovementType` (Linear or Wave). Read-only. The pattern builder's fairness checks read it to skip Wave asteroids |
 | `ApproachSpeed` | How fast it's closing in right now |
 | `CanBreak` | Whether touching it right now would smash it |
 | `HitRadius` | How wide its collider is on screen, measured once in `Awake`, so it's right even while the collider is off |
