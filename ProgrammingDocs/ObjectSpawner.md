@@ -30,6 +30,8 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | `waves[].delayAfter` | 2 | Seconds to wait after this pattern has finished appearing, before the next wave starts |
 | `waves[].clearPoints` | 300 | Score points when every object in this wave is gone. Half if the earth cut the wave short |
 | `waves[].perfectBonus` | 200 | Added on top of `clearPoints` if no life was lost while this wave was on screen |
+| `waves[].fromProgress` | 0 (slider 0–1) | The wave becomes available once level progress reaches this. 0 = from the start. This is how waves **unlock** |
+| `waves[].untilProgress` | 1 (slider 0–1) | The wave stops being available after this much progress. 1 = it never goes away. This is how old waves are **removed** |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
 | `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
@@ -100,15 +102,47 @@ to normal when Play stops. See [PatternGizmosEditor.md](PatternGizmosEditor.md).
 2. Wait `startDelay` seconds, counted from the start of play, not from the load.
 3. For each wave, in the order `GetWaveOrder` gives:
    - If `StopSpawning` is true, stop for good.
-   - If the wave has no pattern assigned, skip it.
+   - If the wave isn't **available** (`IsAvailable`: it has no pattern, or the level's progress is outside its
+     `fromProgress`–`untilProgress` range), skip it. Progress is read fresh at each wave's turn.
    - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
      coroutine inside this one and continues only when that one is done.
    - In a test only (`#if UNITY_EDITOR`, `PatternTest.Active`): also wait until `AsteroidBehavior.Active` and
      `PowerUp.Active` are both empty, so the whole run has flown past.
    - Wait `delayAfter` seconds.
-4. If that pass spawned nothing (no wave had a pattern), log a warning and stop, so an empty list can't spin
-   forever.
+4. If that pass spawned nothing:
+   - If no wave in the whole list has a pattern, that's a setup mistake: log a warning and stop, so an empty
+     list can't spin forever.
+   - Otherwise some waves exist but none is available at this progress: if `loop` is on, wait
+     `NoWaveRetryDelay` (0.5 s) and go round again. This wait is what stops a pass over unavailable waves (which
+     takes no time at all) from spinning and freezing Unity.
 5. If `loop` is on and `StopSpawning` is still false, go back to step 3.
+
+### Wave phases (`fromProgress` and `untilProgress`)
+
+Each wave can be limited to a stretch of **level progress**, so more waves unlock as the player gets further and
+old ones drop out. Progress is `LevelTimer.Progress`: 0 at the start, 1 when the Earth arrives, which is when
+spawning stops. A scene with no LevelTimer counts as 0. A wave is available when
+`fromProgress ≤ progress ≤ untilProgress` (inclusive at both ends). With the defaults, 0 and 1, every wave is
+always available, so existing lists behave as before.
+
+Progress isn't plain seconds: `LevelTimer` advances it by `Time.deltaTime ÷ (levelTime ÷ (1 + Speed × speedTimeFactor))`
+each frame, so a faster player gets to later phases sooner. Progress 0.5 means halfway to the Earth.
+
+Example (Sequential, loop on): Ring 0–0.4, Twist 0.2–0.7, Zigzag 0.5–1.
+
+| Progress | What plays |
+| --- | --- |
+| 0 – 0.2 | Ring, Ring, Ring… (the others are skipped each pass) |
+| 0.2 – 0.4 | Ring, Twist, Ring, Twist… |
+| 0.4 – 0.5 | Twist only |
+| 0.5 – 0.7 | Twist, Zigzag |
+| 0.7 – 1 | Zigzag only. At 1 the Earth arrives and spawning stops |
+
+In Random order the available waves shuffle each pass, as before. With `loop` off, each wave still gets one turn, so
+one that isn't available at its turn is skipped.
+
+A **gap** in the ranges (say Ring 0–0.3 and Zigzag 0.5–1) leaves an empty sky from 0.3 to 0.5, where the spawner
+waits and rechecks every 0.5 s. That's allowed, but easy to do by accident.
 
 `delayAfter` starts once the pattern's **last asteroid has appeared**, not once it has flown past. So
 with a short delay, the next pattern can start while the previous one is still coming at the player.
@@ -224,6 +258,13 @@ compares against its own starting count, so a life lost with two waves on screen
   at a prefab that was deleted, which shows as Missing), `RunWaves` skips them all. It used to loop again
   without ever waiting, which froze Unity. Now a pass that spawns nothing logs "ObjectSpawner has no wave with
   a pattern assigned, so it is not spawning." in the Console and stops. Fix the wave list and press Play again.
+- **Gaps between phases mean an empty sky.** If no wave is available for a stretch of progress, the spawner waits
+  (0.5 s at a time) and nothing spawns until the next wave unlocks.
+- **Progress follows the player's speed,** so a phase "0.3 to 0.6" is a fixed part of the journey, not a fixed
+  number of seconds. A fast player passes it sooner and sees fewer of its waves.
+- **A new wave added to the list starts at 0–1.** The two numbers are per wave, so each new wave needs its own
+  range. If Unity ever showed `Until Progress` as 0 on an old wave, it would only play at the very start.
+- **The Test This Pattern override ignores phases** (its single wave is 0–1).
 - **Spacing is only exact at a steady speed.** The wait is calculated from the approach speed when it
   starts. If the player speeds up or slows down during the wait, the gap between asteroids in flight
   ends up smaller or bigger than laid out.

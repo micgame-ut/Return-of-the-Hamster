@@ -190,8 +190,10 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
 Not started. Waves should be available only within certain points of level progress, so more waves unlock as
 the player progresses and old ones can drop out.
 
-- **Phases:** each wave (or group) has a progress range (from `LevelTimer` progress) in which it can be picked;
-  outside it, it's skipped.
+- **Phases: built, not yet tested.** Each wave has `fromProgress` / `untilProgress` (0–1, from `LevelTimer`
+  progress) and is skipped outside that range. When no wave is available but some have patterns, the spawner
+  waits 0.5 s and rechecks. Still to do: set the ranges on the real levels' wave lists. Possible follow-up: a
+  preview of which waves are active at a given progress.
 - **Runtime rotate / mirror:** rotate or mirror a pattern as it spawns, so one authored pattern can come from
   several sides. Needs a look at how Wave asteroids and power-ups follow the rotation.
 

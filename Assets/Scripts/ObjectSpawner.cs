@@ -22,6 +22,10 @@ public class ObjectSpawner : MonoBehaviour
         public float clearPoints = 300f;
         [Tooltip("Added on top if no life was lost during the wave.")]
         public float perfectBonus = 200f;
+        [Tooltip("The wave becomes available once level progress reaches this (0 = start of the level, 1 = the Earth arrives).")]
+        [Range(0f, 1f)] public float fromProgress = 0f;
+        [Tooltip("The wave stops being available after this much progress. 1 = it never goes away.")]
+        [Range(0f, 1f)] public float untilProgress = 1f;
     }
 
     [Tooltip("The list of waves. Each has a pattern (the prefab to spawn) and a delayAfter.")]
@@ -53,12 +57,21 @@ public class ObjectSpawner : MonoBehaviour
     // Children this close in Z spawn together. Public so PatternGizmos groups them the same way.
     public const float SameZTolerance = 0.01f;
 
+    // How long to wait before looking again when no wave is available at the current progress.
+    private const float NoWaveRetryDelay = 0.5f;
+
     private LevelTimer levelTimer;
     private Score score;
 
     // Once the earth has arrived or the game is over, no more waves or objects are spawned.
     private bool StopSpawning => (levelTimer != null && levelTimer.IsComplete) ||
                                  (GameManager.Instance != null && GameManager.Instance.IsGameOver);
+
+    // Level progress, 0 to 1. A scene with no LevelTimer counts as 0.
+    private float Progress => levelTimer != null ? levelTimer.Progress : 0f;
+
+    // A wave plays only if it has a pattern and the level is currently inside its progress range.
+    private bool IsAvailable(Wave wave) => wave.pattern != null && Progress >= wave.fromProgress && Progress <= wave.untilProgress;
 
     private void Awake()
     {
@@ -106,7 +119,7 @@ public class ObjectSpawner : MonoBehaviour
             foreach (Wave wave in GetWaveOrder())
             {
                 if (StopSpawning) yield break;
-                if (wave.pattern == null) continue;
+                if (!IsAvailable(wave)) continue;
 
                 spawnedAny = true;
 
@@ -122,8 +135,15 @@ public class ObjectSpawner : MonoBehaviour
 
             if (!spawnedAny)
             {
-                Debug.LogWarning("ObjectSpawner has no wave with a pattern assigned, so it is not spawning.", this);
-                yield break;
+                // Nothing in the list has a pattern: a setup mistake, so say so and stop.
+                if (!waves.Exists(w => w.pattern != null))
+                {
+                    Debug.LogWarning("ObjectSpawner has no wave with a pattern assigned, so it is not spawning.", this);
+                    yield break;
+                }
+
+                // Waves exist, but none is available at this progress: look again shortly.
+                if (loop) yield return new WaitForSeconds(NoWaveRetryDelay);
             }
         }
         while (loop && !StopSpawning);
