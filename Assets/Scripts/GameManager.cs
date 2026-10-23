@@ -111,6 +111,7 @@ public class GameManager : MonoBehaviour
 
         IsGameOver = true;
         Time.timeScale = 0f;
+        MusicManager.Instance.TrailOffAndStop();
         if (runStats != null) runStats.RecordDeath();
         OnGameOver?.Invoke();
     }
@@ -121,6 +122,7 @@ public class GameManager : MonoBehaviour
 
         HasWon = true;
         Time.timeScale = 0f;
+        MusicManager.Instance.StopLevelMusic();
         if (runStats != null) runStats.RecordWin();
         if (endScreen != null) endScreen.ShowWin();
         OnWin?.Invoke();
