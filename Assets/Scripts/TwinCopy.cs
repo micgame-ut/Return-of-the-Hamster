@@ -4,9 +4,13 @@ using UnityEngine;
 // offset around the orbit from the player and copies its movement, roll and shell.
 public class TwinCopy : MonoBehaviour
 {
+    [Tooltip("The copy's ship mesh, which copies the player mesh's roll.")]
     [SerializeField] private Transform meshTransform;
+    [Tooltip("The copy's shell, shown and hidden like the player's.")]
     [SerializeField] private GameObject shellMesh;
+    [Tooltip("The copy's bigger hitbox, on while the player's shell hitbox is on.")]
     [SerializeField] private Collider shellCollider;
+    [Tooltip("The copy's body hitbox, on otherwise.")]
     [SerializeField] private Collider bodyCollider;
 
     private PlayerMovement player;

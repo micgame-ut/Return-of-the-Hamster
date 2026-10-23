@@ -3,22 +3,32 @@ using System.Collections;
 
 public class MenuTransition : MonoBehaviour
 {
-    [SerializeField] private float duration = 1f; // seconds for the planets and UI
-    [SerializeField] private float hamsterDuration = 2.5f; // seconds for the hamster's glide; longer than duration so it arrives last
-    [SerializeField] private float startDelay = 0.5f; // seconds the hamster sits at its spot before the game starts
+    [Tooltip("Seconds for the planets and UI to reach their targets.")]
+    [SerializeField] private float duration = 1f;
+    [Tooltip("Seconds for the hamster's glide. Longer than duration, so it arrives last.")]
+    [SerializeField] private float hamsterDuration = 2.5f;
+    [Tooltip("Seconds the hamster sits at its spot before the level starts.")]
+    [SerializeField] private float startDelay = 0.5f;
 
     [Header("Hamster")]
+    [Tooltip("The player. The glide's target comes from its StartPosition and StartRotation.")]
     [SerializeField] private PlayerMovement hamster;
 
     [Header("Planets")]
+    [Tooltip("The far planet.")]
     [SerializeField] private Transform farPlanet;
+    [Tooltip("Where the far planet ends up (its gameplay spot).")]
     [SerializeField] private Transform farPlanetTarget;
+    [Tooltip("The near planet.")]
     [SerializeField] private Transform nearPlanet;
+    [Tooltip("The off-screen spot the near planet slides to.")]
     [SerializeField] private Transform nearPlanetTarget;
 
     [Header("UI")]
+    [Tooltip("Everything that flies back past the camera.")]
     [SerializeField] private Transform[] uiElements;
-    [SerializeField] private float uiEndBehindCamera = 2f; // world units behind the camera the UI finishes
+    [Tooltip("How far behind the camera the UI finishes, in world units.")]
+    [SerializeField] private float uiEndBehindCamera = 2f;
 
     private Camera cam;
     private HamsterMenuFloat hamsterFloat;

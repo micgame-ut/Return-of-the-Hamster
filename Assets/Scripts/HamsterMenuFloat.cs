@@ -6,12 +6,18 @@ up and down, rotate, and move back and forth in depth
 for a neat dynamic effect */
 public class HamsterMenuFloat : MonoBehaviour
 {
+    [Tooltip("Degrees per second the hamster spins, on all three axes.")]
     [SerializeField] private float rotationSpeed = 20f;
-    [SerializeField] private float floatHeight = .5f; // size of the height range
+    [Tooltip("Size of the height range.")]
+    [SerializeField] private float floatHeight = .5f;
+    [Tooltip("How fast the hamster bobs up and down.")]
     [SerializeField] private float floatSpeed = 1f;
+    [Tooltip("How far the hamster moves back and forth in depth, in world units.")]
     [SerializeField] private float depthDistance = .5f;
+    [Tooltip("How fast the hamster moves back and forth in depth.")]
     [SerializeField] private float depthSpeed = 1f;
 
+    [Tooltip("How fast the hamster drifts sideways, in units per second. It turns around at the screen edges.")]
     [SerializeField] private float xSpeed = 2f;
 
     private Vector3 startPosition;

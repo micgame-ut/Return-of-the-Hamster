@@ -135,6 +135,60 @@ collider is off and it shows a hologram look. Otherwise it's a normal asteroid.
 - **Possible follow-up:** remove `HamsterMenuFloat` from the `hamter` prefab and add it only to Level 1's
   player (the guard covers it meanwhile).
 
+## Options menu: forward threshold
+
+**Built and tested** (`PlayerMovement`): `forwardThreshold` (30°, slider 0–90) and `minInputForAngle` (2 px).
+If the trackball movement is within `forwardThreshold` of straight up, `OnMove` zeroes its sideways part, so
+the slide, the sideways roll and the side-boost memory all ignore it. See `PlayerMovement.md`.
+
+**Still to do:** an options screen on the menu where the player changes `forwardThreshold`. The menu's
+Options button is being removed until this exists.
+- Needs: a slider UI, saving the value (probably `PlayerPrefs`), and `PlayerMovement.Awake` reading it.
+- Maybe later: smooth the angle over a few frames if slow forward rolls flicker between filtered and
+  unfiltered.
+
+## Depth fade (asteroids and power-ups darker with distance)
+
+**Built, not yet tested.** `SpawnableTemplate` has `darkenStart` (0.2), `darkenEnd` (1) and `farColor`, measured
+as a share of the new `OrbitSettings.SpawnDistance` (so it follows `spawnerPosition`). `GetDepthTint` turns a
+distance into a color between white and `farColor`. AsteroidBehavior and PowerUp apply it every frame with a
+property block (`_BaseColor`; the outline slot is left alone), and the Asteroid Phase graph has a new `Tint`
+property (`depth` group). The asteroid's warning glow was removed in the same change. See `SpawnableTemplate.md`.
+
+**Still to do:**
+- Test it in Play mode, then tune `darkenStart`, `darkenEnd` and `farColor` by eye.
+- Maybe later: the tint ignores emission, so an emissive material would keep glowing at a distance.
+
+## Pattern builder improvements
+
+The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed as worth doing, roughly in order:
+
+- **Workflow: built and tested** (the slowest part used to be: duplicate a pattern prefab, clear it, build
+  it, add it to the spawner's waves, then play the level to test it). The builder's **Waves** section has Save
+  Pattern As... (with Clear After Save), Test This Pattern (plays only that pattern on a loop in its own
+  `PatternTest` scene, with the full range of speed) and Add to Spawner, all also under Tools → Pattern Builder. New script
+  `PatternTest.cs`. Changed: ObjectSpawner, GameManager (editor-only lines), PatternGizmosEditor. Docs written,
+  including `PatternTest.md`.
+- **Editing: Gap / safe lane on Ring and Arc, Rotate (all and selected) and Mirror (all and selected) are built,
+  not yet tested.** Still to do: Lane, Twist, Zigzag, Burst, Shift / Reverse Z, Distribute selected evenly
+  (Tools menu).
+- **Jitter** on any shape (same seed and Reroll as Random) and a **random prefab per slot** with weights.
+- **Timing readout:** seconds between steps and total length at a chosen player `Speed`, plus a Speed slider for
+  the preview, and a Wave sweep preview.
+- **Fairness checks (warnings only):** overlapping objects, a step with no safe lane, an unreachable power-up.
+  The patterns stay within the player's limits for now; harder, limit-testing waves come later.
+- **Presets** for builder settings, and **auto-naming** children ("Step 3, Asteroid 2").
+
+## Wave phases and runtime variation (ObjectSpawner)
+
+Not started. Waves should be available only within certain points of level progress, so more waves unlock as
+the player progresses and old ones can drop out.
+
+- **Phases:** each wave (or group) has a progress range (from `LevelTimer` progress) in which it can be picked;
+  outside it, it's skipped.
+- **Runtime rotate / mirror:** rotate or mirror a pattern as it spawns, so one authored pattern can come from
+  several sides. Needs a look at how Wave asteroids and power-ups follow the rotation.
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

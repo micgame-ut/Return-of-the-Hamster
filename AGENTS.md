@@ -99,6 +99,10 @@ and nothing can run in Play mode until it's fixed.
 - For each comment you want to add, show it, explain why it's worth having, and ask whether to keep it.
   The user may reword it or drop it. If the user doesn't answer about a comment, keep it.
 - Match the style of existing comments in the file.
+- **Tooltips that restate approved text are clean-up.** A `[Tooltip]` whose text comes from something
+  already approved (the comment on that field, or its row in `ProgrammingDocs/`) can be added without
+  asking per script. Replacing that field's `//` comment with the tooltip is part of the same clean-up.
+  A tooltip with new information, and any other comment change, still needs approval as above.
 
 ## 5. New features: ask for the variables first
 

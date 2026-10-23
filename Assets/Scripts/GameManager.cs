@@ -11,22 +11,38 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    [Tooltip("The player ship.")]
     [SerializeField] private PlayerMovement player;
+    [Tooltip("The main camera. Used to despawn asteroids once they're behind it, and to sort a pattern's asteroids by distance.")]
     [SerializeField] private Camera gameplayCamera;
+    [Tooltip("The earth model that approaches as the level goes on.")]
     [SerializeField] private Renderer earth;
+    [Tooltip("The camera that renders the earth.")]
     [SerializeField] private Camera earthCamera;
+    [Tooltip("The level's timer. Can be left empty if LevelTimer is on the same GameObject.")]
     [SerializeField] private LevelTimer levelTimer;
+    [Tooltip("The player's lives. Can be left empty if PlayerHealth is on the player object.")]
     [SerializeField] private PlayerHealth playerHealth;
+    [Tooltip("The player's invincibility power-up state. Can be left empty if PlayerInvincibility is on the player object.")]
     [SerializeField] private PlayerInvincibility playerInvincibility;
+    [Tooltip("The player's shield shell and its hitbox. Can be left empty if PlayerShell is on the player object.")]
     [SerializeField] private PlayerShell playerShell;
+    [Tooltip("The twin power-up on the player. Can be left empty if PlayerTwins is on the player object.")]
     [SerializeField] private PlayerTwins playerTwins;
+    [Tooltip("The close-call range on the player. Can be left empty if CloseCallZone is on the player object.")]
     [SerializeField] private CloseCallZone closeCallZone;
+    [Tooltip("This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject.")]
     [SerializeField] private RunStats runStats;
+    [Tooltip("This level's score and its HUD counter. Can be left empty if Score is on the same GameObject.")]
     [SerializeField] private Score score;
+    [Tooltip("The EndScreen component on the EndScreen canvas, which holds both the Game Over and Win screens. Must be assigned.")]
     [SerializeField] private EndScreen endScreen;
+    [Tooltip("Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts.")]
     [SerializeField] private bool showOrbitRing = true;
+    [Tooltip("The HUD. Hidden while the menu shows, shown by StartGame. Optional. Keep the menu buttons out of it.")]
     [SerializeField] private GameObject hud;
-    [SerializeField] private bool startWithMenu; // tick on Level 1 only; other levels start straight away
+    [Tooltip("Tick on Level 1 only: the level waits at the menu until MenuTransition calls StartGame. Off = starts straight away.")]
+    [SerializeField] private bool startWithMenu;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -85,6 +101,9 @@ public class GameManager : MonoBehaviour
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
 
         // No menu on this level, or a restart: start straight away.
+#if UNITY_EDITOR
+        if (PatternTest.Active) SkipMenuOnce = true; // Test This Pattern skips the menu
+#endif
         if (!startWithMenu || SkipMenuOnce) StartGame();
         else if (hud != null) hud.SetActive(false);
         SkipMenuOnce = false;

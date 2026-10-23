@@ -6,20 +6,33 @@ using UnityEngine;
 // OnPointsAdded event. Popups rise, fade, and are reused from a pool.
 public class ScorePopups : MonoBehaviour
 {
+    [Tooltip("The popup's look: font, size, color, glow. Center alignment and a center pivot, Raycast Target off.")]
     [SerializeField] private TMP_Text popupPrefab;
+    [Tooltip("Popups made at level start. More are made if needed.")]
     [SerializeField] private int prewarmCount = 5;
+    [Tooltip("Canvas units above the earning body where a popup appears.")]
     [SerializeField] private float startOffset = 40f;
+    [Tooltip("Canvas units it rises over its life.")]
     [SerializeField] private float riseDistance = 80f;
+    [Tooltip("Seconds to rise and fade out.")]
     [SerializeField] private float lifetime = 0.8f;
+    [Tooltip("Size for a tiny gain.")]
     [SerializeField] private float minScale = 1f;
+    [Tooltip("Size at pointsForMaxScale and above.")]
     [SerializeField] private float maxScale = 2f;
+    [Tooltip("The final gain (points times multiplier) that reaches maxScale.")]
     [SerializeField] private float pointsForMaxScale = 1000f;
+    [Tooltip("The multiplier is added to the text (+325x2.0) only when it's above this.")]
     [SerializeField] private float showMultiplierAbove = 1.5f;
 
     [Header("Power-Up Labels")]
+    [Tooltip("Shown when a Health power-up (or a Random one that rolled Health) is picked up. Empty = no popup.")]
     [SerializeField] private string healthLabel = "+1 LIFE";
+    [Tooltip("Shown for Invincible.")]
     [SerializeField] private string invincibleLabel = "INVINCIBLE";
+    [Tooltip("Shown for Twin.")]
     [SerializeField] private string twinLabel = "TWIN";
+    [Tooltip("Shown for Score Multiplier.")]
     [SerializeField] private string scoreLabel = "SCORE x2";
 
     private class Popup

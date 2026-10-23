@@ -9,19 +9,33 @@ public class Score : MonoBehaviour
 {
     public enum ScoreSource { Progress, Asteroids, CloseCalls, Waves, Overdrive }
 
+    [Tooltip("Time points per second of levelTime. A full level gives levelTime times pointsPerSecond time points, however fast the player flies.")]
     [SerializeField] private float pointsPerSecond = 1f;
+    [Tooltip("What points from AddPoints are multiplied by at max speed. At speed 0 it's x1, and in between it rises in a straight line. Doesn't affect the time score.")]
     [SerializeField] private float maxSpeedMultiplier = 2f;
+    [Tooltip("Seconds after a kill to make the next one and keep the combo going. Each kill resets it.")]
     [SerializeField] private float comboWindow = 1.5f;
+    [Tooltip("How much the combo bonus grows after the first kill.")]
     [SerializeField] private float comboStepBonus = 50f;
+    [Tooltip("How much bigger each later step is, as a fraction of comboStepBonus (0.5 gives steps of 50, 75, 100...). 0 makes every step the same.")]
     [SerializeField] private float comboStepGrowth = 0.5f;
+    [Tooltip("The HUD text the score is written to, as six zero-padded digits. Can be left empty: the score still counts, it just isn't shown.")]
     [SerializeField] private TMP_Text scoreText;
+    [Tooltip("How big the HUD score snaps to when points are added through AddPoints. 1 turns the pulse off.")]
     [SerializeField] private float pulseScale = 1.15f;
+    [Tooltip("Seconds to shrink back to normal size after a pulse.")]
     [SerializeField] private float pulseDuration = 0.15f;
+    [Tooltip("Popup label for a wave cleared with no life lost. Empty shows just the number.")]
     [SerializeField] private string perfectWaveLabel = "PERFECT WAVE";
+    [Tooltip("Popup label for any other wave clear.")]
     [SerializeField] private string waveClearLabel = "WAVE CLEAR";
+    [Tooltip("Base points for a close call, before the combo bonus and speed multiplier.")]
     [SerializeField] private float closeCallPoints = 50f;
+    [Tooltip("Popup label for a close call.")]
     [SerializeField] private string closeCallLabel = "CLOSE CALL";
+    [Tooltip("Added to the multiplier for each active score power-up.")]
     [SerializeField] private float powerUpBonus = 2f;
+    [Tooltip("Seconds each score power-up lasts. Each pickup has its own timer.")]
     [SerializeField] private float powerUpDuration = 10f;
 
     public float Total { get; private set; }

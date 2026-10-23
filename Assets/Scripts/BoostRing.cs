@@ -6,7 +6,8 @@ public class BoostRing : MonoBehaviour
 {
     private static readonly int ChargeId = Shader.PropertyToID("_Charge");
 
-    [SerializeField] private Vector3 spinAxis = Vector3.forward; // the ring's local axis to roll around; flip to (0, 0, -1) to reverse
+    [Tooltip("The ring's local axis to roll around. Its sign sets which way the ring rolls for a given dodge. Flip to (0, 0, -1) to reverse.")]
+    [SerializeField] private Vector3 spinAxis = Vector3.forward;
 
     private PlayerMovement movement;
     private Renderer ringRenderer;

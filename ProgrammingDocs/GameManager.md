@@ -110,7 +110,9 @@ Level 1 has the menu inside it (see MenuTransition), so a level can be loaded bu
   `Start`). Most scripts simply read `HasStarted` instead.
 - **`SkipMenuOnce`** (`public static bool`) is set by EndScreen's Restart. It's static, so it survives the
   reload, and `Awake` clears it after reading it. So a restart of Level 1 skips the menu, while the MENU
-  button (which doesn't set it) shows the menu.
+  button (which doesn't set it) shows the menu. In the editor only (`#if UNITY_EDITOR`), `Awake` also sets it
+  while the pattern builder's **Test This Pattern** is active (`PatternTest.Active`), so a test lands straight in
+  gameplay, and a Restart during the test keeps the test going.
 
 | Load | `startWithMenu` | `SkipMenuOnce` | Result |
 | --- | --- | --- | --- |

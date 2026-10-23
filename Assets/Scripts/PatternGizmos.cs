@@ -15,7 +15,9 @@ public class PatternGizmos : MonoBehaviour
     public static Vector2 OrbitCenter => OrbitSettings.Instance.OrbitCenterFromSpawner;
     private static float PlayerZ => OrbitSettings.Instance.PlayerZFromSpawner;
 
+    [Tooltip("Color of the rings drawn at each asteroid depth.")]
     [SerializeField] private Color ringColor = new Color(0.3f, 0.8f, 1f, 0.6f);
+    [Tooltip("Color of the ring drawn at the player's depth.")]
     [SerializeField] private Color playerRingColor = new Color(1f, 0.8f, 0.2f, 0.8f);
 
 #if UNITY_EDITOR

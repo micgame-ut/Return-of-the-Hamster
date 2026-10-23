@@ -12,12 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc00a7f8cc19a2542a2050e56cb7a4c1, type: 3}
   m_Name: SpawnableTemplate
   m_EditorClassIdentifier: Assembly-CSharp::AsteroidTemplate
-  linearGlow: {r: 1, g: 0, b: 0, a: 1}
-  waveGlow: {r: 0, g: 1, b: 1, a: 1}
-  glowIntensity: 3
-  warningTime: 1
-  blinkInterval: 0.1
-  spinSpeed: 45
+  warningTime: 0
+  spinSpeed: 30
   explosionPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
   shakeDuration: 0.2
   shakeMagnitude: 0.3
@@ -27,10 +23,14 @@ MonoBehaviour:
   phasedMaterial: {fileID: 2100000, guid: 442ceb179a8ed1349a4d4dd70342112e, type: 2}
   despawnBehindCamera: 5
   knockbackForce: 4
-  speedLoss: 3
+  speedLoss: 20
   hitShakeDuration: 0.15
   hitShakeMagnitude: 0.2
-  speedMultiplier: 0.5
+  baseApproachSpeed: 20
+  speedMultiplier: 0.3
+  darkenStart: 0.2
+  darkenEnd: 1
+  farColor: {r: 0.12578616, g: 0.12578616, b: 0.1509434, a: 1}
   powerUpSpinSpeed: 90
   pickupEffectPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
   pickupShakeDuration: 0

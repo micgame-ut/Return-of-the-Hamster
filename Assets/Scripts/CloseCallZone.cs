@@ -4,7 +4,8 @@ using UnityEngine;
 // passes within closeCallDistance of the hitbox's edge without touching it is a close call.
 public class CloseCallZone : MonoBehaviour
 {
-    [SerializeField] private float closeCallDistance = 1.5f; // gap past the hitbox edge that still counts as close
+    [Tooltip("The gap past the hitbox edge that still counts as close. Shown as the yellow gizmo sphere. 0 turns close calls off.")]
+    [SerializeField] private float closeCallDistance = 1.5f;
 
     public float Distance => closeCallDistance;
     public float Reach => shell != null ? shell.Reach : 0f;

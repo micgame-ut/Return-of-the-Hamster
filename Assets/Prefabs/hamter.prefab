@@ -1102,6 +1102,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   meshTransform: {fileID: 8124262161344390682}
   mouseSensitivity: 5
+  forwardThreshold: 15
+  minInputForAngle: 2
   startAngle: -90
   faceCenter: 1
   rotationSpeed: 1.25

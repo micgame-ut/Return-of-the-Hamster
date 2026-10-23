@@ -34,6 +34,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PatternCopy.cs | [PatternCopy.md](PatternCopy.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
+| PatternTest.cs | [PatternTest.md](PatternTest.md) | Done |
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |

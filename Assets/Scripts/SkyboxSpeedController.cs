@@ -12,16 +12,24 @@ public class SkyboxSpeedController : MonoBehaviour
     private static readonly int StreamIntensityId = Shader.PropertyToID("_StreamIntensity");
     private static readonly int CoreGlowSizeId = Shader.PropertyToID("_Core_Glow_Size");
 
+    [Tooltip("How fast the clouds drift when the player's Speed is 0.")]
     [SerializeField] private float baseTimeSpeed = 0.3f;
+    [Tooltip("How much each point of player Speed adds to the drift speed.")]
     [SerializeField] private float speedInfluence = 0.05f;
+    [Tooltip("How fast the streams flow when the player's Speed is 0.")]
     [SerializeField] private float baseStreamSpeed = 0.5f;
+    [Tooltip("How much each point of player Speed adds to the stream speed.")]
     [SerializeField] private float streamSpeedInfluence = 0.2f;
+    [Tooltip("How far the core glow reaches past the Earth's edge, in Earth radii.")]
     [SerializeField] private float glowEarthScale = 2f;
+    [Tooltip("Seconds for the streams to fade fully in or out.")]
     [SerializeField] private float streamFadeTime = 1.5f;
+    [Tooltip("Ease-in for stream brightness across overdrive. 1 = linear, higher = slower start.")]
     [SerializeField] private float streamIntensityCurve = 2f;
     [Tooltip("Highest random starting point for the clouds, in world units. 427 = one full repeat of the baked noise (64 cells / Cloud Scale 0.15); 0 = same sky every load.")]
     [SerializeField] private float randomStartRange = 427f;
-    [SerializeField] private float glowGrowTime = 2f; // seconds for the core glow to grow in after the game starts
+    [Tooltip("Seconds for the core glow to grow from nothing to its normal size after the game starts.")]
+    [SerializeField] private float glowGrowTime = 2f;
 
     private const float MinGlowSize = 0.00001f; // the shader's Smoothstep breaks at exactly 0 and lights the whole sky
 

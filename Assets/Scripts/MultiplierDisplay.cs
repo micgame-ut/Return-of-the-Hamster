@@ -6,9 +6,12 @@ using UnityEngine.UI;
 // as the next one runs out. Hidden while none are active.
 public class MultiplierDisplay : MonoBehaviour
 {
-    [SerializeField] private GameObject indicator; // the label and bar's parent, hidden while no power-ups are active
+    [Tooltip("The label and bar's parent. Switched on and off as a whole, so it's hidden while no power-ups are active.")]
+    [SerializeField] private GameObject indicator;
+    [Tooltip("Shows the power-up multiplier, for example x4.")]
     [SerializeField] private TMP_Text label;
-    [SerializeField] private Image bar;            // Image Type set to Filled
+    [Tooltip("An Image with Image Type set to Filled. Its fillAmount drains from 1 to 0.")]
+    [SerializeField] private Image bar;
 
     private Score score;
     private int shownCount = -1;

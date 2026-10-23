@@ -5,8 +5,11 @@ using UnityEngine;
 // contact, and PlayerShell shows the rainbow (flickering near the end).
 public class PlayerInvincibility : MonoBehaviour
 {
+    [Tooltip("Seconds before the end when the rainbow starts flickering.")]
     [SerializeField] private float warningTime = 1f;
+    [Tooltip("Seconds between each flicker on/off.")]
     [SerializeField] private float warningBlinkInterval = 0.1f;
+    [Tooltip("While invincible, PlayerMovement holds the player at max speed.")]
     [SerializeField] private bool lockMaxSpeed = true;
 
     public bool IsInvincible => timer > 0f;

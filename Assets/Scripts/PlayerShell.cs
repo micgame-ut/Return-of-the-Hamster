@@ -6,10 +6,15 @@ using UnityEngine;
 // the player's hitbox bigger.
 public class PlayerShell : MonoBehaviour
 {
+    [Tooltip("The visible shell, switched on and off as a whole GameObject.")]
     [SerializeField] private GameObject shellMesh;
+    [Tooltip("The shell's hitbox, enabled and disabled on its own.")]
     [SerializeField] private Collider shellCollider;
+    [Tooltip("The hamster's own hitbox. Switched off whenever the shell's hitbox is on.")]
     [SerializeField] private Collider bodyCollider;
+    [Tooltip("The shell's look at full health (ShieldOverlayMat).")]
     [SerializeField] private Material shieldMaterial;
+    [Tooltip("The shell's look while invincible (RainbowOverlayMat).")]
     [SerializeField] private Material rainbowMaterial;
 
     private PlayerHealth health;

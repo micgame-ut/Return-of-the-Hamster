@@ -74,6 +74,12 @@ holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), t
 long as there's at least one wave. This happens on load, even while Level 1's menu shows, so the prewarm is
 done before play begins. `RunWaves` itself waits for the start.
 
+**Test This Pattern (editor only).** Before the prewarm, inside `#if UNITY_EDITOR`: if the pattern builder
+asked for a test (`PatternTest.Active`) and its prefab still exists (`PatternTest.Pattern != null`), the wave
+list is replaced **in memory** with one wave holding that pattern, with `delayAfter` set to the test's loop
+delay, no score points, `order` Sequential and `loop` on. The scene file isn't changed, and the list goes back
+to normal when Play stops. See [PatternGizmosEditor.md](PatternGizmosEditor.md). A build never contains this.
+
 ### `CreateCopy`, `GetCopy`, `GetFreeList`, `HandleReleased`
 
 - **`CreateCopy`** instantiates the pattern under the spawner, switches its children off, sorts them closest
@@ -97,8 +103,12 @@ done before play begins. `RunWaves` itself waits for the start.
    - If the wave has no pattern assigned, skip it.
    - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
      coroutine inside this one and continues only when that one is done.
+   - In a test only (`#if UNITY_EDITOR`, `PatternTest.Active`): also wait until `AsteroidBehavior.Active` and
+     `PowerUp.Active` are both empty, so the whole run has flown past.
    - Wait `delayAfter` seconds.
-4. If `loop` is on and `StopSpawning` is still false, go back to step 3.
+4. If that pass spawned nothing (no wave had a pattern), log a warning and stop, so an empty list can't spin
+   forever.
+5. If `loop` is on and `StopSpawning` is still false, go back to step 3.
 
 `delayAfter` starts once the pattern's **last asteroid has appeared**, not once it has flown past. So
 with a short delay, the next pattern can start while the previous one is still coming at the player.
@@ -200,7 +210,9 @@ compares against its own starting count, so a life lost with two waves on screen
 - **Score**: reads `LivesLostCount` when a wave starts and clears, and calls `AddWaveClear` when a wave's copy
   is released.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
-  this script spawns.
+  this script spawns. Its **Add to Spawner** button adds a pattern to `waves` (through a `SerializedObject`),
+  and its **Test This Pattern** button sets the test that `Start` reads.
+- **PatternTest** (editor only): `Start` reads `Active`, `Pattern` and `LoopDelay`, and `RunWaves` reads `Active`.
 
 ## Gotchas
 
@@ -208,15 +220,17 @@ compares against its own starting count, so a life lost with two waves on screen
   and `perfectBonus` to 0 if it shouldn't.
 - **Moving the spawner in the scene does nothing.** It moves itself to `OrbitSettings`' `spawnerPosition`
   when the game starts. Change the asset instead.
-- **Every pattern empty means a freeze.** If `loop` is on and every wave's `pattern` is empty,
-  `RunWaves` skips them all without ever waiting, then loops again, forever. Unity freezes. One real
-  pattern in the list is enough to avoid it.
+- **No wave with a pattern means no spawning, plus a warning.** If every wave's `pattern` is empty (or points
+  at a prefab that was deleted, which shows as Missing), `RunWaves` skips them all. It used to loop again
+  without ever waiting, which froze Unity. Now a pass that spawns nothing logs "ObjectSpawner has no wave with
+  a pattern assigned, so it is not spawning." in the Console and stops. Fix the wave list and press Play again.
 - **Spacing is only exact at a steady speed.** The wait is calculated from the approach speed when it
   starts. If the player speeds up or slows down during the wait, the gap between asteroids in flight
   ends up smaller or bigger than laid out.
-- **Mixed asteroid speeds throw off the spacing.** The wait uses the next asteroid's `ApproachSpeed`, but
-  the asteroid ahead of it is moving at its own speed. If they have different `speed` values, they drift
-  closer or further apart.
+- **Different templates throw off the spacing.** The wait uses the next asteroid's `ApproachSpeed`, but
+  the asteroid ahead of it is moving at its own. Asteroids and power-ups on the same template share the
+  same `baseApproachSpeed` and `speedMultiplier`, so they match. If two prefabs point at different
+  templates, or one has none (its `ApproachSpeed` is 0), they drift closer or further apart.
 - **Only direct children are spawned.** Asteroids inside a sub-group in the pattern are revealed together
   with the group, and there's no wait for them (the group has no AsteroidBehavior or PowerUp, so no speed).
 - **A new kind of spawnable needs a line in `GetApproachSpeed`.** Anything else placed in a pattern is

@@ -6,13 +6,19 @@ using UnityEngine;
 // during the twin destroys one body (lives don't change); the player keeps going as a survivor.
 public class PlayerTwins : MonoBehaviour
 {
+    [Tooltip("The copy that's created. It's a TwinCopy, so a prefab without the script can't be assigned.")]
     [SerializeField] private TwinCopy twinPrefab;
+    [Tooltip("Most bodies at once (player + copies). Pickups past this do nothing.")]
     [SerializeField, Min(2)] private int maxBodies = 4;
+    [Tooltip("Seconds for copies to ease to new spacing.")]
     [SerializeField] private float respaceDuration = 0.3f;
 
     [Header("Destroyed Body")]
+    [Tooltip("Effect played where a body is destroyed, through EffectPool.")]
     [SerializeField] private ParticleSystem destroyEffect;
+    [Tooltip("Camera shake length when a body is destroyed. 0 = no shake.")]
     [SerializeField] private float destroyShakeDuration = 0.2f;
+    [Tooltip("Camera shake strength when a body is destroyed.")]
     [SerializeField] private float destroyShakeMagnitude = 0.3f;
 
     private PlayerMovement movement;

@@ -6,39 +6,58 @@ using UnityEngine;
 public class ExhaustFlame : MonoBehaviour
 {
     [Header("References")]
+    [Tooltip("The outer flame's LineRenderer.")]
     [SerializeField] private LineRenderer core;
+    [Tooltip("The inner core's LineRenderer.")]
     [SerializeField] private LineRenderer innerCore;
 
     [Header("Speed Scaling")]
-    [SerializeField] private float minLength = 0.5f;   // at Speed01 = 0
-    [SerializeField] private float maxLength = 2.5f;   // at Speed01 = 1
-    [SerializeField] private float minWidth = 0.2f;    // at Speed01 = 1 (narrowest)
-    [SerializeField] private float maxWidth = 0.5f;    // at Speed01 = 0 (widest)
+    [Tooltip("Flame length at Speed01 0.")]
+    [SerializeField] private float minLength = 0.5f;
+    [Tooltip("Flame length at Speed01 1.")]
+    [SerializeField] private float maxLength = 2.5f;
+    [Tooltip("Head width at Speed01 1 (narrowest). Multiplies the Width curve.")]
+    [SerializeField] private float minWidth = 0.2f;
+    [Tooltip("Head width at Speed01 0 (widest). Multiplies the Width curve.")]
+    [SerializeField] private float maxWidth = 0.5f;
 
     [Header("Sputter")]
-    [SerializeField, Range(0f, 1f)] private float minFlicker = 0.15f; // at Speed01 = 1 (steadiest)
-    [SerializeField, Range(0f, 1f)] private float maxFlicker = 0.4f;  // at Speed01 = 0 (most sputter)
+    [Tooltip("How much the width wobbles at Speed01 1 (steadiest), as a fraction of the width.")]
+    [SerializeField, Range(0f, 1f)] private float minFlicker = 0.15f;
+    [Tooltip("How much the width wobbles at Speed01 0 (most sputter), as a fraction of the width.")]
+    [SerializeField, Range(0f, 1f)] private float maxFlicker = 0.4f;
+    [Tooltip("How fast the wobble changes.")]
     [SerializeField] private float flickerSpeed = 10f;
 
     [Header("Boost")]
-    [SerializeField] private float boostLengthMultiplier = 1.5f; // line length at the instant of a boost (1.5 = 50% longer)
-    [SerializeField] private float boostDuration = 0.3f;         // seconds for the stretch to ease back to normal
+    [Tooltip("Length multiplier at the instant of a forward boost (1.5 = 50% longer).")]
+    [SerializeField] private float boostLengthMultiplier = 1.5f;
+    [Tooltip("Seconds for the stretch to ease back to normal.")]
+    [SerializeField] private float boostDuration = 0.3f;
 
     [Header("Drag")]
-    [SerializeField] private float dragIntensity = 0.1f;   // seconds the tail takes to catch up; 0 = straight line
-    [SerializeField, Min(2)] private int dragSegments = 8; // points along the line; more = smoother curve
+    [Tooltip("Seconds the tail takes to catch up when the player moves. 0 = always straight.")]
+    [SerializeField] private float dragIntensity = 0.1f;
+    [Tooltip("Points along each line. More = a smoother curve.")]
+    [SerializeField, Min(2)] private int dragSegments = 8;
 
     [Header("Inner Core")]
-    [SerializeField, Range(0f, 1f)] private float innerWidthFraction = 0.35f;  // of the outer line's width
-    [SerializeField, Range(0f, 1f)] private float innerLengthFraction = 0.6f;  // of the outer line's length
-    [SerializeField, GradientUsage(true)] private Gradient innerColor;         // stays the same while invincible
+    [Tooltip("Inner core width, as a fraction of the outer flame's.")]
+    [SerializeField, Range(0f, 1f)] private float innerWidthFraction = 0.35f;
+    [Tooltip("Inner core length, as a fraction of the outer flame's.")]
+    [SerializeField, Range(0f, 1f)] private float innerLengthFraction = 0.6f;
+    [Tooltip("The inner core's gradient, head to tail. Never changes, even while invincible.")]
+    [SerializeField, GradientUsage(true)] private Gradient innerColor;
 
     [Header("Colors")]
+    [Tooltip("The outer flame's gradient, head to tail.")]
     [SerializeField, GradientUsage(true)] private Gradient normalColor;
+    [Tooltip("The outer flame's gradient while the rainbow shows.")]
     [SerializeField, GradientUsage(true)] private Gradient rainbowColor;
 
     [Header("Start")]
-    [SerializeField] private float growTime = 0.6f; // seconds for the flame to grow from nothing once the game starts
+    [Tooltip("Seconds for the flame to grow from nothing to its normal size once the game starts.")]
+    [SerializeField] private float growTime = 0.6f;
 
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;

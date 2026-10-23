@@ -5,13 +5,21 @@ using UnityEngine.UI;
 // blinks a warning sign in each corner.
 public class DangerWarning : MonoBehaviour
 {
+    [Tooltip("The sign copied into each corner. Its anchor and pivot are set by code.")]
     [SerializeField] private RectTransform warningPrefab;
+    [Tooltip("Pixels in from both edges of each corner (on the 1280 x 1024 reference).")]
     [SerializeField] private float cornerInset = 40f;
+    [Tooltip("Seconds the signs are on, then off. One full pulse lasts two intervals.")]
     [SerializeField, Min(0.01f)] private float blinkInterval = 0.4f;
+    [Tooltip("The glows' color (multiplied with the white texture).")]
     [SerializeField] private Color overlayColor = Color.red;
+    [Tooltip("How opaque the glow's edge is at the pulse's low point.")]
     [SerializeField] private float overlayAlphaMin = 0.4f;
+    [Tooltip("How opaque the glow's edge is at the pulse's high point.")]
     [SerializeField] private float overlayAlphaMax = 0.8f;
+    [Tooltip("How wide each glow is at the pulse's low point, as a fraction of the canvas width.")]
     [SerializeField] private float overlayWidthMin = 0.12f;
+    [Tooltip("How wide each glow is at the pulse's high point, as a fraction of the canvas width.")]
     [SerializeField] private float overlayWidthMax = 0.22f;
 
     private static readonly Vector2[] Corners =

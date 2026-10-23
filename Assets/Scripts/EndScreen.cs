@@ -11,18 +11,29 @@ public class EndScreen : MonoBehaviour
     [System.Serializable]
     private class ScreenParts
     {
+        [Tooltip("The panel switched on to show this screen.")]
         public GameObject panel;
+        [Tooltip("Text that gets the Apollo name.")]
         public TMP_Text hamsterNameText;
+        [Tooltip("Text that gets the stats.")]
         public TMP_Text statsText;
+        [Tooltip("Whether to add the Progress line.")]
         public bool showProgress;
+        [Tooltip("The text that shows this screen's score total.")]
         public TMP_Text scoreTotalText;
+        [Tooltip("The parent the score breakdown rows are created under.")]
         public Transform scoreRowContainer;
     }
 
+    [Tooltip("The Game Over screen's parts.")]
     [SerializeField] private ScreenParts gameOver;
+    [Tooltip("The Win screen's parts.")]
     [SerializeField] private ScreenParts win;
+    [Tooltip("The shared stats overlay opened by the Stats buttons and closed by its Close button. Optional.")]
     [SerializeField] private GameObject statsOverlay;
+    [Tooltip("The score HUD object, hidden when an end screen is shown. Optional.")]
     [SerializeField] private GameObject scoreHud;
+    [Tooltip("The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings.")]
     [SerializeField] private string menuSceneName = "Level_1";
 
     private ScoreBreakdown scoreBreakdown;

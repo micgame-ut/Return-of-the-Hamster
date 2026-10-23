@@ -5,6 +5,7 @@ using UnityEngine;
 // it tells GameManager the game is over.
 public class PlayerHealth : MonoBehaviour
 {
+    [Tooltip("How many lives the player starts with, which is the number of counted hits that ends the game.")]
     [SerializeField] private int maxLives = 3;
 
     public int MaxLives => maxLives;

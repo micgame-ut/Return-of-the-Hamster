@@ -1567,6 +1567,14 @@ MonoBehaviour:
     delayAfter: 3
     clearPoints: 150
     perfectBonus: 50
+  - pattern: {fileID: 1426364939829335137, guid: 8e29f78f1cc066a44b89c094ae01456e, type: 3}
+    delayAfter: 3
+    clearPoints: 150
+    perfectBonus: 50
+  - pattern: {fileID: 1426364939829335137, guid: 620d41c2b3494704382c44dea55b101f, type: 3}
+    delayAfter: 3
+    clearPoints: 150
+    perfectBonus: 50
   order: 1
   loop: 1
   startDelay: 2
@@ -6601,7 +6609,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -10.000015}
+  m_AnchoredPosition: {x: 0, y: -10}
   m_SizeDelta: {x: 0, y: -20.000008}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1566903243
