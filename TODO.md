@@ -173,7 +173,9 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   the Zigzag and Twist shapes (a Twist gap turns with each ring), Shift Z and Reverse Z (all and selected), and
   Distribute Selected by Depth / by Angle (Tools menu). Lane and Burst are Spiral with Angle Step 0 / Z Step 0
   (a note in the panel says so). Possible follow-up: draw the red gap wedge on a gapped Twist.
-- **Jitter** on any shape (same seed and Reroll as Random) and a **random prefab per slot** with weights.
+- **Jitter and Prefab Mix: built, not yet tested.** Jitter Angle / Jitter Z on every shape except Random (shared
+  seed and Reroll with Random), and a weighted mix of up to 4 prefabs per slot (Asteroid and Power-Up), remembered
+  between sessions. Preview spheres stay one colour. Still to do: presets and auto-naming.
 - **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
   reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
   player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing

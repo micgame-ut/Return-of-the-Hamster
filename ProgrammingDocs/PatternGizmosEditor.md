@@ -107,14 +107,21 @@ The panel, top to bottom:
    are shown. If anything changes, `SceneView.RepaintAll()` redraws the preview straight away, instead of
    waiting for the mouse to move. A change also sets `randomDirty`, so the Random layout is rebuilt. If the
    Random shape placed fewer than `Count`, a warning ("Placed 6 of 8: the minimum gap doesn't fit in the angle
-   range.") shows under the fields.
+   range.") shows under the fields. For every shape except Random, a **Jitter** block follows the shape's fields.
 5. **Add [Asteroid/Power-Up] [Shape]**, e.g. "Add Power-Up Arc". Greyed out while the selected slot is
    empty (`DisabledScope`). The same text is used as the Undo name.
-6. **Timing** and **Fairness** (see "The Timing section" and "The Fairness section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
+6. **Prefab Mix**, **Timing** and **Fairness** (see "The Prefab Mix" above, and "The Timing section" and "The Fairness section" below), then **Waves:** the **Clear After Save** checkbox, **Save Pattern As...**, the **Test Loop Delay** field,
    **Test This Pattern** and **Add to Spawner** (see "The Waves tools" below).
 7. **Snap All to Circle**, then **Rotate By** with **Rotate All** and **Mirror All**, then **Shift Z By** with
    **Shift Z All** and **Reverse Z All**, then **Delete All
    Children.**
+
+**Tooltips:** every field, button and tab in the panel has hover text. Because the panel is drawn in code, a
+plain `[Tooltip]` attribute isn't available. Each control takes a `GUIContent` (a label plus a tooltip) instead,
+for example `EditorGUILayout.FloatField(new GUIContent("Gap Width", "Width of an empty wedge…"), gapWidth)`, and
+the two tab bars use `GUIContent[]` arrays (`ShapeTabs`, `PlacingTabs`) so each tab has its own. The Prefab Mix
+weight boxes have no label of their own, so their explanation is on the prefab row's label. AGENTS.md requires a
+tooltip on every new control.
 
 `BeginChangeCheck` / `EndChangeCheck` wrap a group of fields and report whether any of them changed.
 That's how it knows when to save the prefab or redraw the preview.
@@ -139,7 +146,9 @@ the editor's GUI is ready). Its color is set every time the style is read, so it
 ### Where each asteroid goes (`ShapePosition` and `OnCircle`)
 
 `ShapePosition(i)` gives the position of asteroid number `i` (counting from 0) for the selected shape.
-**Both the preview and Add use it**, so what you see is exactly what gets placed.
+**Both the preview and Add use it**, so what you see is exactly what gets placed. It is a small wrapper: it asks
+`BasePosition(i)` (the shape's own position, the table below) and then, for every shape except Random, applies
+the jitter (see "Jitter" below).
 
 `OnCircle(angle, z)` gives a point on the orbit, using the same cos/sin placement as PlayerMovement:
 `center + (cos(angle), sin(angle)) × orbit radius`, after converting the angle from degrees to radians.
@@ -156,6 +165,29 @@ the editor's GUI is ready). Its color is set every time the style is read, so it
 
 Also, `PlacedCount` is how many objects the selected shape places. It's `count` for every shape except Random,
 which can place fewer if the gap doesn't fit. The preview and `Build` loop over `PlacedCount`.
+
+### Jitter (`Jitter`)
+
+A small random nudge on every object, so a pattern doesn't look machine-perfect. It works on every shape except
+Random (already random), is chosen when you press **Add**, and is baked in like the Random layout.
+
+| Setting | Default | What it changes |
+| --- | --- | --- |
+| Jitter Angle | 0 (degrees) | Each object is moved round the orbit by a random amount between -Jitter Angle and +Jitter Angle. 0 = off |
+| Jitter Z | 0 | Each object's depth is moved by a random amount between -Jitter Z and +Jitter Z. 0 = off |
+| Seed / Reroll | the Random tab's seed | Shown once a jitter is on. The same `randomSeed` the Random tab uses |
+
+For object `i`, `Jitter` creates `new System.Random(randomSeed)` and throws away the two numbers each earlier object
+used, then takes two numbers between -1 and +1 (`NextDouble() × 2 − 1`): the first times `jitterAngle` is how
+far to turn the position round the orbit center (`Quaternion.Euler(0, 0, turn) * offset`, like Rotate, so it
+works on a Row too), and the second times `jitterZ` is added to the depth. So the same seed always gives the
+same layout, and object 5 gets the same wobble whether Count is 6 or 60. Example: a Ring object at -90°,
+depth 0, with Jitter Angle 5 and Jitter Z 1 and numbers +0.6 and -0.5 moves to -87° at depth -0.5.
+
+Objects spawn together only if their depths match within `SameZTolerance` (0.01). A Ring at one depth is one
+step, but with Jitter Z above 0.01 every object gets its own depth and becomes its own step, arriving one
+after another. The panel says so, and the Scene labels show it. Jitter Angle alone doesn't do that. Jitter can
+also push objects together or close a gap, so use the Fairness section afterwards.
 
 ### The gap (`RingAngleWithGap` and `ArcAngleWithGap`)
 
@@ -227,11 +259,35 @@ the pattern prefab. It isn't re-rolled each time the pattern spawns in a level.
 
 For each position:
 
-1. **`PrefabUtility.InstantiatePrefab`** creates a copy of `SelectedPrefab` as a child of the pattern.
-   Unlike plain `Instantiate`, this keeps the link to the prefab, so later changes to the prefab still
+1. **`PrefabUtility.InstantiatePrefab`** creates a copy of the prefab `PickPrefab(i)` gives as a child of the
+   pattern. Unlike plain `Instantiate`, this keeps the link to the prefab, so later changes to the prefab still
    reach these copies.
 2. **Set its position.** Shape positions are in spawner space, but a child's position is relative to the
    pattern root, so the root's own offset is subtracted.
+
+### The Prefab Mix (`DrawMix`, `PickPrefab`)
+
+Each slot (Asteroid and Power-Up) can pick between up to **4 prefabs** at random, each with a **weight**, so one
+Ring can mix Linear, Destructible and Phase asteroids. Entry 1 is the slot's existing prefab field; entries 2–4
+are extra prefab slots, each with a weight box beside it. Entry 1's weight starts at 1 and the others at 0
+(unused), so nothing changes until you fill one in. The section follows the Asteroid / Power-Up tab, and it
+sits below the Add button.
+
+`PickPrefab(i)` makes the choice for object `i`:
+1. Make the list of the four options (the selected prefab and the three extras). An empty slot adds nothing.
+2. Add up the weights of the filled slots (`total`). If that's 0, use the selected prefab.
+3. Roll a number from 0 to `total`, from a seeded stream (`new System.Random(randomSeed + 4242)`, skipping the
+   numbers earlier objects used, so the pick doesn't depend on Count and is independent of the jitter's numbers).
+4. Walk down the entries: if the roll is below an entry's weight, that's the pick; otherwise subtract the weight
+   and move on.
+
+Example: weights 3, 1, 1 (total 5). A roll of 3.4 isn't below 3, so subtract 3 → 0.4, below 1, so entry 2. A roll
+of 4.5 → 1.5 → 0.5, below 1, so entry 3. A prefab with weight 0 can never win. The same seed gives the same
+picks, and **Reroll** (with Jitter on, or from the Random tab) reshuffles which object gets which type.
+
+The extra prefabs (as asset paths) and all the weights are saved in `EditorPrefs` (`SaveMix`) and read back once
+per editor session (`LoadMix`, in `OnEnable`), like the Asteroid and Power-Up prefab choices. The preview spheres
+stay one colour, so which type an object is shows only after **Add**.
 
 ### Undo
 

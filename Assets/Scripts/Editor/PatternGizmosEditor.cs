@@ -35,6 +35,18 @@ public class PatternGizmosEditor : Editor
     private enum Shape { Ring, Arc, Row, Spiral, Zigzag, Twist, Random }
     private static readonly string[] ShapeNames = { "Ring", "Arc", "Row", "Spiral", "Zigzag", "Twist", "Random" };
 
+    // The same tabs with hover text, for the tab bar.
+    private static readonly GUIContent[] ShapeTabs =
+    {
+        new GUIContent("Ring", "Evenly spaced all the way round the orbit."),
+        new GUIContent("Arc", "Spread along part of the orbit, including both ends."),
+        new GUIContent("Row", "A straight horizontal line across the orbit."),
+        new GUIContent("Spiral", "Each object steps round the orbit and deeper. Angle Step 0 = a Lane, Z Step 0 = a Burst."),
+        new GUIContent("Zigzag", "Alternates between two angles, going deeper each time."),
+        new GUIContent("Twist", "Rings stacked in depth, each turned a bit more than the last."),
+        new GUIContent("Random", "Random angles and depths, repeatable from a seed."),
+    };
+
     // EditorPrefs is a small key/value store saved on your machine (not in the
     // project). We use it to remember which asteroid prefab you picked, so you
     // don't have to re-pick it every time Unity restarts.
@@ -75,9 +87,22 @@ public class PatternGizmosEditor : Editor
     private static GameObject asteroidPrefab;
     private static GameObject powerUpPrefab;
 
+    // Prefab mix: each slot can pick between up to 4 prefabs at random. Entry 0 is the slot's own prefab field above,
+    // so only entries 1 to 3 are kept here. Entry 0's weight starts at 1, the rest at 0 (unused).
+    private static readonly GameObject[] asteroidExtras = new GameObject[3];
+    private static readonly GameObject[] powerUpExtras = new GameObject[3];
+    private static readonly float[] asteroidWeights = { 1f, 0f, 0f, 0f };
+    private static readonly float[] powerUpWeights = { 1f, 0f, 0f, 0f };
+    private static bool mixLoaded; // true once the saved mix has been read
+
     // Which slot the Add button places from.
     private enum Placing { Asteroid, PowerUp }
     private static readonly string[] PlacingNames = { "Asteroid", "Power-Up" };
+    private static readonly GUIContent[] PlacingTabs =
+    {
+        new GUIContent("Asteroid", "Which of the two prefabs Add places. Also sets the preview colour (green or yellow)."),
+        new GUIContent("Power-Up", "Which of the two prefabs Add places. Also sets the preview colour (green or yellow)."),
+    };
     private static Placing placing = Placing.Asteroid;
 
     private static GameObject SelectedPrefab => placing == Placing.Asteroid ? asteroidPrefab : powerUpPrefab;
@@ -119,6 +144,10 @@ public class PatternGizmosEditor : Editor
     private static int twistRings = 5;
     private static float twistZStep = 3f;
     private static float twistAngle = 15f; // degrees each ring is turned more than the one before
+
+    // Jitter: a small random nudge on every object (all shapes except Random). 0 = off. Uses randomSeed.
+    private static float jitterAngle; // degrees either way round the orbit
+    private static float jitterZ;     // depth either way
 
     // Wave tools: Save Pattern As, Test This Pattern, Add to Spawner.
     private static bool clearAfterSave = true; // Save Pattern As empties the open pattern afterwards
@@ -188,6 +217,13 @@ public class PatternGizmosEditor : Editor
         if (powerUpPrefab == null)
             powerUpPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 EditorPrefs.GetString(PowerUpPrefKey, DefaultPowerUpPath));
+
+        if (!mixLoaded)
+        {
+            LoadMix("Asteroid", asteroidExtras, asteroidWeights);
+            LoadMix("PowerUp", powerUpExtras, powerUpWeights);
+            mixLoaded = true;
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -214,13 +250,13 @@ public class PatternGizmosEditor : Editor
         // us whether any of them changed this frame.
         EditorGUI.BeginChangeCheck();
         asteroidPrefab = (GameObject)EditorGUILayout.ObjectField(
-            "Asteroid Prefab", asteroidPrefab, typeof(GameObject), false); // false = assets only, no scene objects
+            new GUIContent("Asteroid Prefab", "The asteroid prefab Add places when the Asteroid tab is selected. With a Prefab Mix, this is entry 1."), asteroidPrefab, typeof(GameObject), false); // false = assets only, no scene objects
         if (EditorGUI.EndChangeCheck())
             EditorPrefs.SetString(PrefabPrefKey, asteroidPrefab != null ? AssetDatabase.GetAssetPath(asteroidPrefab) : "");
 
         EditorGUI.BeginChangeCheck();
         powerUpPrefab = (GameObject)EditorGUILayout.ObjectField(
-            "Power-Up Prefab", powerUpPrefab, typeof(GameObject), false);
+            new GUIContent("Power-Up Prefab", "The power-up prefab Add places when the Power-Up tab is selected."), powerUpPrefab, typeof(GameObject), false);
         if (EditorGUI.EndChangeCheck())
             EditorPrefs.SetString(PowerUpPrefKey, powerUpPrefab != null ? AssetDatabase.GetAssetPath(powerUpPrefab) : "");
 
@@ -230,66 +266,86 @@ public class PatternGizmosEditor : Editor
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.Space();
-        placing = (Placing)GUILayout.Toolbar((int)placing, PlacingNames); // what Add places
-        shape = (Shape)GUILayout.Toolbar((int)shape, ShapeNames); // the tab bar
+        placing = (Placing)GUILayout.Toolbar((int)placing, PlacingTabs); // what Add places
+        shape = (Shape)GUILayout.Toolbar((int)shape, ShapeTabs); // the tab bar
 
-        z = EditorGUILayout.FloatField("Z", z);
-        count = Mathf.Max(1, EditorGUILayout.IntField("Count", count)); // never fewer than 1
-        previewSize = Mathf.Max(0.05f, EditorGUILayout.FloatField("Preview Size", previewSize));
+        z = EditorGUILayout.FloatField(new GUIContent("Z", "Depth in spawner space. Lower Z spawns first."), z);
+        count = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("Count", "How many objects to place (at least 1). In Twist, the number in each ring."), count)); // never fewer than 1
+        previewSize = Mathf.Max(0.05f, EditorGUILayout.FloatField(new GUIContent("Preview Size", "Size of the preview spheres. Only affects the preview."), previewSize));
 
         // Only show the settings for the selected shape.
         switch (shape)
         {
             case Shape.Ring:
-                ringStartAngle = EditorGUILayout.FloatField("Start Angle", ringStartAngle);
+                ringStartAngle = EditorGUILayout.FloatField(new GUIContent("Start Angle", "The angle of the first object, in degrees. 0 = right, 90 = top, -90 = bottom. Ignored while Gap Width is above 0."), ringStartAngle);
                 DrawGapFields();
                 if (gapWidth > 0f)
                     EditorGUILayout.HelpBox("Start Angle is ignored while Gap Width is above 0: the gap sets where the ring begins.", MessageType.None);
                 break;
             case Shape.Arc:
-                arcFrom = EditorGUILayout.FloatField("From Angle", arcFrom);
-                arcTo = EditorGUILayout.FloatField("To Angle", arcTo);
+                arcFrom = EditorGUILayout.FloatField(new GUIContent("From Angle", "Where the arc starts, in degrees. The first object lands exactly on it."), arcFrom);
+                arcTo = EditorGUILayout.FloatField(new GUIContent("To Angle", "Where the arc ends, in degrees. The last object lands exactly on it."), arcTo);
                 DrawGapFields();
                 if (gapWidth > 0f && (gapCenter + gapWidth / 2f < Mathf.Min(arcFrom, arcTo) || gapCenter - gapWidth / 2f > Mathf.Max(arcFrom, arcTo)))
                     EditorGUILayout.HelpBox("The gap is outside the arc, so it has no effect.", MessageType.Warning);
                 break;
             case Shape.Row:
-                rowYOffset = EditorGUILayout.FloatField("Height Above Bottom", rowYOffset);
-                rowSpacing = EditorGUILayout.FloatField("Spacing", rowSpacing);
+                rowYOffset = EditorGUILayout.FloatField(new GUIContent("Height Above Bottom", "Height of the row above the bottom of the orbit, where the player starts. 0 = level with the bottom."), rowYOffset);
+                rowSpacing = EditorGUILayout.FloatField(new GUIContent("Spacing", "Distance between neighbouring objects in the row."), rowSpacing);
                 break;
             case Shape.Spiral:
-                spiralStartAngle = EditorGUILayout.FloatField("Start Angle", spiralStartAngle);
-                spiralAngleStep = EditorGUILayout.FloatField("Angle Step", spiralAngleStep);
-                spiralZStep = EditorGUILayout.FloatField("Z Step", spiralZStep);
+                spiralStartAngle = EditorGUILayout.FloatField(new GUIContent("Start Angle", "The angle of the first object, in degrees. 0 = right, 90 = top, -90 = bottom."), spiralStartAngle);
+                spiralAngleStep = EditorGUILayout.FloatField(new GUIContent("Angle Step", "Degrees each object turns round the orbit from the one before. 0 = a Lane (the same angle, going deeper)."), spiralAngleStep);
+                spiralZStep = EditorGUILayout.FloatField(new GUIContent("Z Step", "Depth each object goes back from the one before. 0 = a Burst (all at the same depth)."), spiralZStep);
                 EditorGUILayout.HelpBox("Angle Step 0 = a Lane (same angle, going deeper). Z Step 0 = a Burst (same depth, spaced by Angle Step).", MessageType.None);
                 break;
             case Shape.Zigzag:
-                zigzagAngleA = EditorGUILayout.FloatField("Angle A", zigzagAngleA);
-                zigzagAngleB = EditorGUILayout.FloatField("Angle B", zigzagAngleB);
-                zigzagZStep = EditorGUILayout.FloatField("Z Step", zigzagZStep);
+                zigzagAngleA = EditorGUILayout.FloatField(new GUIContent("Angle A", "The angle of the 1st, 3rd, 5th... objects, in degrees."), zigzagAngleA);
+                zigzagAngleB = EditorGUILayout.FloatField(new GUIContent("Angle B", "The angle of the 2nd, 4th, 6th... objects, in degrees."), zigzagAngleB);
+                zigzagZStep = EditorGUILayout.FloatField(new GUIContent("Z Step", "Depth each object goes back from the one before."), zigzagZStep);
                 break;
             case Shape.Twist:
                 EditorGUILayout.HelpBox("Count is the number of objects in each ring.", MessageType.None);
-                twistRings = Mathf.Max(1, EditorGUILayout.IntField("Rings", twistRings));
-                twistZStep = EditorGUILayout.FloatField("Z Step", twistZStep);
-                twistAngle = EditorGUILayout.FloatField("Twist Per Ring", twistAngle);
-                ringStartAngle = EditorGUILayout.FloatField("Start Angle", ringStartAngle);
+                twistRings = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("Rings", "How many rings to stack."), twistRings));
+                twistZStep = EditorGUILayout.FloatField(new GUIContent("Z Step", "Depth between one ring and the next."), twistZStep);
+                twistAngle = EditorGUILayout.FloatField(new GUIContent("Twist Per Ring", "Degrees each ring is turned more than the one before."), twistAngle);
+                ringStartAngle = EditorGUILayout.FloatField(new GUIContent("Start Angle", "The angle of the first object, in degrees. 0 = right, 90 = top, -90 = bottom. Ignored while Gap Width is above 0."), ringStartAngle);
                 DrawGapFields();
                 if (gapWidth > 0f)
                     EditorGUILayout.HelpBox("Start Angle is ignored while Gap Width is above 0: the gap sets where each ring begins, and it turns with the ring.", MessageType.None);
                 break;
             case Shape.Random:
-                randomFromAngle = EditorGUILayout.FloatField("From Angle", randomFromAngle);
-                randomToAngle = EditorGUILayout.FloatField("To Angle", randomToAngle);
-                randomZRange = EditorGUILayout.FloatField("Z Range", randomZRange);
-                randomMinGap = Mathf.Max(0f, EditorGUILayout.FloatField("Min Gap", randomMinGap));
-                randomSeed = EditorGUILayout.IntField("Seed", randomSeed);
-                if (GUILayout.Button("Reroll"))
+                randomFromAngle = EditorGUILayout.FloatField(new GUIContent("From Angle", "The start of the range random angles fall in, in degrees. -180 to 180 is the whole circle."), randomFromAngle);
+                randomToAngle = EditorGUILayout.FloatField(new GUIContent("To Angle", "The end of the range random angles fall in, in degrees."), randomToAngle);
+                randomZRange = EditorGUILayout.FloatField(new GUIContent("Z Range", "Each object's depth is Z plus a random amount up to this. 0 = all at the same depth."), randomZRange);
+                randomMinGap = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Min Gap", "The least angle between any two objects, in degrees."), randomMinGap));
+                randomSeed = EditorGUILayout.IntField(new GUIContent("Seed", "The same seed always gives the same layout. Shared by Random, Jitter and the Prefab Mix."), randomSeed);
+                if (GUILayout.Button(new GUIContent("Reroll", "Picks a new seed, for a different layout.")))
                 {
                     randomSeed = Environment.TickCount; // a different number each click
                     GUI.changed = true;                 // so the change check below sees it
                 }
                 break;
+        }
+
+        // Jitter works on every shape except Random, which is already random.
+        if (shape != Shape.Random)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Jitter", EditorStyles.miniBoldLabel);
+            jitterAngle = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Jitter Angle", "Each object is moved round the orbit by a random amount up to this many degrees either way. 0 = off."), jitterAngle));
+            jitterZ = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Jitter Z", "Each object's depth is moved by a random amount up to this either way. 0 = off. Above 0.01, each object becomes its own step."), jitterZ));
+            if (jitterAngle > 0f || jitterZ > 0f)
+            {
+                randomSeed = EditorGUILayout.IntField(new GUIContent("Seed", "The same seed always gives the same layout. Shared by Random, Jitter and the Prefab Mix."), randomSeed);
+                if (GUILayout.Button(new GUIContent("Reroll", "Picks a new seed, for a different layout.")))
+                {
+                    randomSeed = Environment.TickCount; // a different number each click
+                    GUI.changed = true;                 // so the change check below sees it
+                }
+                if (jitterZ > ObjectSpawner.SameZTolerance)
+                    EditorGUILayout.HelpBox("Jitter Z gives each object its own depth, so each becomes its own step and they arrive one after another.", MessageType.None);
+            }
         }
 
         if (EditorGUI.EndChangeCheck())
@@ -306,25 +362,26 @@ public class PatternGizmosEditor : Editor
         using (new EditorGUI.DisabledScope(SelectedPrefab == null))
         {
             string addName = $"Add {PlacingNames[(int)placing]} {ShapeNames[(int)shape]}";
-            if (GUILayout.Button(addName))
+            if (GUILayout.Button(new GUIContent(addName, "Places the previewed objects into the pattern, in one undo step.")))
                 Build(addName);
         }
 
+        DrawMix();
         DrawTiming((PatternGizmos)target);
         DrawFairness((PatternGizmos)target);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Waves", EditorStyles.miniBoldLabel);
-        clearAfterSave = EditorGUILayout.Toggle("Clear After Save", clearAfterSave);
-        if (GUILayout.Button("Save Pattern As...")) SavePatternAs();
-        testLoopDelay = Mathf.Max(0f, EditorGUILayout.FloatField("Test Loop Delay", testLoopDelay));
-        if (GUILayout.Button("Test This Pattern")) TestPattern();
-        if (GUILayout.Button("Add to Spawner")) AddToSpawner();
+        clearAfterSave = EditorGUILayout.Toggle(new GUIContent("Clear After Save", "Empties the open pattern after Save Pattern As, ready for the next one."), clearAfterSave);
+        if (GUILayout.Button(new GUIContent("Save Pattern As...", "Saves a copy of the open pattern as a new prefab."))) SavePatternAs();
+        testLoopDelay = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Test Loop Delay", "Seconds to wait between test runs, after everything has flown past."), testLoopDelay));
+        if (GUILayout.Button(new GUIContent("Test This Pattern", "Opens the test scene and plays only this pattern on a loop, with full control of the player. Returns you here when you stop."))) TestPattern();
+        if (GUILayout.Button(new GUIContent("Add to Spawner", "Adds the open pattern as a new wave on the ObjectSpawner in the open scene."))) AddToSpawner();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Existing Children", EditorStyles.miniBoldLabel);
 
-        if (GUILayout.Button("Snap All to Circle"))
+        if (GUILayout.Button(new GUIContent("Snap All to Circle", "Moves every object straight in or out from the orbit centre until it sits on the orbit.")))
         {
             var pattern = (PatternGizmos)target;
             var children = new Transform[pattern.transform.childCount];
@@ -333,20 +390,20 @@ public class PatternGizmosEditor : Editor
             Snap(pattern, children, "Snap All to Circle");
         }
 
-        rotateBy = EditorGUILayout.FloatField("Rotate By", rotateBy);
+        rotateBy = EditorGUILayout.FloatField(new GUIContent("Rotate By", "Degrees to turn, for Rotate All and Rotate Selected. Positive = counter-clockwise."), rotateBy);
         var openPattern = (PatternGizmos)target;
-        if (GUILayout.Button("Rotate All"))
+        if (GUILayout.Button(new GUIContent("Rotate All", "Turns every object round the orbit centre by Rotate By.")))
             RotateChildren(openPattern, ChildrenOf(openPattern.transform));
-        if (GUILayout.Button("Mirror All"))
+        if (GUILayout.Button(new GUIContent("Mirror All", "Flips every object left-right across the orbit centre.")))
             MirrorChildren(openPattern, ChildrenOf(openPattern.transform));
 
-        shiftZBy = EditorGUILayout.FloatField("Shift Z By", shiftZBy);
-        if (GUILayout.Button("Shift Z All"))
+        shiftZBy = EditorGUILayout.FloatField(new GUIContent("Shift Z By", "Depth added by Shift Z. Positive = further away."), shiftZBy);
+        if (GUILayout.Button(new GUIContent("Shift Z All", "Moves every object's depth by Shift Z By.")))
             ShiftChildrenZ(ChildrenOf(openPattern.transform));
-        if (GUILayout.Button("Reverse Z All"))
+        if (GUILayout.Button(new GUIContent("Reverse Z All", "Flips the depth order, so the nearest becomes the furthest.")))
             ReverseChildrenZ(ChildrenOf(openPattern.transform));
 
-        if (GUILayout.Button("Delete All Children"))
+        if (GUILayout.Button(new GUIContent("Delete All Children", "Deletes every object in the pattern (it asks first). Undo brings them back.")))
             DeleteAll();
     }
 
@@ -359,6 +416,24 @@ public class PatternGizmosEditor : Editor
 
         using var movementObject = new SerializedObject(movement);
         return movementObject.FindProperty("maxSpeed").floatValue;
+    }
+
+    // Saves a slot's extra prefabs (as asset paths) and weights, so they survive restarts. `name` is "Asteroid" or "PowerUp".
+    private static void SaveMix(string name, GameObject[] extras, float[] weights)
+    {
+        for (int n = 0; n < extras.Length; n++)
+            EditorPrefs.SetString($"PatternBuilder.{name}Extra{n}", extras[n] != null ? AssetDatabase.GetAssetPath(extras[n]) : "");
+        for (int n = 0; n < weights.Length; n++)
+            EditorPrefs.SetFloat($"PatternBuilder.{name}Weight{n}", weights[n]);
+    }
+
+    // Reads them back. Entry 0's weight defaults to 1 and the others to 0.
+    private static void LoadMix(string name, GameObject[] extras, float[] weights)
+    {
+        for (int n = 0; n < extras.Length; n++)
+            extras[n] = AssetDatabase.LoadAssetAtPath<GameObject>(EditorPrefs.GetString($"PatternBuilder.{name}Extra{n}", ""));
+        for (int n = 0; n < weights.Length; n++)
+            weights[n] = EditorPrefs.GetFloat($"PatternBuilder.{name}Weight{n}", n == 0 ? 1f : 0f);
     }
 
     // One row of the Timing table: a label, then the value at each of the three speeds.
@@ -394,7 +469,7 @@ public class PatternGizmosEditor : Editor
 
         float maxSpeed = PlayerMaxSpeed();
         EditorGUI.BeginChangeCheck();
-        timingSpeed = EditorGUILayout.Slider("Speed", Mathf.Clamp(timingSpeed, 0f, maxSpeed), 0f, maxSpeed);
+        timingSpeed = EditorGUILayout.Slider(new GUIContent("Speed", "The player Speed the Timing table's middle column and the Scene labels use, from 0 to the player's top speed."),Mathf.Clamp(timingSpeed, 0f, maxSpeed), 0f, maxSpeed);
         if (EditorGUI.EndChangeCheck()) SceneView.RepaintAll();
         PatternGizmos.PreviewSpeed = timingSpeed; // the Scene view labels use this too
 
@@ -419,9 +494,9 @@ public class PatternGizmosEditor : Editor
     {
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Fairness", EditorStyles.miniBoldLabel);
-        playerRadius = Mathf.Max(0f, EditorGUILayout.FloatField("Player Radius", playerRadius));
-        laneMargin = Mathf.Max(0f, EditorGUILayout.FloatField("Lane Margin (degrees)", laneMargin));
-        playerAngularSpeed = Mathf.Max(0f, EditorGUILayout.FloatField("Player Move Speed (deg/s)", playerAngularSpeed));
+        playerRadius = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Player Radius", "The player's hitbox radius. 0.3 is the shield's, the biggest, so it's the worst case."), playerRadius));
+        laneMargin = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Lane Margin (degrees)", "How wide a free stretch must be to count as a lane: room for the player's centre to wiggle in."), laneMargin));
+        playerAngularSpeed = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Player Move Speed (deg/s)", "How fast the player is assumed to move round the orbit. Sets whether they can reach the next gap in time."), playerAngularSpeed));
 
         if (pattern.transform.childCount == 0)
         {
@@ -449,8 +524,35 @@ public class PatternGizmosEditor : Editor
     // Gap Width and Gap Center, shared by Ring and Arc.
     private static void DrawGapFields()
     {
-        gapWidth = Mathf.Clamp(EditorGUILayout.FloatField("Gap Width", gapWidth), 0f, 359f);
-        gapCenter = EditorGUILayout.FloatField("Gap Center", gapCenter);
+        gapWidth = Mathf.Clamp(EditorGUILayout.FloatField(new GUIContent("Gap Width", "Width of an empty wedge on a Ring, Arc or Twist, in degrees, so there's always a lane to fly through. 0 = off."), gapWidth), 0f, 359f);
+        gapCenter = EditorGUILayout.FloatField(new GUIContent("Gap Center", "The middle of the gap, in degrees. -90 = the bottom, where the player starts."), gapCenter);
+    }
+
+    // The Prefab Mix section for the selected slot: the prefab field above is entry 1, then up to 3 extras, each with a weight.
+    // Each placed object picks one at random, in proportion to the weights.
+    private static void DrawMix()
+    {
+        bool asteroid = placing == Placing.Asteroid;
+        GameObject[] extras = asteroid ? asteroidExtras : powerUpExtras;
+        float[] weights = asteroid ? asteroidWeights : powerUpWeights;
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField($"Prefab Mix ({PlacingNames[(int)placing]})", EditorStyles.miniBoldLabel);
+
+        EditorGUI.BeginChangeCheck();
+        weights[0] = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Weight of the prefab above", "How likely the prefab above is picked, compared with the others. 0 = never."), weights[0]));
+        for (int n = 0; n < extras.Length; n++)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                extras[n] = (GameObject)EditorGUILayout.ObjectField(new GUIContent($"Prefab {n + 2}", "An extra prefab to mix in. The box on its right is its weight (its relative chance); an empty slot or weight 0 is never picked."), extras[n], typeof(GameObject), false);
+                weights[n + 1] = Mathf.Max(0f, EditorGUILayout.FloatField(weights[n + 1], GUILayout.Width(50)));
+            }
+        }
+        if (EditorGUI.EndChangeCheck())
+            SaveMix(asteroid ? "Asteroid" : "PowerUp", extras, weights);
+
+        EditorGUILayout.HelpBox("Each object picks one prefab at random, in proportion to the weights. A prefab with no weight, or an empty slot, is never picked. With only the first weight above 0, nothing changes.", MessageType.None);
     }
 
     // -----------------------------------------------------------------------
@@ -544,6 +646,13 @@ public class PatternGizmosEditor : Editor
     // space. Both the preview and Build call this, so they always agree.
     private static Vector3 ShapePosition(int i)
     {
+        Vector3 p = BasePosition(i);
+        return shape == Shape.Random ? p : Jitter(p, i);
+    }
+
+    // The shape's own position for object i, before any jitter.
+    private static Vector3 BasePosition(int i)
+    {
         switch (shape)
         {
             case Shape.Ring:
@@ -597,6 +706,26 @@ public class PatternGizmosEditor : Editor
             PatternGizmos.OrbitCenter.x + Mathf.Cos(a) * r,
             PatternGizmos.OrbitCenter.y + Mathf.Sin(a) * r,
             z);
+    }
+
+    // Nudges a position by a small random amount round the orbit and in depth. The same seed and object number
+    // always give the same nudge, and an object's nudge doesn't change when Count does.
+    private static Vector3 Jitter(Vector3 p, int i)
+    {
+        if (jitterAngle <= 0f && jitterZ <= 0f) return p;
+
+        var rng = new System.Random(randomSeed);
+        for (int k = 0; k < i; k++)
+        {
+            rng.NextDouble(); // skip the numbers the earlier objects used
+            rng.NextDouble();
+        }
+        float turn = ((float)rng.NextDouble() * 2f - 1f) * jitterAngle;
+        float deeper = ((float)rng.NextDouble() * 2f - 1f) * jitterZ;
+
+        Vector2 center = PatternGizmos.OrbitCenter;
+        Vector2 turned = (Vector2)(Quaternion.Euler(0f, 0f, turn) * ((Vector2)p - center));
+        return new Vector3(center.x + turned.x, center.y + turned.y, p.z + deeper);
     }
 
     // Ring with a gap: the objects fill the circle outside the gap, first and last at the gap's two edges.
@@ -684,6 +813,37 @@ public class PatternGizmosEditor : Editor
     // with a single Ctrl+Z instead of one object at a time.
     // -----------------------------------------------------------------------
 
+    // The prefab object number i is made from: a random pick weighted by the mix, or just the selected prefab if
+    // nothing else is weighted. The same seed and object number always give the same pick.
+    private static GameObject PickPrefab(int i)
+    {
+        bool asteroid = placing == Placing.Asteroid;
+        GameObject[] extras = asteroid ? asteroidExtras : powerUpExtras;
+        float[] weights = asteroid ? asteroidWeights : powerUpWeights;
+
+        // The prefab field is entry 0, then the extras. An empty slot is never picked.
+        GameObject[] options = { SelectedPrefab, extras[0], extras[1], extras[2] };
+        float total = 0f;
+        for (int n = 0; n < options.Length; n++)
+            if (options[n] != null) total += weights[n];
+        if (total <= 0f) return SelectedPrefab;
+
+        // The pick's own stream of random numbers (not the jitter's), skipping the numbers earlier objects used.
+        var rng = new System.Random(randomSeed + 4242);
+        for (int k = 0; k < i; k++)
+            rng.NextDouble();
+        float roll = (float)rng.NextDouble() * total;
+
+        // Walk down the entries until the roll falls inside one's share.
+        for (int n = 0; n < options.Length; n++)
+        {
+            if (options[n] == null) continue;
+            if (roll < weights[n]) return options[n];
+            roll -= weights[n];
+        }
+        return SelectedPrefab; // only reached when the roll lands exactly on the total
+    }
+
     private void Build(string undoName)
     {
         // "target" is the component this inspector is showing.
@@ -700,7 +860,7 @@ public class PatternGizmosEditor : Editor
         {
             // InstantiatePrefab (unlike plain Instantiate) keeps the link to the
             // prefab, so later edits to it still apply to these copies.
-            var placed = (GameObject)PrefabUtility.InstantiatePrefab(SelectedPrefab, pattern.transform);
+            var placed = (GameObject)PrefabUtility.InstantiatePrefab(PickPrefab(i), pattern.transform);
 
             // Tells Undo "this object was just created"; undoing deletes it.
             Undo.RegisterCreatedObjectUndo(placed, undoName);

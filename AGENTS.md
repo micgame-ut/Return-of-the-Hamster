@@ -103,6 +103,12 @@ and nothing can run in Play mode until it's fixed.
   already approved (the comment on that field, or its row in `ProgrammingDocs/`) can be added without
   asking per script. Replacing that field's `//` comment with the tooltip is part of the same clean-up.
   A tooltip with new information, and any other comment change, still needs approval as above.
+- **Every Inspector field gets a tooltip.** When a script adds a field that shows in the Inspector (a
+  `[SerializeField]` or `public` field, a ScriptableObject field, or a field or button in the pattern builder's
+  panel), it gets a tooltip in the same change, in plain words: what it changes, and its unit or range if it has
+  one. Show the tooltip with the snippet, like a comment. In the builder's panel, which is drawn in code, use a
+  `GUIContent` with the tooltip. Fields that don't show in the Inspector (private working values, internal data
+  types) don't need one.
 
 ## 5. New features: ask for the variables first
 
