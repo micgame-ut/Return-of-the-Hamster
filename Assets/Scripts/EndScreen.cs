@@ -101,6 +101,8 @@ public class EndScreen : MonoBehaviour
         // The menu scene has no GameManager to unfreeze time, so do it here.
         Time.timeScale = 1f;
         SceneManager.LoadScene(menuSceneName);
+
+        MusicManager.Instance.GoToTitle();
     }
 
     public void Quit()

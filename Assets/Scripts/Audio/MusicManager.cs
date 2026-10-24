@@ -187,6 +187,13 @@ public class MusicManager : MonoBehaviour
         RestartRoutine(ref titleFadeRoutine, FadeOutAndStop(titleSource, titleFadeOutTime));
     }
 
+    /// <summary>Leave the level: fade out level music and bring the title music back.</summary>
+    public void GoToTitle()
+    {
+        StopLevelMusic();     // fades out (also cancels any speed ramps)
+        PlayTitleMusic();     // also clears GameStarted
+    }
+
     /// <summary>Hook this to your Credits button: stops title music and begins level music.</summary>
     public void StartGame()
     {
