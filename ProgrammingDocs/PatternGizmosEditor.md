@@ -101,7 +101,8 @@ value = EditorGUILayout.SomeField("Label", value);
 The panel, top to bottom:
 
 1. **`DrawDefaultInspector()`** draws PatternGizmos' own fields (the ring colors) as normal.
-2. A short help box explaining angles, Z, and the preview colors.
+2. A short help box explaining angles, Z, and the preview colors, then the **Presets** section (see "Presets"
+   below).
 3. **Asteroid Prefab** and **Power-Up Prefab.** When either changes, its new path is saved to EditorPrefs.
 4. **The Asteroid / Power-Up tabs, then the shape tabs and settings.** Only the selected shape's settings
    are shown. If anything changes, `SceneView.RepaintAll()` redraws the preview straight away, instead of
@@ -366,6 +367,66 @@ stay). One undo step.
   `lowest angle + 360 × k / n`. Each keeps its depth and its distance, so a child off the circle stays at its own
   distance. 4 objects with the lowest at -90° become -90°, 0°, 90°, 180°. It needs at least 2 children.
 
+### Presets (`DrawPresets`)
+
+A preset is a snapshot of the builder's **placement settings**, saved as a small readable `.json` file in
+`Assets/Scripts/Editor/PatternPresets/` and loaded back by name. The files are in the project, so they travel with
+git and a preset someone else commits appears in your dropdown.
+
+**What's in a preset** (the `Preset` class, one field per setting): the Asteroid / Power-Up tab, the shape, Z,
+Count, every shape's own settings (Ring, Arc, Row, Spiral, Zigzag, Twist, Random), the Gap, Jitter and the seed,
+and the Prefab Mix: the two main prefabs and the extras as **asset paths**, plus all the weights. **Not in it:**
+Preview Size, Rotate By, Shift Z By, the naming checkbox, Timing, Fairness and the Waves/test settings.
+
+**The section** (at the top of the panel, under the help box):
+- **Preset** dropdown (`PresetNames`): the `.json` files in the folder, without the extension.
+- **Load**: reads the file and puts every value into the builder (`ApplyPreset`), reloading the prefabs from their
+  paths and saving the prefab choices and the mix again so they survive a restart. It copies the preset's name into
+  the name box, so saving again updates it. It doesn't touch objects already in the pattern, and it can't be undone
+  (it only changes the builder's settings).
+- **Delete Preset**: asks first, then deletes the file (`AssetDatabase.DeleteAsset`, so the `.meta` goes too).
+- **Name** box and **Save Preset**: greyed out while the name is empty. If a preset with that name exists, it asks
+  before overwriting.
+
+**How it works.** `CapturePreset` copies each static setting into a `Preset`. `SavePreset` turns it into text
+with `JsonUtility.ToJson(…, true)` (indented) and writes `<name>.json` (creating the folder the first time), then
+`AssetDatabase.Refresh()` so Unity notices it. `LoadPreset` reads the text, `JsonUtility.FromJson<Preset>`
+turns it back, and `ApplyPreset` copies it in. `PresetPath` replaces characters Windows doesn't allow in a file
+name (`/`, `:` and so on) with `_`. A prefab path that no longer exists, or a field missing from an older file,
+loads as an empty slot (weight 1 for the first entry, 0 for the rest) and counts of at least 1 are enforced.
+
+Example: a preset called `Gap Ring 12` is a file like
+`{ "shape": 0, "count": 12, "z": 0, "gapWidth": 60, "gapCenter": -90, "jitterAngle": 0, "asteroidPrefab": "Assets/Prefabs/Asteroid Types/Linear.prefab", … }`.
+Loading it sets Ring, Count 12 and a 60° gap at the bottom, and the preview updates.
+
+**`GUIUtility.ExitGUI()`** is called after Load and Delete. The panel is drawn in two passes that must draw the
+same controls, and loading changes what is drawn below (the shape's fields). `ExitGUI` stops the current pass
+cleanly and Unity redraws at once with the new values. It's the standard fix for a button that changes what the
+panel shows.
+
+### Naming the children (`NameChildren`)
+
+Names every child of the pattern `Step N - Prefab K` and puts them in step order in the Hierarchy, so the list
+reads like the Scene labels (`Step 3 (4, 1 power-up)`). It runs after each **Add** when **Name Children After Add**
+is ticked (the default), and the **Name Children** button does it on demand, for patterns built earlier.
+
+1. `Undo.RegisterFullObjectHierarchyUndo` records the pattern and all its children (names and order) first, so
+   one Ctrl+Z restores them. When it runs from **Add**, it is inside Add's undo group, so Add and the renaming
+   undo together.
+2. For each step from `GetSteps()` and each child in it: the name is `Step {step number} - {prefab name} {k}`,
+   where `k` counts the objects within the step from 1 (it is just the order the objects already have, not
+   sorted by angle). The prefab name comes from `PrefabUtility.GetCorrespondingObjectFromSource` (the prefab
+   asset the object was made from), or the object's current name if it isn't a prefab instance. That avoids
+   names like `Linear (3)` and means a Prefab Mix reads properly.
+3. `SetSiblingIndex(sibling++)` puts each child at the next place in the Hierarchy, so step 1's objects come
+   first, then step 2's, and so on.
+
+Example: a Ring of 4 Linear asteroids at depth 0, then a Linear and a Health power-up at depth 3, becomes
+`Step 1 - Linear 1` to `Step 1 - Linear 4`, then `Step 2 - Linear 1` and `Step 2 - Health PowerUp 2`.
+
+Running it again gives the same names, because each name is built from the prefab's name, not from the old name.
+Nothing in the game looks pattern children up by name, so renaming is safe. The names are only for reading.
+
 ### Deleting (`DeleteAll` and `ClearChildren`)
 
 `DeleteAll` asks for confirmation with a popup, then calls `ClearChildren`, which deletes every child of the
@@ -536,6 +597,10 @@ The game's scripts only read the test request, and only inside `#if UNITY_EDITOR
 - **The Timing numbers assume a steady `Speed` and the template in `Assets/Resources/`.** Real spacing
   changes if the player speeds up or slows down in flight, so treat them as the design target. They describe
   the children already in the prefab, not the Add preview.
+- **A preset stores prefab asset paths.** Move or rename a prefab and that slot loads empty until you save the
+  preset again. The same goes for the default prefab paths.
+- **Presets don't store Preview Size, the edit settings, Timing, Fairness or the Waves settings.** Those stay as
+  they are when you load one.
 - **The red gap wedge is only drawn for Ring and Arc,** not Twist, even though a gapped Twist leaves the gap.
 - **In Twist, `Count` is the number per ring,** not the total. The total is `Count × Rings`.
 - **A Mirrored Wave asteroid isn't an exact mirror image.** Its position is flipped, but it always swings

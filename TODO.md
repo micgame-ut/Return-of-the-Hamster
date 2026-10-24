@@ -175,7 +175,12 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   (a note in the panel says so). Possible follow-up: draw the red gap wedge on a gapped Twist.
 - **Jitter and Prefab Mix: built, not yet tested.** Jitter Angle / Jitter Z on every shape except Random (shared
   seed and Reroll with Random), and a weighted mix of up to 4 prefabs per slot (Asteroid and Power-Up), remembered
-  between sessions. Preview spheres stay one colour. Still to do: presets and auto-naming.
+  between sessions. Preview spheres stay one colour.
+- **Auto-naming: built, not yet tested.** Children are named `Step N - Prefab K` and put in step order, after each
+  Add (a checkbox, on by default) or with the **Name Children** button.
+- **Presets: built, not yet tested.** A Presets section at the top of the builder saves the placement settings to
+  `Assets/Scripts/Editor/PatternPresets/<name>.json` and loads them back by name (dropdown, Load, Name + Save
+  Preset, Delete Preset). The builder's "ideas" list is otherwise done; what's left is the Wave sweep preview.
 - **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
   reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
   player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing

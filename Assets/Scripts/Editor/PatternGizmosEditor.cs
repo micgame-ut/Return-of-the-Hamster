@@ -21,6 +21,7 @@
 // ---------------------------------------------------------------------------
 
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -154,6 +155,9 @@ public class PatternGizmosEditor : Editor
     private static float testLoopDelay = 3f;   // seconds between test runs
     private static float rotateBy = 30f;       // degrees; positive = counter-clockwise
     private static float shiftZBy = 5f;        // depth added by Shift Z; positive = further away
+    private static bool autoNameOnAdd = true;  // rename every child "Step N - Prefab K" after each Add
+    private static int selectedPreset;         // which preset the dropdown shows
+    private static string presetName = "";     // what the name box holds
     private static float timingSpeed = 50f;    // player Speed the middle Timing column and the Scene labels use
     private static float playerRadius = 0.3f;      // the player's hitbox radius; 0.3 is the shield's, the biggest
     private static float laneMargin = 5f;          // degrees of room a gap needs, on top of the bare minimum
@@ -207,6 +211,133 @@ public class PatternGizmosEditor : Editor
     private static float[] randomDepths = new float[0];
     private static bool randomDirty = true;  // true = the lists above must be rebuilt
 
+    // A snapshot of the builder's placement settings, saved to and loaded from a .json file. Prefabs are kept as asset paths.
+    [Serializable]
+    private class Preset
+    {
+        public int placing, shape;
+        public float z;
+        public int count;
+        public float ringStartAngle, arcFrom, arcTo, rowYOffset, rowSpacing;
+        public float gapWidth, gapCenter;
+        public float spiralStartAngle, spiralAngleStep, spiralZStep;
+        public float zigzagAngleA, zigzagAngleB, zigzagZStep;
+        public int twistRings;
+        public float twistZStep, twistAngle;
+        public float randomFromAngle, randomToAngle, randomZRange, randomMinGap;
+        public int randomSeed;
+        public float jitterAngle, jitterZ;
+        public string asteroidPrefab, powerUpPrefab;
+        public string[] asteroidExtras, powerUpExtras;
+        public float[] asteroidWeights, powerUpWeights;
+    }
+
+    // A prefab's asset path, or "" for an empty slot.
+    private static string PathOf(GameObject prefab) => prefab != null ? AssetDatabase.GetAssetPath(prefab) : "";
+
+    // Copies the builder's current placement settings into a Preset. (In each `name = name`, the left side is the
+    // Preset's field and the right side is the builder's setting.)
+    private static Preset CapturePreset()
+    {
+        return new Preset
+        {
+            placing = (int)placing, shape = (int)shape, z = z, count = count,
+            ringStartAngle = ringStartAngle, arcFrom = arcFrom, arcTo = arcTo, rowYOffset = rowYOffset, rowSpacing = rowSpacing,
+            gapWidth = gapWidth, gapCenter = gapCenter,
+            spiralStartAngle = spiralStartAngle, spiralAngleStep = spiralAngleStep, spiralZStep = spiralZStep,
+            zigzagAngleA = zigzagAngleA, zigzagAngleB = zigzagAngleB, zigzagZStep = zigzagZStep,
+            twistRings = twistRings, twistZStep = twistZStep, twistAngle = twistAngle,
+            randomFromAngle = randomFromAngle, randomToAngle = randomToAngle, randomZRange = randomZRange,
+            randomMinGap = randomMinGap, randomSeed = randomSeed,
+            jitterAngle = jitterAngle, jitterZ = jitterZ,
+            asteroidPrefab = PathOf(asteroidPrefab), powerUpPrefab = PathOf(powerUpPrefab),
+            asteroidExtras = Array.ConvertAll(asteroidExtras, PathOf), powerUpExtras = Array.ConvertAll(powerUpExtras, PathOf),
+            asteroidWeights = (float[])asteroidWeights.Clone(), powerUpWeights = (float[])powerUpWeights.Clone()
+        };
+    }
+
+    // A prefab loaded from an asset path. An empty or missing path gives an empty slot.
+    private static GameObject LoadPrefab(string path) =>
+        string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+    // Puts a Preset's values into the builder's settings. Prefabs come back from their paths, and the prefab choices and the
+    // mix are saved again so they survive a restart.
+    private static void ApplyPreset(Preset p)
+    {
+        placing = (Placing)p.placing; shape = (Shape)p.shape; z = p.z; count = Mathf.Max(1, p.count);
+        ringStartAngle = p.ringStartAngle; arcFrom = p.arcFrom; arcTo = p.arcTo; rowYOffset = p.rowYOffset; rowSpacing = p.rowSpacing;
+        gapWidth = p.gapWidth; gapCenter = p.gapCenter;
+        spiralStartAngle = p.spiralStartAngle; spiralAngleStep = p.spiralAngleStep; spiralZStep = p.spiralZStep;
+        zigzagAngleA = p.zigzagAngleA; zigzagAngleB = p.zigzagAngleB; zigzagZStep = p.zigzagZStep;
+        twistRings = Mathf.Max(1, p.twistRings); twistZStep = p.twistZStep; twistAngle = p.twistAngle;
+        randomFromAngle = p.randomFromAngle; randomToAngle = p.randomToAngle; randomZRange = p.randomZRange;
+        randomMinGap = p.randomMinGap; randomSeed = p.randomSeed;
+        jitterAngle = p.jitterAngle; jitterZ = p.jitterZ;
+
+        asteroidPrefab = LoadPrefab(p.asteroidPrefab);
+        powerUpPrefab = LoadPrefab(p.powerUpPrefab);
+        for (int n = 0; n < asteroidExtras.Length; n++)
+        {
+            asteroidExtras[n] = LoadPrefab(p.asteroidExtras != null && n < p.asteroidExtras.Length ? p.asteroidExtras[n] : "");
+            powerUpExtras[n] = LoadPrefab(p.powerUpExtras != null && n < p.powerUpExtras.Length ? p.powerUpExtras[n] : "");
+        }
+        for (int n = 0; n < asteroidWeights.Length; n++)
+        {
+            asteroidWeights[n] = p.asteroidWeights != null && n < p.asteroidWeights.Length ? p.asteroidWeights[n] : (n == 0 ? 1f : 0f);
+            powerUpWeights[n] = p.powerUpWeights != null && n < p.powerUpWeights.Length ? p.powerUpWeights[n] : (n == 0 ? 1f : 0f);
+        }
+
+        EditorPrefs.SetString(PrefabPrefKey, PathOf(asteroidPrefab));
+        EditorPrefs.SetString(PowerUpPrefKey, PathOf(powerUpPrefab));
+        SaveMix("Asteroid", asteroidExtras, asteroidWeights);
+        SaveMix("PowerUp", powerUpExtras, powerUpWeights);
+        randomDirty = true;
+        SceneView.RepaintAll();
+    }
+
+    private const string PresetFolder = "Assets/Scripts/Editor/PatternPresets";
+
+    // The path of a preset's file. Characters Windows doesn't allow in a file name are replaced with an underscore.
+    private static string PresetPath(string name)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars())
+            name = name.Replace(c, '_');
+        return $"{PresetFolder}/{name.Trim()}.json";
+    }
+
+    // The names of the saved presets: the .json files in the folder, without the extension, in alphabetical order.
+    private static string[] PresetNames()
+    {
+        if (!Directory.Exists(PresetFolder)) return new string[0];
+
+        string[] files = Directory.GetFiles(PresetFolder, "*.json");
+        Array.Sort(files);
+        return Array.ConvertAll(files, f => Path.GetFileNameWithoutExtension(f));
+    }
+
+    // Saves the builder's current settings as a preset file. A preset of the same name is overwritten (the panel asks first).
+    private static void SavePreset(string name)
+    {
+        if (!Directory.Exists(PresetFolder)) Directory.CreateDirectory(PresetFolder);
+        File.WriteAllText(PresetPath(name), JsonUtility.ToJson(CapturePreset(), true));
+        AssetDatabase.Refresh(); // so Unity notices the new file
+    }
+
+    // Loads a preset file into the builder's settings. Returns false if the file is missing.
+    private static bool LoadPreset(string name)
+    {
+        string path = PresetPath(name);
+        if (!File.Exists(path)) return false;
+
+        ApplyPreset(JsonUtility.FromJson<Preset>(File.ReadAllText(path)));
+        return true;
+    }
+
+    private static void DeletePreset(string name)
+    {
+        AssetDatabase.DeleteAsset(PresetPath(name));
+    }
+
     // Called when this inspector is created (i.e. when you select a pattern).
     private void OnEnable()
     {
@@ -245,6 +376,8 @@ public class PatternGizmosEditor : Editor
             "Angles in degrees: 0 = right, 90 = top, -90 = bottom (player start), increasing counter-clockwise. " +
             "Z is in spawner space; lower Z spawns first. Green (asteroid) or yellow (power-up) spheres in the Scene view preview the next Add.",
             MessageType.None);
+
+        DrawPresets();
 
         // BeginChangeCheck / EndChangeCheck wraps a group of fields and tells
         // us whether any of them changed this frame.
@@ -357,6 +490,8 @@ public class PatternGizmosEditor : Editor
         if (shape == Shape.Random && PlacedCount < count)
             EditorGUILayout.HelpBox($"Placed {PlacedCount} of {count}: the minimum gap doesn't fit in the angle range.", MessageType.Warning);
 
+        autoNameOnAdd = EditorGUILayout.Toggle(new GUIContent("Name Children After Add", "Renames every object in the pattern 'Step N - Prefab K' after each Add, and puts them in step order in the Hierarchy."), autoNameOnAdd);
+
         // DisabledScope greys out (and blocks) everything inside it while the
         // condition is true, so you can't click Add without a prefab.
         using (new EditorGUI.DisabledScope(SelectedPrefab == null))
@@ -390,7 +525,10 @@ public class PatternGizmosEditor : Editor
             Snap(pattern, children, "Snap All to Circle");
         }
 
-        rotateBy = EditorGUILayout.FloatField(new GUIContent("Rotate By", "Degrees to turn, for Rotate All and Rotate Selected. Positive = counter-clockwise."), rotateBy);
+        if (GUILayout.Button(new GUIContent("Name Children", "Names every object 'Step N - Prefab K' and puts them in step order in the Hierarchy.")))
+            NameChildren((PatternGizmos)target);
+
+        rotateBy =EditorGUILayout.FloatField(new GUIContent("Rotate By", "Degrees to turn, for Rotate All and Rotate Selected. Positive = counter-clockwise."), rotateBy);
         var openPattern = (PatternGizmos)target;
         if (GUILayout.Button(new GUIContent("Rotate All", "Turns every object round the orbit centre by Rotate By.")))
             RotateChildren(openPattern, ChildrenOf(openPattern.transform));
@@ -553,6 +691,51 @@ public class PatternGizmosEditor : Editor
             SaveMix(asteroid ? "Asteroid" : "PowerUp", extras, weights);
 
         EditorGUILayout.HelpBox("Each object picks one prefab at random, in proportion to the weights. A prefab with no weight, or an empty slot, is never picked. With only the first weight above 0, nothing changes.", MessageType.None);
+    }
+
+    // The Presets section: pick a saved preset to load or delete, or type a name to save the current settings under.
+    private static void DrawPresets()
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Presets", EditorStyles.miniBoldLabel);
+
+        string[] names = PresetNames();
+        if (names.Length == 0)
+        {
+            EditorGUILayout.HelpBox("No presets saved yet.", MessageType.None);
+        }
+        else
+        {
+            selectedPreset = Mathf.Clamp(selectedPreset, 0, names.Length - 1);
+            selectedPreset = EditorGUILayout.Popup(new GUIContent("Preset", "The saved presets, from Assets/Scripts/Editor/PatternPresets."), selectedPreset, names);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button(new GUIContent("Load", "Puts the chosen preset's settings into the builder. Objects already in the pattern aren't touched.")))
+                {
+                    LoadPreset(names[selectedPreset]);
+                    presetName = names[selectedPreset]; // so saving again updates the same preset
+                    GUIUtility.ExitGUI();               // the settings just changed, so stop drawing this pass
+                }
+                if (GUILayout.Button(new GUIContent("Delete Preset", "Deletes the chosen preset's file (it asks first)."))
+                    && EditorUtility.DisplayDialog("Delete Preset", $"Delete the preset '{names[selectedPreset]}'?", "Delete", "Cancel"))
+                {
+                    DeletePreset(names[selectedPreset]);
+                    GUIUtility.ExitGUI();
+                }
+            }
+        }
+
+        presetName = EditorGUILayout.TextField(new GUIContent("Name", "The name to save the current settings under."), presetName);
+        using (new EditorGUI.DisabledScope(presetName.Trim() == ""))
+        {
+            if (GUILayout.Button(new GUIContent("Save Preset", "Saves the builder's current settings under this name. If the name is already used, it asks before overwriting.")))
+            {
+                if (!File.Exists(PresetPath(presetName))
+                    || EditorUtility.DisplayDialog("Save Preset", $"A preset called '{presetName}' already exists. Overwrite it?", "Overwrite", "Cancel"))
+                    SavePreset(presetName);
+            }
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -868,6 +1051,8 @@ public class PatternGizmosEditor : Editor
             placed.transform.localPosition = ShapePosition(i) - rootOffset;
         }
 
+        if (autoNameOnAdd) NameChildren(pattern);
+
         Undo.CollapseUndoOperations(group);
     }
 
@@ -893,6 +1078,28 @@ public class PatternGizmosEditor : Editor
             Undo.DestroyObjectImmediate(root.GetChild(i).gameObject);
 
         Undo.CollapseUndoOperations(group);
+    }
+
+    // Names every child "Step N - Prefab K" (N = its step, K = its number within the step) and puts them in step order
+    // in the Hierarchy, so the list reads like the Scene labels. One undo step.
+    private static void NameChildren(PatternGizmos pattern)
+    {
+        Undo.RegisterFullObjectHierarchyUndo(pattern.gameObject, "Name Children");
+
+        int sibling = 0;
+        PatternGizmos.Step[] steps = pattern.GetSteps();
+        for (int s = 0; s < steps.Length; s++)
+        {
+            for (int k = 0; k < steps[s].children.Length; k++)
+            {
+                Transform child = steps[s].children[k];
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject);
+                string prefabName = source != null ? source.name : child.name;
+
+                child.name = $"Step {s + 1} - {prefabName} {k + 1}";
+                child.SetSiblingIndex(sibling++);
+            }
+        }
     }
 
     // Saves a copy of the open pattern as a new prefab, then (if ticked) empties the open one for the next pattern.
