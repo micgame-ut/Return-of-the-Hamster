@@ -32,6 +32,9 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | `waves[].perfectBonus` | 200 | Added on top of `clearPoints` if no life was lost while this wave was on screen |
 | `waves[].fromProgress` | 0 (slider 0–1) | The wave becomes available once level progress reaches this. 0 = from the start. This is how waves **unlock** |
 | `waves[].untilProgress` | 1 (slider 0–1) | The wave stops being available after this much progress. 1 = it never goes away. This is how old waves are **removed** |
+| `waves[].randomRotation` | false | Each time the wave spawns, turn the whole pattern round the orbit by a random angle |
+| `waves[].rotationStep` | 0 | If above 0, the random angle is a multiple of this many degrees (90 = 4 orientations, 45 = 8). 0 = any angle. Only used when `randomRotation` is on |
+| `waves[].mirrorChance` | 0 (slider 0–1) | The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
 | `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
@@ -143,6 +146,25 @@ one that isn't available at its turn is skipped.
 
 A **gap** in the ranges (say Ring 0–0.3 and Zigzag 0.5–1) leaves an empty sky from 0.3 to 0.5, where the spawner
 waits and rechecks every 0.5 s. That's allowed, but easy to do by accident.
+
+### Rotating and mirroring at spawn (`randomRotation`, `rotationStep`, `mirrorChance`)
+
+One authored pattern can come from several sides. Each time `SpawnPattern` runs it decides, **once**, a `turn`
+(from `RandomTurn`: 0 if `randomRotation` is off, any angle if `rotationStep` is 0, otherwise a random whole
+multiple of `rotationStep`) and a `mirror` (true when `Random.value < mirrorChance`). The same two values are
+used for every object in that spawn, so the pattern keeps its shape.
+
+When each child is revealed, its position relative to the orbit center is **flipped first** (`offset.x` negated,
+a mirror about the vertical line through the center), **then turned** by `turn`. Depth (Z) is untouched. Order
+matters: a Ring with its gap at the bottom, mirrored, keeps its gap at the bottom; turned 90° it moves to the side.
+
+`PatternCopy` restores each child's authored position when the copy is returned to the pool, so a pooled copy is
+never left turned or flipped. A Wave asteroid takes its start angle from its position when it's switched on, so
+a turned pattern's waves swing round the new spot. For a mirrored pattern the spawner also sets
+`AsteroidBehavior.MirrorSwing` on each asteroid before switching it on, so the swing runs the other way.
+
+Limits: **Test This Pattern** plays the pattern as authored (no variation). The builder's fairness warnings check
+the authored pattern only, and skip Wave asteroids.
 
 `delayAfter` starts once the pattern's **last asteroid has appeared**, not once it has flown past. So
 with a short delay, the next pattern can start while the previous one is still coming at the player.

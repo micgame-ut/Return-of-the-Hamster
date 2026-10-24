@@ -26,6 +26,12 @@ public class ObjectSpawner : MonoBehaviour
         [Range(0f, 1f)] public float fromProgress = 0f;
         [Tooltip("The wave stops being available after this much progress. 1 = it never goes away.")]
         [Range(0f, 1f)] public float untilProgress = 1f;
+        [Tooltip("Each time the wave spawns, turn the whole pattern round the orbit by a random angle.")]
+        public bool randomRotation = false;
+        [Tooltip("If above 0, the random angle is a multiple of this many degrees (90 = 4 orientations, 45 = 8). 0 = any angle. Only used when Random Rotation is on.")]
+        public float rotationStep = 0f;
+        [Tooltip("The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip.")]
+        [Range(0f, 1f)] public float mirrorChance = 0f;
     }
 
     [Tooltip("The list of waves. Each has a pattern (the prefab to spawn) and a delayAfter.")]
@@ -167,6 +173,17 @@ public class ObjectSpawner : MonoBehaviour
         return ordered;
     }
 
+    // How far to turn a wave's pattern on this spawn, in degrees: 0 unless Random Rotation is on, otherwise a random angle,
+    // snapped to a multiple of rotationStep when that is above 0.
+    private static float RandomTurn(Wave wave)
+    {
+        if (!wave.randomRotation) return 0f;
+        if (wave.rotationStep <= 0f) return UnityEngine.Random.Range(0f, 360f);
+
+        int steps = Mathf.Max(1, Mathf.RoundToInt(360f / wave.rotationStep));
+        return UnityEngine.Random.Range(0, steps) * wave.rotationStep;
+    }
+
     // The free list for one pattern prefab, made the first time it's needed.
     private Stack<PatternCopy> GetFreeList(GameObject prefab)
     {
@@ -249,6 +266,12 @@ public class ObjectSpawner : MonoBehaviour
         // in flight each step trails the one before by exactly its authored gap.
         float spawnZ = children.Length > 0 ? children[0].position.z : 0f;
 
+        // Decided once per spawn: how far to turn the pattern round the orbit, and whether to flip it left-right.
+        float turn = RandomTurn(wave);
+        bool mirror = UnityEngine.Random.value < wave.mirrorChance;
+        Vector2 orbitCenter = OrbitSettings.Instance.OrbitCenter;
+        Quaternion turnRotation = Quaternion.Euler(0f, 0f, turn);
+
         float previousDistance = 0f;
         for (int i = 0; i < children.Length; i++)
         {
@@ -273,10 +296,14 @@ public class ObjectSpawner : MonoBehaviour
             }
 
             // Reveal it at the spawn plane. Its OnEnable records its start point
-            // (and, for asteroids, starts the warning blink).
-            Vector3 p = children[i].position;
-            children[i].position = new Vector3(p.x, p.y, spawnZ);
+            // (and, for asteroids, starts the warning wait).
+            Vector2 offset = (Vector2)children[i].position - orbitCenter;
+            if (mirror) offset.x = -offset.x;           // flip left-right about the orbit center
+            if (turn != 0f) offset = (Vector2)(turnRotation * offset); // then turn round the orbit center
+            children[i].position = new Vector3(orbitCenter.x + offset.x, orbitCenter.y + offset.y, spawnZ);
             copy.ChildRevealed();
+            AsteroidBehavior asteroid = children[i].GetComponent<AsteroidBehavior>();
+            if (asteroid != null) asteroid.MirrorSwing = mirror;
             children[i].gameObject.SetActive(true);
         }
 

@@ -100,6 +100,8 @@ public class AsteroidBehavior : MonoBehaviour
 
     public bool IsMoving => isMoving;
     public MovementType Movement => movementType;
+    // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
+    public bool MirrorSwing { get; set; }
     public bool IsPhased { get; private set; }
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||
@@ -301,7 +303,7 @@ public class AsteroidBehavior : MonoBehaviour
         {
             // Read every frame so it follows the orbit being tuned live
             OrbitSettings orbit = OrbitSettings.Instance;
-            float swing = Mathf.Sin(elapsed * frequency * Mathf.PI * 2f) * amplitude * Mathf.Deg2Rad;
+            float swing = Mathf.Sin(elapsed * frequency * Mathf.PI * 2f) * amplitude * Mathf.Deg2Rad * (MirrorSwing ? -1f : 1f);
             float angle = baseAngle + swing;
             position.x = orbit.OrbitCenter.x + Mathf.Cos(angle) * orbit.OrbitRadius;
             position.y = orbit.OrbitCenter.y + Mathf.Sin(angle) * orbit.OrbitRadius;

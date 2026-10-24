@@ -201,8 +201,10 @@ the player progresses and old ones can drop out.
   progress) and is skipped outside that range. When no wave is available but some have patterns, the spawner
   waits 0.5 s and rechecks. Still to do: set the ranges on the real levels' wave lists. Possible follow-up: a
   preview of which waves are active at a given progress.
-- **Runtime rotate / mirror:** rotate or mirror a pattern as it spawns, so one authored pattern can come from
-  several sides. Needs a look at how Wave asteroids and power-ups follow the rotation.
+- **Runtime rotate / mirror: built, not yet tested.** Each wave has `randomRotation`, `rotationStep` and
+  `mirrorChance`; the spawner picks a turn and a flip once per spawn and applies them as each child is revealed.
+  Mirrored Wave asteroids swing the other way (`AsteroidBehavior.MirrorSwing`). Test This Pattern ignores the
+  variation. See `ObjectSpawner.md`.
 
 ## Small cleanup
 
