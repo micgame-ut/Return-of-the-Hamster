@@ -8,25 +8,41 @@ using UnityEngine;
 public class StarfieldStreamer : MonoBehaviour
 {
     [Header("Speed")]
+    [Tooltip("How fast stars stream past when the player's Speed is 0, in units/sec.")]
     [SerializeField] private float baseSpeed = 30f;
+    [Tooltip("How much faster they go for each point of player Speed.")]
     [SerializeField] private float speedMultiplier = 15f;
+    [Tooltip("Each star also drifts outward (away from the middle) at a random speed up to this, so they don't all move in perfect parallel lines.")]
     [SerializeField] private float sidewaysDrift = 2f;
-    [SerializeField] private float rampTime = 1f; // seconds for the stars to speed up from still once the game starts
+    [Tooltip("Seconds for the stars to speed up from still to normal once the game starts.")]
+    [SerializeField] private float rampTime = 1f;
 
     [Header("Field Shape")]
-    [SerializeField] private float fieldRadius = 300f; // stars spawn up to this far from the center...
-    [SerializeField] private float clearRadius = 20f;  // ...and no closer, so none stream through the middle of the screen
+    [Tooltip("Stars spawn up to this far from the middle...")]
+    [SerializeField] private float fieldRadius = 300f;
+    [Tooltip("...and no closer than this, so no star streams past the camera through the middle of the screen. Tune by eye.")]
+    [SerializeField] private float clearRadius = 20f;
+    [Tooltip("How far ahead of the camera the spawn ring is.")]
     [SerializeField] private float spawnDistance = 300f;
+    [Tooltip("Stars are removed once they're this far behind the camera (the despawn plane).")]
     [SerializeField] private float despawnDistance = -50f;
 
     [Header("Stars")]
+    [Tooltip("New stars per second.")]
     [SerializeField] private float emissionRate = 180f;
+    [Tooltip("Roughly how long each star lasts, in seconds (each gets a random 85% to 115% of this).")]
     [SerializeField] private float lifetime = 8f;
+    [Tooltip("Each star gets a random size between minSize and maxSize.")]
     [SerializeField] private float minSize = 0.2f;
+    [Tooltip("Each star gets a random size between minSize and maxSize.")]
     [SerializeField] private float maxSize = 0.8f;
+    [Tooltip("Each star gets a random color between colorA and colorB.")]
     [SerializeField] private Color colorA = Color.white;
+    [Tooltip("Each star gets a random color between colorA and colorB.")]
     [SerializeField] private Color colorB = new Color(0.75f, 0.85f, 1f, 1f);
+    [Tooltip("How long the streaks are.")]
     [SerializeField] private float streakLengthScale = 2f;
+    [Tooltip("Material for the stars. If empty, one is made in code.")]
     [SerializeField] private Material starMaterial;
 
     private ParticleSystem stars;

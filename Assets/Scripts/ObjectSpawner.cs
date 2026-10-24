@@ -14,17 +14,36 @@ public class ObjectSpawner : MonoBehaviour
     [Serializable]
     public class Wave
     {
+        [Tooltip("The pattern prefab to spawn for this wave.")]
         public GameObject pattern;
-        public float delayAfter = 2f;      // seconds to wait before the next wave starts
-        public float clearPoints = 300f;    // points when every object in the wave is gone
-        public float perfectBonus = 200f;   // added on top if no life was lost during the wave
+        [Tooltip("Seconds to wait before the next wave starts.")]
+        public float delayAfter = 2f;
+        [Tooltip("Points when every object in the wave is gone.")]
+        public float clearPoints = 300f;
+        [Tooltip("Added on top if no life was lost during the wave.")]
+        public float perfectBonus = 200f;
+        [Tooltip("The wave becomes available once level progress reaches this (0 = start of the level, 1 = the Earth arrives).")]
+        [Range(0f, 1f)] public float fromProgress = 0f;
+        [Tooltip("The wave stops being available after this much progress. 1 = it never goes away.")]
+        [Range(0f, 1f)] public float untilProgress = 1f;
+        [Tooltip("Each time the wave spawns, turn the whole pattern round the orbit by a random angle.")]
+        public bool randomRotation = false;
+        [Tooltip("If above 0, the random angle is a multiple of this many degrees (90 = 4 orientations, 45 = 8). 0 = any angle. Only used when Random Rotation is on.")]
+        public float rotationStep = 0f;
+        [Tooltip("The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip.")]
+        [Range(0f, 1f)] public float mirrorChance = 0f;
     }
 
+    [Tooltip("The list of waves. Each has a pattern (the prefab to spawn) and a delayAfter.")]
     [SerializeField] private List<Wave> waves = new List<Wave>();
+    [Tooltip("Sequential plays the list top to bottom. Random shuffles it each time through.")]
     [SerializeField] private WaveOrder order = WaveOrder.Sequential;
+    [Tooltip("Start the list over after the last wave. If off, it plays through once and stops.")]
     [SerializeField] private bool loop = true;
-    [SerializeField] private float startDelay = 1f; // seconds before the first wave
-    [SerializeField] private int prewarmPerPattern = 1; // copies of each pattern made at level start
+    [Tooltip("Seconds before the first wave.")]
+    [SerializeField] private float startDelay = 1f;
+    [Tooltip("Copies of each pattern made at level start, so the first waves don't stutter.")]
+    [SerializeField] private int prewarmPerPattern = 1;
 
     // Pooling: free copies per pattern prefab, and each copy's children in reveal order.
     private readonly Dictionary<GameObject, Stack<PatternCopy>> freeCopies = new Dictionary<GameObject, Stack<PatternCopy>>();
@@ -44,12 +63,21 @@ public class ObjectSpawner : MonoBehaviour
     // Children this close in Z spawn together. Public so PatternGizmos groups them the same way.
     public const float SameZTolerance = 0.01f;
 
+    // How long to wait before looking again when no wave is available at the current progress.
+    private const float NoWaveRetryDelay = 0.5f;
+
     private LevelTimer levelTimer;
     private Score score;
 
     // Once the earth has arrived or the game is over, no more waves or objects are spawned.
     private bool StopSpawning => (levelTimer != null && levelTimer.IsComplete) ||
                                  (GameManager.Instance != null && GameManager.Instance.IsGameOver);
+
+    // Level progress, 0 to 1. A scene with no LevelTimer counts as 0.
+    private float Progress => levelTimer != null ? levelTimer.Progress : 0f;
+
+    // A wave plays only if it has a pattern and the level is currently inside its progress range.
+    private bool IsAvailable(Wave wave) => wave.pattern != null && Progress >= wave.fromProgress && Progress <= wave.untilProgress;
 
     private void Awake()
     {
@@ -61,6 +89,16 @@ public class ObjectSpawner : MonoBehaviour
     {
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+
+#if UNITY_EDITOR
+        // Test This Pattern: play only that pattern, on a loop. Only changes the list in memory, not the scene.
+        if (PatternTest.Active && PatternTest.Pattern != null)
+        {
+            waves = new List<Wave> { new Wave { pattern = PatternTest.Pattern, delayAfter = PatternTest.LoopDelay, clearPoints = 0f, perfectBonus = 0f } };
+            order = WaveOrder.Sequential;
+            loop = true;
+        }
+#endif
 
         // Make each pattern's first copies now, so the first waves don't stutter.
         foreach (Wave wave in waves)
@@ -83,14 +121,35 @@ public class ObjectSpawner : MonoBehaviour
 
         do
         {
+            bool spawnedAny = false;
             foreach (Wave wave in GetWaveOrder())
             {
                 if (StopSpawning) yield break;
-                if (wave.pattern == null) continue;
+                if (!IsAvailable(wave)) continue;
+
+                spawnedAny = true;
 
                 // Wait for the whole pattern to finish revealing, then pause.
                 yield return SpawnPattern(wave);
+#if UNITY_EDITOR
+                // Test This Pattern: let the whole run fly past before the next one.
+                if (PatternTest.Active)
+                    yield return new WaitUntil(() => AsteroidBehavior.Active.Count == 0 && PowerUp.Active.Count == 0);
+#endif
                 yield return new WaitForSeconds(wave.delayAfter);
+            }
+
+            if (!spawnedAny)
+            {
+                // Nothing in the list has a pattern: a setup mistake, so say so and stop.
+                if (!waves.Exists(w => w.pattern != null))
+                {
+                    Debug.LogWarning("ObjectSpawner has no wave with a pattern assigned, so it is not spawning.", this);
+                    yield break;
+                }
+
+                // Waves exist, but none is available at this progress: look again shortly.
+                if (loop) yield return new WaitForSeconds(NoWaveRetryDelay);
             }
         }
         while (loop && !StopSpawning);
@@ -112,6 +171,17 @@ public class ObjectSpawner : MonoBehaviour
         }
 
         return ordered;
+    }
+
+    // How far to turn a wave's pattern on this spawn, in degrees: 0 unless Random Rotation is on, otherwise a random angle,
+    // snapped to a multiple of rotationStep when that is above 0.
+    private static float RandomTurn(Wave wave)
+    {
+        if (!wave.randomRotation) return 0f;
+        if (wave.rotationStep <= 0f) return UnityEngine.Random.Range(0f, 360f);
+
+        int steps = Mathf.Max(1, Mathf.RoundToInt(360f / wave.rotationStep));
+        return UnityEngine.Random.Range(0, steps) * wave.rotationStep;
     }
 
     // The free list for one pattern prefab, made the first time it's needed.
@@ -196,6 +266,12 @@ public class ObjectSpawner : MonoBehaviour
         // in flight each step trails the one before by exactly its authored gap.
         float spawnZ = children.Length > 0 ? children[0].position.z : 0f;
 
+        // Decided once per spawn: how far to turn the pattern round the orbit, and whether to flip it left-right.
+        float turn = RandomTurn(wave);
+        bool mirror = UnityEngine.Random.value < wave.mirrorChance;
+        Vector2 orbitCenter = OrbitSettings.Instance.OrbitCenter;
+        Quaternion turnRotation = Quaternion.Euler(0f, 0f, turn);
+
         float previousDistance = 0f;
         for (int i = 0; i < children.Length; i++)
         {
@@ -220,10 +296,14 @@ public class ObjectSpawner : MonoBehaviour
             }
 
             // Reveal it at the spawn plane. Its OnEnable records its start point
-            // (and, for asteroids, starts the warning blink).
-            Vector3 p = children[i].position;
-            children[i].position = new Vector3(p.x, p.y, spawnZ);
+            // (and, for asteroids, starts the warning wait).
+            Vector2 offset = (Vector2)children[i].position - orbitCenter;
+            if (mirror) offset.x = -offset.x;           // flip left-right about the orbit center
+            if (turn != 0f) offset = (Vector2)(turnRotation * offset); // then turn round the orbit center
+            children[i].position = new Vector3(orbitCenter.x + offset.x, orbitCenter.y + offset.y, spawnZ);
             copy.ChildRevealed();
+            AsteroidBehavior asteroid = children[i].GetComponent<AsteroidBehavior>();
+            if (asteroid != null) asteroid.MirrorSwing = mirror;
             children[i].gameObject.SetActive(true);
         }
 

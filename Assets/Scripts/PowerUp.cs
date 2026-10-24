@@ -8,8 +8,9 @@ public class PowerUp : MonoBehaviour
 {
     public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random }
 
+    [Tooltip("Which effect this power-up has. Random rolls one on pickup.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
-    [SerializeField] private float speed = 20f;
+    [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
 
     private Vector3 origin;
@@ -22,8 +23,20 @@ public class PowerUp : MonoBehaviour
     private PlayerTwins twins;
     private Score score;
 
+    private struct TintSlot
+    {
+        public Renderer renderer;
+        public int slot;
+        public Color baseColor;
+    }
+
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private MaterialPropertyBlock tintBlock;
+    private TintSlot[] tintSlots;
+    private Color lastTint;  // the tint last sent to the renderers, so unchanged frames skip the call
+
     // Same formula as asteroids, so a power-up keeps its spacing inside a pattern.
-    public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
+    public float ApproachSpeed => template != null ? template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier : 0f;
 
     // Every revealed power-up, so GameManager can tell when the field is clear.
     public static readonly List<PowerUp> Active = new List<PowerUp>();
@@ -45,6 +58,20 @@ public class PowerUp : MonoBehaviour
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+
+        // Every material slot under this power-up, with its own base color, kept for the depth tint.
+        tintBlock = new MaterialPropertyBlock();
+        var slots = new List<TintSlot>();
+        foreach (MeshRenderer r in GetComponentsInChildren<MeshRenderer>())
+        {
+            Material[] mats = r.sharedMaterials;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                Color baseColor = mats[i] != null && mats[i].HasProperty(BaseColorId) ? mats[i].GetColor(BaseColorId) : Color.white;
+                slots.Add(new TintSlot { renderer = r, slot = i, baseColor = baseColor });
+            }
+        }
+        tintSlots = slots.ToArray();
     }
 
     private void OnEnable()
@@ -60,8 +87,26 @@ public class PowerUp : MonoBehaviour
         Active.Remove(this);
     }
 
+    // Fades every body slot toward template.farColor the further the power-up is ahead of the player.
+    private void UpdateDepthTint()
+    {
+        if (tintSlots == null || template == null || player == null) return;
+
+        Color tint = template.GetDepthTint(transform.position.z - player.transform.position.z);
+        if (tint == lastTint) return;
+        lastTint = tint;
+
+        foreach (TintSlot s in tintSlots)
+        {
+            tintBlock.SetColor(BaseColorId, s.baseColor * tint);
+            s.renderer.SetPropertyBlock(tintBlock, s.slot);
+        }
+    }
+
     private void Update()
     {
+        UpdateDepthTint();
+
         if (template != null && waited < template.warningTime)
             waited += Time.deltaTime;
         else

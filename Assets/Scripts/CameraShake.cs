@@ -8,6 +8,7 @@ public class CameraShake : MonoBehaviour
 {
     private static CameraShake instance;
 
+    [Tooltip("New shake directions per second. 60 matches how the shake looked at 60 fps. Lower = a slower, rougher rumble.")]
     [SerializeField, Min(1f)] private float shakeFrequency = 60f;
 
     private float duration;

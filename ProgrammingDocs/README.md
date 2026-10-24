@@ -32,8 +32,10 @@ It lives outside `Assets/` so Unity does not import these files.
 | OrbitSettings.cs | [OrbitSettings.md](OrbitSettings.md) | Done |
 | OverdriveTally.cs | [OverdriveTally.md](OverdriveTally.md) | Done |
 | PatternCopy.cs | [PatternCopy.md](PatternCopy.md) | Done |
+| Editor/PatternFairness.cs | [PatternFairness.md](PatternFairness.md) | Done |
 | PatternGizmos.cs | [PatternGizmos.md](PatternGizmos.md) | Done |
 | Editor/PatternGizmosEditor.cs | [PatternGizmosEditor.md](PatternGizmosEditor.md) | Done |
+| PatternTest.cs | [PatternTest.md](PatternTest.md) | Done |
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |

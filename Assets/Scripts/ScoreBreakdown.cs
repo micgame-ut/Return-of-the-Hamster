@@ -7,14 +7,23 @@ using UnityEngine.InputSystem;
 // source that earned points, each popping in and ticking the total up. Boost skips it.
 public class ScoreBreakdown : MonoBehaviour
 {
-    [SerializeField] private GameObject rowPrefab;   // a label text and a value text, in that child order
-    [SerializeField] private string[] labels = { "Progress", "Asteroids", "Close calls", "Waves", "Overdrive" }; // one per Score.ScoreSource, same order
+    [Tooltip("A label text and a value text, in that child order.")]
+    [SerializeField] private GameObject rowPrefab;
+    [Tooltip("One per Score.ScoreSource, in the same order.")]
+    [SerializeField] private string[] labels = { "Progress", "Asteroids", "Close calls", "Waves", "Overdrive" };
+    [Tooltip("Text shown before the total, for example SCORE 000123.")]
     [SerializeField] private string totalPrefix = "SCORE ";
+    [Tooltip("Seconds between a row's label popping in and its value popping in.")]
     [SerializeField] private float segmentDelay = 0.12f;
+    [Tooltip("How big a label or value snaps to when it pops in, before easing back to normal size.")]
     [SerializeField] private float popScale = 1.3f;
+    [Tooltip("Seconds a pop takes to ease back to normal size.")]
     [SerializeField] private float popTime = 0.15f;
+    [Tooltip("Seconds the total takes to tick up for each row.")]
     [SerializeField] private float countUpTime = 0.3f;
+    [Tooltip("Seconds before the next row starts.")]
     [SerializeField] private float rowDelay = 0.4f;
+    [Tooltip("Pressing this (the boost button) finishes the breakdown instantly.")]
     [SerializeField] private InputActionReference skipAction;
 
     private Score score;

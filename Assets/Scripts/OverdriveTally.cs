@@ -7,14 +7,23 @@ public class OverdriveTally : MonoBehaviour
 {
     private enum State { Idle, Counting, Ending }
 
+    [Tooltip("The text at the fixed HUD spot.")]
     [SerializeField] private TMP_Text tallyText;
+    [Tooltip("Shown in front of the number, for example OVERDRIVE +70.")]
     [SerializeField] private string label = "OVERDRIVE";
+    [Tooltip("How fast the tally grows while in overdrive.")]
     [SerializeField] private float overdrivePointsPerSecond = 20f;
-    [SerializeField] private float minShownTally = 10f; // smaller tallies are banked but never shown
+    [Tooltip("Smaller tallies are banked but never shown.")]
+    [SerializeField] private float minShownTally = 10f;
+    [Tooltip("How big the text snaps to when overdrive ends.")]
     [SerializeField] private float exitScale = 1.4f;
+    [Tooltip("The flash color when overdrive ends.")]
     [SerializeField] private Color exitColor = Color.yellow;
+    [Tooltip("Seconds for the pop to ease back to normal.")]
     [SerializeField] private float emphasisTime = 0.3f;
+    [Tooltip("Canvas units it rises while fading.")]
     [SerializeField] private float riseDistance = 60f;
+    [Tooltip("Seconds to rise and fade out.")]
     [SerializeField] private float fadeTime = 0.8f;
 
     private State state = State.Idle;

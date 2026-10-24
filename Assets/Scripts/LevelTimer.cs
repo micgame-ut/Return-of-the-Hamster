@@ -5,11 +5,14 @@ using UnityEngine;
 public class LevelTimer : MonoBehaviour
 {
     [Header("Timing")]
-    [SerializeField] private float levelTime = 60f;        // seconds to arrive at player speed 0
-    [SerializeField] private float speedTimeFactor = 0.1f; // how strongly player speed shortens levelTime
+    [Tooltip("Seconds the level takes if the player's Speed stays at 0.")]
+    [SerializeField] private float levelTime = 60f;
+    [Tooltip("How much the player's Speed shortens the level.")]
+    [SerializeField] private float speedTimeFactor = 0.1f;
 
     [Header("Arrival")]
-    [SerializeField] private float stopDistance = 20f;     // how far from the earth camera the earth stops
+    [Tooltip("How far in front of the earth camera the earth stops, in world units.")]
+    [SerializeField] private float stopDistance = 20f;
 
     // 0 at level start, 1 when the earth has arrived
     public float Progress { get; private set; }

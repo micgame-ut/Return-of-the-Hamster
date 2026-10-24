@@ -31,7 +31,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 - **Placed in:** wave pattern prefabs, as **direct children** of the pattern root, using the pattern
   builder's Power-Up slot. ObjectSpawner reveals them like asteroids.
 - **Requires:**
-  - The SpawnableTemplate asset in `template`, for the shared speed multiplier, despawn distance, and the
+  - The SpawnableTemplate asset in `template`, for the shared base approach speed and speed multiplier, despawn distance, and the
     Power-Up section (spin, pickup effect, pickup shake).
   - `GameManager.Instance`, for the gameplay camera (despawning), `HasWon`, and RunStats. Without one, it
     still flies and works, but never despawns and isn't counted.
@@ -41,7 +41,6 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 | Field | Default | What it changes |
 | --- | --- | --- |
 | `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls one on pickup |
-| `speed` | 20 | Base approach speed, before the player's speed is added |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
 
 ## How it works
@@ -110,14 +109,18 @@ made once and refilled each roll; power-ups are pooled, so a pickup makes no gar
 
 ### `ApproachSpeed`
 
-`speed + PlayerMovement.Speed × template.speedMultiplier`, worked out fresh each time it's read, so it
-rises and falls with the player's speed. It's the same formula as asteroids, so a power-up laid out
-between two asteroids stays between them in flight. ObjectSpawner reads it to time when to reveal it.
+`template.baseApproachSpeed + PlayerMovement.Speed × template.speedMultiplier`, worked out fresh each time
+it's read, so it rises and falls with the player's speed. It's the same formula and the same template
+values as asteroids, so a power-up laid out between two asteroids stays between them in flight.
+ObjectSpawner reads it to time when to reveal it. Without a template it's 0, so the power-up doesn't move.
 
 ### `Awake` and `OnEnable`
 
 - **`Awake`** gets the gameplay camera, the player's PlayerMovement, PlayerHealth, PlayerInvincibility and
-  PlayerTwins, and the level's Score, from GameManager, once.
+  PlayerTwins, and the level's Score, from GameManager, once. It also sets up the depth tint: it finds every
+  `MeshRenderer` under the power-up (the Health and Score ones have several), and for each material slot saves
+  the renderer, the slot and the slot's own `_BaseColor` in `tintSlots` (a `TintSlot` struct), plus a
+  `tintBlock` to apply them with.
 - **`OnEnable`** adds it to the static `Active` list, records where the power-up was revealed (`origin`)
   and resets `distance` to 0.
 - **`OnDisable`** removes it from `Active`. Every way a power-up leaves (picked up or missed) goes through
@@ -136,6 +139,12 @@ the spawn plane and switches it back **on**. Only `OnEnable` runs again at that 
 
 Each frame, the same as a Linear asteroid:
 
+0. **Depth tint (`UpdateDepthTint`)**, first of all, so it applies during the warning wait too. Works out
+   `distance = its z − the player's z`, asks `template.GetDepthTint(distance)` for a color between white and
+   `farColor`, and, if that changed since last frame (`lastTint`), sets `_BaseColor` = each slot's saved color ×
+   the tint with a property block, slot by slot. A property block replaces a value instead of multiplying it,
+   which is why the original colors are saved in `Awake`. Without a template or a cached player it does
+   nothing.
 1. **Move.** `distance += ApproachSpeed × Time.deltaTime`, then `position = origin + back × distance`.
    `distance` is a running total, so a change in the player's speed changes how fast it grows from then
    on, instead of making the power-up jump.
@@ -144,8 +153,8 @@ Each frame, the same as a Linear asteroid:
    calls `PatternCopy.Despawn(gameObject)`. Its spin is undone too: going home restores its authored
    rotation, so a reused power-up starts upright.
 
-Without a template it still moves, but doesn't spin or despawn. There's no warning blink, unlike
-asteroids. At game over the freeze sets `Time.deltaTime` to 0, so it stops by itself.
+Without a template it doesn't move (its `ApproachSpeed` is 0), spin, despawn or tint. Like an asteroid, it
+waits `warningTime` seconds before it starts moving. At game over the freeze sets `Time.deltaTime` to 0, so it stops by itself.
 
 ### `OnTriggerEnter`
 
@@ -214,7 +223,8 @@ as it's picked up.
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
-- **SpawnableTemplate**: reads `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
+- **SpawnableTemplate**: calls `GetDepthTint` every frame for the depth fade, and reads `baseApproachSpeed`,
+  `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab`, the pickup shake settings, `invincibleDuration` and the four Random chances.
 - **ScorePopups**: listens to `OnCollected` and shows the picked type's label.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`,
@@ -237,6 +247,9 @@ as it's picked up.
 ## Gotchas
 
 - **It must be a direct child of a pattern,** or the spawner won't reveal it on its own.
+- **The depth tint covers every `MeshRenderer` under the power-up, found once in `Awake`.** A renderer added
+  later isn't tinted. A material without `_BaseColor` is multiplied from white, and a particle or other
+  non-mesh renderer is skipped.
 - **It's reused.** Any new state must be reset in `OnEnable`, which runs on every reveal. Never `Destroy`
   it in code; call `PatternCopy.Despawn`.
 - **The pickup effect must be assigned in the template** (`pickupEffectPrefab`), or there's no visual

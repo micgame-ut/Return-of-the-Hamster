@@ -40,6 +40,7 @@ SpawnableTemplate's gotchas). `orbitRadius` and `orbitCenter` take effect immedi
 | `OrbitCenter` | The same scripts as `OrbitRadius` |
 | `PlayerZ` | PlayerMovement (moves itself there), PatternGizmos (the "Player" ring) |
 | `SpawnerPosition` | ObjectSpawner (moves itself there), PatternGizmos (to work out spawner space) |
+| `SpawnDistance` | SpawnableTemplate's `GetDepthTint` (to measure the depth fade as a share of it) |
 
 `SameZTolerance` isn't here. It's a plain number, not something you'd tune, so it lives in ObjectSpawner
 as `public const`, and PatternGizmos reads it from there.
@@ -56,6 +57,14 @@ from the spawner:
 
 Doing this subtraction in code is what keeps the builder right when either position changes. It used to
 be worked out by hand and typed in as -19.
+
+### `SpawnDistance`
+
+`spawnerPosition.z − playerZ`: how far ahead of the player patterns appear. With the defaults that's
+15 − (−4) = **19**, and with the spawner at z 40 it's **44**. It's the same number as `PlayerZFromSpawner`
+with the sign flipped. It's worked out each time it's read, so changing either setting changes it at once.
+The depth fade on asteroids and power-ups (SpawnableTemplate's Depth Fade) is measured as a share of it, so it
+stretches or shrinks with the spawner instead of needing new numbers.
 
 ### Finding the asset (`Instance`)
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Controls a single asteroid from the moment it appears until it's gone. It blinks a warning glow, then flies
+Controls a single asteroid from the moment it appears until it's gone. It waits out a short warning, then flies
 toward the camera, either in a straight line or swinging back and forth around the player's orbit (a
 wave). When it touches the player, it
 either breaks (if the player is fast enough) or knocks the player back.
@@ -16,7 +16,7 @@ and while phased its collider is off and it shows a hologram look.
 - **Attached to:** the root of each asteroid prefab (in `Assets/Prefabs/Asteroid Types/`).
   Asteroids are placed as children of pattern prefabs, which ObjectSpawner reveals one at a time.
 - **Requires:**
-  - A **Renderer on a child object** (the mesh). That child is what spins and glows.
+  - A **Renderer on a child object** (the mesh). That child is what spins and what the depth tint is applied to.
   - A **Collider set to Is Trigger** on the root. The player has the Rigidbody, which Unity needs on at
     least one side for trigger events to fire.
   - An **SpawnableTemplate** asset assigned to `template`. Most of the tuning lives there (see Gotchas
@@ -26,13 +26,12 @@ and while phased its collider is off and it shows a hologram look.
 
 ## Inspector settings
 
-These are per-asteroid. Settings shared by every asteroid (glow colors, warning time, spin, knockback,
+These are per-asteroid. Settings shared by every asteroid (warning time, depth fade, spin, knockback,
 explosion, etc.) are on the SpawnableTemplate asset instead.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `movementType` | Linear | The path it takes: Linear or Wave. Warning glow is tied to the type |
-| `speed` | 20 | Base approach speed in units/sec, before the player's `Speed` is added on |
+| `movementType` | Linear | The path it takes: Linear or Wave |
 | `amplitude` | 30 | Wave: how many degrees it swings each way around the player's circle. Unused by Linear |
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
 | `effectType` | None | Extra behavior on top of the movement: None or Phase. A separate dropdown from `movementType` |
@@ -45,8 +44,9 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 | `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
 | `template` | none | The shared SpawnableTemplate asset |
 
-Note that `speed` here is the asteroid's own speed. It's unrelated to the player's `PlayerMovement.Speed`,
-though both feed into how fast the asteroid approaches.
+The base approach speed is no longer set per asteroid. It's `baseApproachSpeed` on the SpawnableTemplate, so
+every asteroid and power-up shares it. It's unrelated to the player's `PlayerMovement.Speed`, though both
+feed into how fast the asteroid approaches.
 
 ## How it works
 
@@ -55,9 +55,9 @@ though both feed into how fast the asteroid approaches.
 1. **`Awake`**: grabs its components once and adds the outline material if it's destructible.
 2. **`OnEnable`**: the spawner reveals it. It records its start point, resets its state, and starts the
    warning.
-3. **`WarnThenMove`**: blinks for `warningTime` seconds with its collider off, then starts moving.
-4. **`Update`**: every frame it spins, updates the outline color, and (once moving) moves toward the
-   camera.
+3. **`WarnThenMove`**: waits `warningTime` seconds with its collider off, then starts moving.
+4. **`Update`**: every frame it spins, updates the outline color and the depth tint, and (once moving)
+   moves toward the camera.
 5. It **despawns** when the player **smashes** it, or when it gets far enough **behind the camera**:
    `PatternCopy.Despawn` switches it off and puts it back at its spot in its pattern copy, ready to be
    revealed again on the pattern's next use (object pooling). An asteroid that isn't in a pooled pattern is
@@ -70,8 +70,8 @@ though both feed into how fast the asteroid approaches.
 - Gets the gameplay camera from GameManager, the player's PlayerMovement, PlayerHealth and
   PlayerInvincibility, the level's Score, and the player's CloseCallZone. Like every script that isn't on the player, it gets player components from
   GameManager once instead of looking them up on each hit.
-- Creates `blinkWait`, one `WaitForSeconds(blinkInterval)` that every blink of the warning reuses (see
-  `WarnThenMove`). Only when there's a template, since that's where `blinkInterval` lives.
+- Creates `warnWait`, one `WaitForSeconds(warningTime)` that every warning reuses (see `WarnThenMove`).
+  Only when there's a template, since that's where `warningTime` lives.
 - **Destructible outline:** if `destructible` is on, it adds the template's `outlineMaterial` as an extra
   material slot on the renderer. A mesh with two materials gets drawn twice, and the outline shader
   draws the second copy slightly larger and inside out (an "inverted hull"), so only a rim shows around
@@ -83,6 +83,9 @@ though both feed into how fast the asteroid approaches.
   `phasedMaterials` is just the template's `phasedMaterial` (only for a Phase asteroid with one assigned;
   otherwise null, and the look never swaps). They're made once so swapping costs no allocation.
   `rend.sharedMaterials` returns a new copy of the array each time it's read, which is why it's read once.
+- **The depth tint's setup:** creates `tintBlock` (a `MaterialPropertyBlock`) and fills `baseColors` with the
+  `_BaseColor` of every material slot **except the outline's** (white for a material without that property).
+  The outline is always the last slot, so the slots before `outlineIndex` are the body. See `UpdateDepthTint`.
 
 ### `OnEnable`: reset when revealed
 
@@ -102,26 +105,21 @@ with `SetActive(true)`. That fires `OnEnable`, which:
   an x/y and gives you the angle back (in radians). The orbit center comes from `OrbitSettings`.
 - Starts the `WarnThenMove` coroutine.
 
-### `WarnThenMove`: the warning blink
+### `WarnThenMove`: the warning wait
 
 A **coroutine** is a method that can pause partway through and continue later. `yield return new
-WaitForSeconds(x)` means "stop here and pick up again in x seconds." That makes timed sequences like a
-blink easy to write as a simple loop.
+WaitForSeconds(x)` means "stop here and pick up again in x seconds." That makes timed sequences easy to
+write as plain code.
 
-1. **Turn the collider off.** The asteroid can't hit the player until it has visibly warned them.
-2. **Blink.** Every `blinkInterval` seconds, flip the glow on or off until `warningTime` has passed.
-   With the defaults (1s and 0.1s), that's 10 flips. Each wait yields the same `blinkWait` made in `Awake`
-   instead of a `new WaitForSeconds`, so blinking creates no garbage. Reusing it is safe because it only
-   holds the wait length; Unity tracks each wait's timing separately.
-3. **Glow off, collider on, `isMoving = true`.**
+1. **Turn the collider off.** The asteroid can't hit the player while it's still warning.
+2. **Wait `warningTime` seconds.** It yields the same `warnWait` made in `Awake` instead of a `new
+   WaitForSeconds`, so each warning creates no garbage. Reusing it is safe because it only holds the wait
+   length; Unity tracks each wait's timing separately.
+3. **Collider on, `isMoving = true`.**
 
-The glow color depends on `movementType` (red for Linear, cyan for Wave by default), so the player can
-tell how the asteroid will move before it does.
-
-**How the glow works (`SetGlow`):** it uses a `MaterialPropertyBlock`, which overrides a material setting
-(here, the emission color) on this one renderer only. Changing the material directly would either change
-every asteroid sharing it, or make Unity quietly copy the material for each asteroid. Setting the
-block to `null` removes the override. The material needs **Emission** turned on for this to show.
+The warning used to blink a red or cyan glow. That was removed (along with the template's glow fields and
+`GetGlow`), so the warning is now just the wait: the asteroid sits at the far end of the field, dark from the
+depth tint, tumbling.
 
 ### `Update`: every frame
 
@@ -133,6 +131,22 @@ true (the player is invincible, or fast enough to smash it) and red when it isn'
 renderer when that changes, not every frame. It's skipped while the hologram look is showing
 (`showingPhased`), which has no outline slot; when the solid look comes back, `outlineState = -1` makes it
 re-apply the color.
+
+**Depth tint (`UpdateDepthTint`).** Makes asteroids darker the further they are from the player, so depth is
+easier to read. It runs every frame, including during the warning, so a new asteroid shows dark at once:
+
+1. `distance = its z − the player's z`.
+2. `template.GetDepthTint(distance)` turns that into a color between white (near the player) and
+   `farColor` (far away). The distance is measured as a share of `OrbitSettings.SpawnDistance`, so it follows
+   `spawnerPosition` and `playerZ` if they change.
+3. If that tint is the same as last frame's (`lastTint`), it stops. Otherwise it fills `tintBlock` for each body
+   slot with `_BaseColor` = that slot's saved color × the tint, plus `_Tint` = the tint (for the Asteroid
+   Phase graph), and applies it to just that slot with `SetPropertyBlock(tintBlock, i)`.
+
+A property block replaces a value, it doesn't multiply it, which is why `baseColors` saves each slot's own
+base color in `Awake`. The **outline slot is never touched**, so the outline stays at full brightness.
+`SetPropertyBlock` is per slot, so the same tint carries over when the phase look swaps the materials. A
+passed asteroid has a negative distance, which clamps to white.
 
 **Phase (`UpdatePhase`).** For a Phase asteroid, once moving, right after `elapsed` is advanced:
 
@@ -159,7 +173,7 @@ If it turns solid while overlapping the player, that's a normal hit; the flicker
 
 **Moving.** Once `isMoving` is true:
 
-1. **How fast to approach.** `ApproachSpeed = speed + PlayerMovement.Speed × template.speedMultiplier`.
+1. **How fast to approach.** `ApproachSpeed = template.baseApproachSpeed + PlayerMovement.Speed × template.speedMultiplier`.
    The player never really moves forward, so asteroids coming in faster is what makes flying faster feel
    faster.
 2. **How far it has come.** `distance += ApproachSpeed × Time.deltaTime`. Like `orbitAngle` in
@@ -251,6 +265,9 @@ scene for asteroids every frame. The public properties exist for it:
 | Property | What it tells you |
 | --- | --- |
 | `IsMoving` | Whether it has finished warning and started moving |
+| `Movement` | Its `MovementType` (Linear or Wave). Read-only. The pattern builder's fairness checks read it to skip Wave asteroids |
+| `Amplitude`, `Frequency` | Read-only copies of the Wave swing settings. The pattern builder reads `Amplitude` to draw the sweep arc in the Scene view |
+| `MirrorSwing` | Settable. The spawner sets it when it flips a pattern left-right; a Wave asteroid then swings the other way (the swing is multiplied by -1). Not saved in the Inspector or prefab, starts false. Linear asteroids ignore it |
 | `ApproachSpeed` | How fast it's closing in right now |
 | `CanBreak` | Whether touching it right now would smash it |
 | `HitRadius` | How wide its collider is on screen, measured once in `Awake`, so it's right even while the collider is off |
@@ -267,7 +284,7 @@ PlayerInvincibility, that part is just false.
 
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`.
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).
-- **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetGlow` for the warning color.
+- **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetDepthTint` for the depth fade.
   A Phase asteroid gets its hologram look from `phasedMaterial` (the Asteroid Phase shader, see
   [AsteroidPhase.md](AsteroidPhase.md)).
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
@@ -291,8 +308,8 @@ PlayerInvincibility, that part is just false.
 ## Gotchas
 
 - **No template means a broken asteroid.** Without one, there's no warning (and the collider stays on the
-  whole time), no spin, no knockback or camera shake when it hits the player, it ignores the player's
-  speed, and it never despawns.
+  whole time), no spin, no knockback or camera shake when it hits the player, its `ApproachSpeed` is 0 so
+  it never moves, and it never despawns.
 - **`amplitude` is in degrees, the rest of the angles in the script are radians.** It's converted with
   `Deg2Rad` right where it's used.
 - **Wave speed is based on time, not distance.** At higher player speed, the asteroid covers more
@@ -304,10 +321,15 @@ PlayerInvincibility, that part is just false.
 - **`phasedTime` 0** means it never phases, but it still flickers near the end of each cycle.
 - **`destructible` is only read in `Awake`.** Ticking it on a live asteroid in Play mode lets it be smashed,
   but it won't get an outline.
-- **`blinkInterval` is only read into `blinkWait` in `Awake`.** Changing it on the template in Play mode
-  won't change how long existing asteroids wait between blinks, though their loop already steps by the new
-  value, so the number of blinks changes. Stop and press Play again after tuning it.
-- **The glow needs Emission turned on** in the asteroid's material, or the blink is invisible.
+- **`warningTime` is only read into `warnWait` in `Awake`.** Changing it on the template in Play mode won't
+  change how long existing asteroids wait. Stop and press Play again after tuning it.
+- **The depth tint needs `_BaseColor`.** It works on URP Lit materials (the asteroid material). A body
+  material without a `_BaseColor` property is multiplied from white instead, and shows no tint unless it
+  has its own tint property, like the Asteroid Phase graph's `Tint`.
+- **Slots added after `Awake` aren't tinted.** `baseColors` is filled once, so a body material slot added later
+  by another script keeps its own color.
+- **The tint ignores emission.** A body material with a strong emission color keeps glowing at full brightness
+  at a distance.
 - **`OnEnable` runs every time it's revealed, and the asteroid is reused.** Creating a pattern copy switches
   its children on once (running `Awake` and `OnEnable`) before the spawner switches them off, and with
   pooling the same asteroid is revealed again on every later use of its pattern. So `OnEnable` has to reset

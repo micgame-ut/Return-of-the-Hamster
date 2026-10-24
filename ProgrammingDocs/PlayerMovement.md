@@ -25,6 +25,8 @@ the same way you would handle a mouse.
 | Field | Default | What it changes |
 | --- | --- | --- |
 | `mouseSensitivity` | 1.7 | Orbit distance per pixel of horizontal mouse movement, **in thousandths** of a world unit (5 = 0.005). TestGame uses 5 |
+| `forwardThreshold` | 30 (slider 0–90) | Degrees either side of straight up inside which the sideways part of the trackball movement is ignored. 0 = off |
+| `minInputForAngle` | 2 | Pixels per frame. Movement shorter than this is too small to have a reliable direction, so the threshold isn't applied |
 | `startAngle` | -90 | Where on the circle the ship starts, in degrees. -90 = bottom |
 | `faceCenter` | true | Rotates the ship so its top always points at the center |
 | `rotationSpeed` | 1.7 | Degrees the mesh tilts/rolls per pixel of mouse movement. TestGame uses 1.25 |
@@ -111,6 +113,35 @@ same maths as the orbit below (centre + cos/sin × radius, at `playerZ`; rotatio
 MenuTransition glides the menu hamster to exactly this pose, so when play begins and `Update` places the
 player on the orbit, it doesn't move.
 
+### The forward threshold (`OnMove`)
+
+A trackball flick meant to go straight forward usually drifts a little sideways. `OnMove` filters that out
+right after reading the input: if the movement is at least `minInputForAngle` long and its angle from straight
+up (`Vector2.Angle(Vector2.up, moveInput)`, unsigned, 0–180) is at most `forwardThreshold`, `moveInput.x` is set
+to 0. `y` is never touched, so `Speed` rises as usual.
+
+Because `moveInput` is filtered once, everything that reads it sees the filtered value: the orbit slide in
+`Movement` and the side-boost memory (`lastSideDirection`, `lastSideInputTime`). So a straight forward flick
+doesn't slide the ship or turn the next click into a side boost.
+
+`Roll` is the exception. It reads `rawMoveInput`, a copy of the input saved in `OnMove` before the filter. The
+roll is only visual, and cutting its sideways part inside the cone made the tilt switch off and on as the angle
+crossed the threshold, which felt choppy. So the mesh still tilts with every movement, even when the ship doesn't slide.
+
+With a threshold of 30 and `minInputForAngle` 2:
+
+| Raw input (x, y) | Angle from up | Result |
+| --- | --- | --- |
+| (0, 5) | 0° | Forward only |
+| (2, 5) | 21.8° | Inside the cone: `x` becomes 0 |
+| (-2, 5) | 21.8° | Same, the angle is unsigned |
+| (4, 5) | 38.7° | Outside: slides and moves forward |
+| (5, 0) | 90° | Sideways, unaffected |
+| (0, -5) | 180° | Backwards, unaffected |
+| (1, 0.5) | not measured | Shorter than 2 px, left alone |
+
+The setting is only an Inspector field for now. The menu option to change it is still on the TODO list.
+
 ### The orbit (`Movement`)
 
 Picture a clock hand pinned to the center of the screen. The hand is `CircleRadius` long, and the ship
@@ -169,7 +200,7 @@ Purely visual. Only the mesh rotates, never the root or collider.
 - Left/right input rolls the mesh around its own axis.
 - With no input, the roll eases back to level (`rollDamping`, with the exact fade).
 
-The mouse is treated as a **speed** here: `rollInput = moveInput ÷ Time.deltaTime` (pixels per second), and
+The mouse is treated as a **speed** here: `rollInput = rawMoveInput ÷ Time.deltaTime` (pixels per second), and
 each frame rotates by `rollInput × rotationSpeed × Time.deltaTime`. While moving, that's simply
 `rotationSpeed` degrees per pixel; after you stop, the fading "momentum" also turns the same amount at any
 frame rate. The `Time.deltaTime > 0` check avoids dividing by zero if time is ever frozen. At high frame
@@ -343,6 +374,9 @@ Side effects of doing it this way:
   game respond less the higher the frame rate. Rates get `× Time.deltaTime`, fades get `1 − e^(−k·dt)`.
 - **`mouseSensitivity` and `acceleration` are in thousandths.** Old-style values (0.3, 2) from before the
   change would make the ship barely move. Check the prefab and any scene overrides.
+- **The forward threshold works on one frame's input.** At high frame rates the trackball reports only a pixel
+  or two per frame, so the angle comes in steps (for example (1, 2) is 26.6° and (1, 1) is 45°). A slow, wobbly
+  forward roll can flicker between filtered and unfiltered. Raise `minInputForAngle` if it does.
 - The ship is moved in `Update`, not `FixedUpdate`. Its Rigidbody must stay kinematic; a simulated
   Rigidbody would need its movement in `FixedUpdate` instead.
 - The player's z comes from `OrbitSettings`. Moving the player in the scene does nothing, because it moves

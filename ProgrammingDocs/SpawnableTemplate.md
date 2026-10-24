@@ -3,21 +3,22 @@
 ## Purpose
 
 Holds the settings shared by everything the spawner sends at the player, asteroids and power-ups:
-warning glow colors and timing, spin, explosion, outline colors, despawn distance, what happens when the
-player gets hit, how much the player's speed affects approach speed, and the power-up spin, pickup
-effect and invincibility duration. Every asteroid and power-up prefab points at the same template asset, so changing a value there
-changes it for all of them at once.
+warning timing, spin, explosion, outline colors, despawn distance, what happens when the
+player gets hit, how much the player's speed affects approach speed, how they darken with distance, and the
+power-up spin, pickup effect and invincibility duration. Every asteroid and power-up prefab points at the
+same template asset, so changing a value there changes it for all of them at once.
 
 It was called `AsteroidTemplate` until power-ups started using it. Asteroid-only settings and power-up-only
-settings sit in their own sections; `speedMultiplier` and `despawnBehindCamera` are shared by both.
+settings sit in their own sections; `baseApproachSpeed`, `speedMultiplier` and `despawnBehindCamera` are
+shared by both.
 
-It's only data. It has no `Update` or other logic, apart from one helper that picks the glow color.
+It's only data. It has no `Update` or other logic, apart from one small helper, `GetDepthTint`.
 
 ## Where it lives
 
 - **Attached to:** nothing. It's a **ScriptableObject**, which is saved as an asset file in the project
   instead of being attached to a GameObject.
-- **The asset:** `Assets/Scripts/SpawnableTemplate.asset`.
+- **The asset:** `Assets/Resources/SpawnableTemplate.asset`.
 - **Used by:** the `template` field on every asteroid prefab in `Assets/Prefabs/Asteroid Types/`, and on
   power-up prefabs (`Assets/Prefabs/Health PowerUp.prefab`).
 - **Making a new one:** right-click in the Project window → Create → Return of the Hamster → Spawnable
@@ -29,7 +30,7 @@ The other option would be putting all these fields on AsteroidBehavior itself. T
 carry its own copy, and changing the knockback would mean editing every prefab and making sure they
 match. With a ScriptableObject, there's one copy of the settings and every asteroid just points to it.
 
-The per-asteroid settings (movement type, speed, wave, destructible) stay on AsteroidBehavior because
+The per-asteroid settings (movement type, wave, destructible) stay on AsteroidBehavior because
 they're meant to differ between asteroids.
 
 ## Inspector settings
@@ -37,20 +38,15 @@ they're meant to differ between asteroids.
 "Default" is what the script starts a new template with. "In the asset" is what the project's
 `SpawnableTemplate.asset` is actually set to, which is what the game uses.
 
-### Warning Glow
-
-| Field | Default | In the asset | What it changes |
-| --- | --- | --- | --- |
-| `linearGlow` | red | red | Glow color for Linear asteroids during the warning |
-| `waveGlow` | cyan | cyan | Glow color for Wave asteroids during the warning |
-| `glowIntensity` | 3 | 3 | Brightness multiplier on both glow colors |
-
 ### Warning Timing
 
 | Field | Default | In the asset | What it changes |
 | --- | --- | --- | --- |
-| `warningTime` | 1 | 1 | Seconds an asteroid blinks before it starts moving |
-| `blinkInterval` | 0.1 | 0.1 | Seconds between each blink on/off |
+| `warningTime` | 1 | 1 | Seconds an asteroid waits (collider off) before it starts moving. A power-up waits the same time |
+
+The warning used to blink a glow (`linearGlow`, `waveGlow`, `glowIntensity`, `blinkInterval` and `GetGlow`).
+That was removed, so these fields are gone. The old values may still sit in the asset file until Unity next
+saves it; they're ignored.
 
 ### Spin
 
@@ -99,7 +95,22 @@ they're meant to differ between asteroids.
 
 | Field | Default | In the asset | What it changes |
 | --- | --- | --- | --- |
+| `baseApproachSpeed` | 5 | 5 (the asset has no saved value until Unity re-saves it, so it uses the default) | Approach speed (units/sec) at player `Speed` 0. Shared by asteroids and power-ups, so one change tunes them all. Used to be a `speed` field on each prefab |
 | `speedMultiplier` | 15 | **0.5** | Extra approach speed (units/sec) for each point of the player's `Speed`. See `ApproachSpeed` in AsteroidBehavior. Power-ups use it too, so they keep their place in a pattern |
+
+### Depth Fade
+
+Asteroids and power-ups get darker the further ahead of the player they are, so depth is easier to read.
+Distances are measured as a share of `OrbitSettings.SpawnDistance` (the distance from the player to the
+spawner), so the fade follows the spawner if it moves.
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `darkenStart` | 0.2 (slider 0–1) | Where the fade begins, as a share of the spawn distance. Closer than this = full brightness |
+| `darkenEnd` | 1 (slider 0–1) | Where the fade is complete, as a share of the spawn distance. 1 = at the spawner |
+| `farColor` | (0.25, 0.25, 0.3) | The color they fade toward. It's multiplied into their base color, so a dark color darkens them |
+
+These three are new, so the asset uses the defaults until they're changed.
 
 ### Power-Up
 
@@ -131,30 +142,35 @@ these; the fixed prefabs ignore them. See PowerUp's `RollType`.
 
 ### HDR colors (`[ColorUsage(false, true)]`)
 
-The glow and outline colors have `[ColorUsage(false, true)]` above them. It changes the color picker in
+The outline colors have `[ColorUsage(false, true)]` above them. It changes the color picker in
 the Inspector:
 
 - **`false`**: hides the alpha (transparency) slider, since these colors are never see-through.
 - **`true`**: makes it an **HDR** color, which can be brighter than normal white. The picker gets an
   Intensity slider. Values above 1 are what make things glow when the camera has bloom turned on.
 
-### `GetGlow`
+### `GetDepthTint`
 
-Takes an asteroid's movement type and returns its glow color:
+Takes how far ahead of the player something is (in world units) and returns the color to multiply it by:
 
-1. The `switch` picks `waveGlow` for Wave. Anything else, including Linear, gets `linearGlow`.
-2. The result is multiplied by `glowIntensity`. Multiplying a color by a number scales its brightness,
-   so 3 makes it three times as bright. This is what makes it bright enough to glow.
+1. `distance ÷ OrbitSettings.SpawnDistance` turns the distance into a share of the spawn distance.
+2. `InverseLerp(darkenStart, darkenEnd, share)` turns that share into 0–1: 0 at or below `darkenStart`, 1 at or
+   above `darkenEnd`, a straight line between.
+3. `Color.Lerp(white, farColor, t)` mixes white toward `farColor` by that amount.
 
-AsteroidBehavior calls this during the warning blink.
+With the defaults and a spawn distance of 44 (spawner z 40, player z −4): the fade starts at 8.8 units, so an
+asteroid 8.8 or less ahead is white (no change). 26.4 units ahead gives `t` = 0.5, halfway between white and
+`farColor`. 44 or more gives `farColor`. A passed asteroid has a negative distance, which clamps to white.
+
+AsteroidBehavior and PowerUp call this every frame and apply the result to their materials.
 
 ## Talks to
 
-- **AsteroidBehavior**: reads every asteroid field and calls `GetGlow`.
-- **PowerUp**: reads `speedMultiplier`, `despawnBehindCamera` and the Power-Up section, including
-  `invincibleDuration` for the Invincible type, and the four Random Power-Up Chances for a Random pickup.
-
-The template doesn't read from or call anything itself.
+- **AsteroidBehavior**: reads every asteroid field and calls `GetDepthTint`.
+- **PowerUp**: reads `baseApproachSpeed`, `speedMultiplier`, `despawnBehindCamera` and the Power-Up section, including
+  `invincibleDuration` for the Invincible type, and the four Random Power-Up Chances for a Random pickup. It also
+  calls `GetDepthTint`.
+- **OrbitSettings**: `GetDepthTint` reads `SpawnDistance` from it.
 
 ## Gotchas
 
@@ -167,6 +183,7 @@ The template doesn't read from or call anything itself.
 - **A new `pickupEffectPrefab` field starts empty.** Until it's assigned in the asset, pickups have no effect.
 - **One template changes every asteroid.** To give one group of asteroids different settings (say, a
   harder knockback), make a second template asset and assign it to just those prefabs.
-- **Adding a movement type needs a glow color here too.** A new type with no case in `GetGlow` quietly
-  glows the Linear color.
+- **The depth fade uses shares, not world units.** Change `spawnerPosition` or `playerZ` on OrbitSettings and the
+  fade stretches to match. `darkenStart` equal to `darkenEnd` turns the fade off, because `InverseLerp` returns 0
+  instead of dividing by zero.
 - **An asteroid with no template is broken.** See AsteroidBehavior's gotchas.

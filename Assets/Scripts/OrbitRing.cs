@@ -8,19 +8,30 @@ using UnityEngine;
 public class OrbitRing : MonoBehaviour
 {
     [Header("Ring")]
-    [SerializeField] private Material lineMaterial; // unlit/transparent; falls back to Sprites/Default
+    [Tooltip("Material for the lines. If empty, it makes one with the built-in Sprites/Default shader.")]
+    [SerializeField] private Material lineMaterial;
+    [Tooltip("Color of the orbit circle.")]
     [SerializeField] private Color ringColor = new Color(1f, 1f, 1f, 0.15f);
+    [Tooltip("Thickness of the orbit circle.")]
     [SerializeField] private float ringWidth = 0.05f;
+    [Tooltip("How many straight pieces make up the circle. More is smoother.")]
     [SerializeField] private int ringSegments = 96;
 
     [Header("Danger Arcs")]
+    [Tooltip("Arc color for an asteroid that will hit the player.")]
     [SerializeField] private Color dangerColor = new Color(1f, 0.2f, 0.2f, 1f);
-    [SerializeField] private Color breakableColor = new Color(0.2f, 1f, 0.3f, 1f); // destructible and fast enough to break it
-    [SerializeField] private Color phasedColor = new Color(0.2f, 0.5f, 1f, 1f); // phased out: safe, but can't be broken
+    [Tooltip("Arc color for an asteroid the player would smash right now (fast enough, or invincible).")]
+    [SerializeField] private Color breakableColor = new Color(0.2f, 1f, 0.3f, 1f);
+    [Tooltip("Arc color for a Phase asteroid while it's phased out: safe, but it can't be broken.")]
+    [SerializeField] private Color phasedColor = new Color(0.2f, 0.5f, 1f, 1f);
+    [Tooltip("Thickness of the danger arcs.")]
     [SerializeField] private float arcWidth = 0.15f;
-    [SerializeField] private float arcOffset = 0.6f; // drawn this far outside the ring so arcs don't cover the hamster
-    [SerializeField] private float warnTime = 1.5f; // seconds before impact the arc starts fading in
-    [SerializeField] private float playerRadius = 0.5f; // added to the asteroid's radius; match the hamster's collider
+    [Tooltip("How far outside the ring the arcs are drawn, so they don't cover the hamster.")]
+    [SerializeField] private float arcOffset = 0.6f;
+    [Tooltip("Seconds before impact that an arc starts fading in.")]
+    [SerializeField] private float warnTime = 1.5f;
+    [Tooltip("The player's size, added to the asteroid's size to work out how wide the danger zone is. While PlayerShell's hitbox is on and bigger, its size is used instead.")]
+    [SerializeField] private float playerRadius = 0.5f;
 
     private PlayerMovement player;
     private PlayerShell shell;

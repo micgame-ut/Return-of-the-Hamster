@@ -135,6 +135,80 @@ collider is off and it shows a hologram look. Otherwise it's a normal asteroid.
 - **Possible follow-up:** remove `HamsterMenuFloat` from the `hamter` prefab and add it only to Level 1's
   player (the guard covers it meanwhile).
 
+## Options menu: forward threshold
+
+**Built and tested** (`PlayerMovement`): `forwardThreshold` (30°, slider 0–90) and `minInputForAngle` (2 px).
+If the trackball movement is within `forwardThreshold` of straight up, `OnMove` zeroes its sideways part, so
+the slide, the sideways roll and the side-boost memory all ignore it. See `PlayerMovement.md`.
+
+**Still to do:** an options screen on the menu where the player changes `forwardThreshold`. The menu's
+Options button is being removed until this exists.
+- Needs: a slider UI, saving the value (probably `PlayerPrefs`), and `PlayerMovement.Awake` reading it.
+- Maybe later: smooth the angle over a few frames if slow forward rolls flicker between filtered and
+  unfiltered.
+
+## Depth fade (asteroids and power-ups darker with distance)
+
+**Built, not yet tested.** `SpawnableTemplate` has `darkenStart` (0.2), `darkenEnd` (1) and `farColor`, measured
+as a share of the new `OrbitSettings.SpawnDistance` (so it follows `spawnerPosition`). `GetDepthTint` turns a
+distance into a color between white and `farColor`. AsteroidBehavior and PowerUp apply it every frame with a
+property block (`_BaseColor`; the outline slot is left alone), and the Asteroid Phase graph has a new `Tint`
+property (`depth` group). The asteroid's warning glow was removed in the same change. See `SpawnableTemplate.md`.
+
+**Still to do:**
+- Test it in Play mode, then tune `darkenStart`, `darkenEnd` and `farColor` by eye.
+- Maybe later: the tint ignores emission, so an emissive material would keep glowing at a distance.
+
+## Pattern builder improvements
+
+The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed as worth doing, roughly in order:
+
+- **Workflow: built and tested** (the slowest part used to be: duplicate a pattern prefab, clear it, build
+  it, add it to the spawner's waves, then play the level to test it). The builder's **Waves** section has Save
+  Pattern As... (with Clear After Save), Test This Pattern (plays only that pattern on a loop in its own
+  `PatternTest` scene, with the full range of speed) and Add to Spawner, all also under Tools → Pattern Builder. New script
+  `PatternTest.cs`. Changed: ObjectSpawner, GameManager (editor-only lines), PatternGizmosEditor. Docs written,
+  including `PatternTest.md`.
+- **Editing: Gap / safe lane on Ring and Arc, Rotate and Mirror are built and tested.** New, not yet tested:
+  the Zigzag and Twist shapes (a Twist gap turns with each ring), Shift Z and Reverse Z (all and selected), and
+  Distribute Selected by Depth / by Angle (Tools menu). Lane and Burst are Spiral with Angle Step 0 / Z Step 0
+  (a note in the panel says so). Possible follow-up: draw the red gap wedge on a gapped Twist.
+- **Jitter and Prefab Mix: built, not yet tested.** Jitter Angle / Jitter Z on every shape except Random (shared
+  seed and Reroll with Random), and a weighted mix of up to 4 prefabs per slot (Asteroid and Power-Up), remembered
+  between sessions. Preview spheres stay one colour.
+- **Auto-naming: built, not yet tested.** Children are named `Step N - Prefab K` and put in step order, after each
+  Add (a checkbox, on by default) or with the **Name Children** button.
+- **Presets: built, not yet tested.** A Presets section at the top of the builder saves the placement settings to
+  `Assets/Scripts/Editor/PatternPresets/<name>.json` and loads them back by name (dropdown, Load, Name + Save
+  Preset, Delete Preset). The builder's "ideas" list is otherwise done.
+- **Wave sweep preview: built and tested.** For a Wave asteroid prefab, each previewed sphere gets a cyan
+  arc showing the stretch of the orbit it swings along (`AsteroidBehavior.Amplitude`). Visual only; the fairness
+  checks still skip Wave asteroids.
+- **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
+  reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
+  player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing
+  helpers.
+- **Fairness checks (warnings only): built and tested.** New editor script `PatternFairness.cs` plus a
+  Fairness section in the builder: overlapping asteroids, a step with no safe lane, a gap too far from the one
+  before (lane reach), and power-ups that are too far from the orbit, blocked or out of reach. Red rings mark
+  the objects in the Scene view. Wave asteroids aren't checked yet. `AsteroidBehavior` has a new read-only
+  `Movement` property. Docs written, including `PatternFairness.md`. The patterns stay within the player's limits for now; harder, limit-testing waves come later.
+- **Presets** for builder settings, and **auto-naming** children ("Step 3, Asteroid 2").
+
+## Wave phases and runtime variation (ObjectSpawner)
+
+Not started. Waves should be available only within certain points of level progress, so more waves unlock as
+the player progresses and old ones can drop out.
+
+- **Phases: built, not yet tested.** Each wave has `fromProgress` / `untilProgress` (0–1, from `LevelTimer`
+  progress) and is skipped outside that range. When no wave is available but some have patterns, the spawner
+  waits 0.5 s and rechecks. Still to do: set the ranges on the real levels' wave lists. Possible follow-up: a
+  preview of which waves are active at a given progress.
+- **Runtime rotate / mirror: built, not yet tested.** Each wave has `randomRotation`, `rotationStep` and
+  `mirrorChance`; the spawner picks a turn and a flip once per spawn and applies them as each child is revealed.
+  Mirrored Wave asteroids swing the other way (`AsteroidBehavior.MirrorSwing`). Test This Pattern ignores the
+  variation. See `ObjectSpawner.md`.
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

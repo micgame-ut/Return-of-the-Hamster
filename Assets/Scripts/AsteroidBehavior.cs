@@ -11,42 +11,57 @@ public class AsteroidBehavior : MonoBehaviour
     public enum EffectType { None, Phase }
 
     [Header("Movement")]
+    [Tooltip("The path it takes: Linear or Wave.")]
     [SerializeField] private MovementType movementType = MovementType.Linear;
-    [SerializeField] private float speed = 20f;
 
     [Header("Wave")]
-    [SerializeField] private float amplitude = 30f;  // degrees swung each way around the orbit
-    [SerializeField] private float frequency = 1f;   // cycles per second
+    [Tooltip("Wave: how many degrees it swings each way around the player's circle. Unused by Linear.")]
+    [SerializeField] private float amplitude = 30f;
+    [Tooltip("Wave: full back-and-forth swings per second. Unused by Linear.")]
+    [SerializeField] private float frequency = 1f;
 
     [Header("Effect")]
+    [Tooltip("Extra behavior on top of the movement: None or Phase. A separate dropdown from movementType.")]
     [SerializeField] private EffectType effectType = EffectType.None;
 
     [Header("Phase")]
-    [SerializeField] private float solidTime = 1.5f;        // seconds solid in each cycle
-    [SerializeField] private float phasedTime = 1f;         // seconds phased (no collider, hologram look) in each cycle
-    [SerializeField] private float flickerTime = 0.3f;      // seconds of flicker just before each switch
-    [SerializeField] private float flickerInterval = 0.05f; // seconds between flicker flips
+    [Tooltip("Phase: seconds solid in each cycle.")]
+    [SerializeField] private float solidTime = 1.5f;
+    [Tooltip("Phase: seconds phased (collider off, hologram look) in each cycle.")]
+    [SerializeField] private float phasedTime = 1f;
+    [Tooltip("Phase: seconds of flicker just before each switch, as a warning.")]
+    [SerializeField] private float flickerTime = 0.3f;
+    [Tooltip("Phase: seconds between flicker flips. 0 = no flicker.")]
+    [SerializeField] private float flickerInterval = 0.05f;
 
     [Header("Destruction")]
+    [Tooltip("Whether the player can smash it by being fast enough. Also gives it the outline.")]
     [SerializeField] private bool destructible = false;
-    [SerializeField] private float destroySpeed = 5f; // player Speed needed to break it (Speed ranges 0 to PlayerMovement.MaxSpeed)
-    [SerializeField] private int scorePoints = 10; // base points when broken, before the speed multiplier
+    [Tooltip("The player Speed needed to smash it (compare to maxSpeed, 10 by default).")]
+    [SerializeField] private float destroySpeed = 5f;
+    [Tooltip("Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount.")]
+    [SerializeField] private int scorePoints = 10;
 
     [Header("Mesh")]
-    [SerializeField] private Mesh[] meshes; // models to pick from; empty keeps the prefab's own mesh
+    [Tooltip("Models to pick from at random. Empty keeps the prefab's own mesh.")]
+    [SerializeField] private Mesh[] meshes;
 
     [Header("Template")]
+    [Tooltip("The shared SpawnableTemplate asset.")]
     [SerializeField] private SpawnableTemplate template;
 
-    private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
     private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
+    private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int TintId = Shader.PropertyToID("_Tint");   // the Asteroid Phase graph's tint property
 
     private Renderer rend;
     private MeshFilter meshFilter;
     private Collider col;
-    private MaterialPropertyBlock block;
     private MaterialPropertyBlock outlineBlock;
-    private WaitForSeconds blinkWait;
+    private MaterialPropertyBlock tintBlock;
+    private Color[] baseColors;  // each non-outline slot's own base color, before the depth tint
+    private Color lastTint;  // the tint last sent to the renderer, so unchanged frames skip the call
+    private WaitForSeconds warnWait;
     private Transform mesh;
     private Transform cam;
     private PlayerInvincibility invincibility;
@@ -78,12 +93,17 @@ public class AsteroidBehavior : MonoBehaviour
     private float baseAngle; // radians, where on the circle it was revealed
 
     // How fast this asteroid closes on the camera right now; rises with player speed.
-    public float ApproachSpeed => speed + PlayerMovement.Speed * (template != null ? template.speedMultiplier : 0f);
+    public float ApproachSpeed => template != null ? template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier : 0f;
 
     // Every revealed asteroid, so other scripts can react without searching the scene.
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
 
     public bool IsMoving => isMoving;
+    public MovementType Movement => movementType;
+    public float Amplitude => amplitude;
+    public float Frequency => frequency;
+    // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
+    public bool MirrorSwing { get; set; }
     public bool IsPhased { get; private set; }
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||
@@ -107,8 +127,7 @@ public class AsteroidBehavior : MonoBehaviour
         // the root, which never spins, so its footprint doesn't change.
         if (col != null) hitRadius = Mathf.Max(col.bounds.extents.x, col.bounds.extents.y);
 
-        block = new MaterialPropertyBlock();
-        if (template != null) blinkWait = new WaitForSeconds(template.blinkInterval);
+        if (template != null) warnWait = new WaitForSeconds(template.warningTime);
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
@@ -139,6 +158,18 @@ public class AsteroidBehavior : MonoBehaviour
         if (rend != null) solidMaterials = rend.sharedMaterials;
         if (effectType == EffectType.Phase && template != null && template.phasedMaterial != null)
             phasedMaterials = new[] { template.phasedMaterial };
+
+        // Each slot's own base color, kept for the depth tint. The outline slot is left out so it stays bright.
+        if (rend != null)
+        {
+            tintBlock = new MaterialPropertyBlock();
+            int slots = outlineIndex >= 0 ? outlineIndex : solidMaterials.Length;
+            baseColors = new Color[slots];
+            for (int i = 0; i < slots; i++)
+                baseColors[i] = solidMaterials[i] != null && solidMaterials[i].HasProperty(BaseColorId)
+                    ? solidMaterials[i].GetColor(BaseColorId)
+                    : Color.white;
+        }
     }
 
     private void OnEnable()
@@ -181,37 +212,11 @@ public class AsteroidBehavior : MonoBehaviour
             // it has visibly telegraphed itself.
             if (col != null) col.enabled = false;
 
-            bool on = false;
-            for (float t = 0f; t < template.warningTime; t += template.blinkInterval)
-            {
-                on = !on;
-                SetGlow(on);
-                yield return blinkWait;
-            }
-
-            SetGlow(false);
+            yield return warnWait;
             if (col != null) col.enabled = true;
         }
 
         isMoving = true;
-    }
-
-    private void SetGlow(bool on)
-    {
-        if (rend == null || template == null) return;
-
-        if (on)
-        {
-            // Property block overrides emission on this renderer only, without
-            // creating a per-asteroid material copy. The material must have
-            // Emission enabled for this to show.
-            block.SetColor(EmissionColorId, template.GetGlow(movementType));
-            rend.SetPropertyBlock(block);
-        }
-        else
-        {
-            rend.SetPropertyBlock(null); // back to the material's own emission
-        }
     }
 
     // Swaps between the solid and hologram materials, only when the look actually changes.
@@ -258,11 +263,29 @@ public class AsteroidBehavior : MonoBehaviour
         rend.SetPropertyBlock(outlineBlock, outlineIndex);
     }
 
+    // Fades the body toward template.farColor the further it is ahead of the player. The outline slot is left alone.
+    private void UpdateDepthTint()
+    {
+        if (baseColors == null || template == null || player == null) return;
+
+        Color tint = template.GetDepthTint(transform.position.z - player.transform.position.z);
+        if (tint == lastTint) return;
+        lastTint = tint;
+
+        for (int i = 0; i < baseColors.Length; i++)
+        {
+            tintBlock.SetColor(BaseColorId, baseColors[i] * tint);
+            tintBlock.SetColor(TintId, tint);
+            rend.SetPropertyBlock(tintBlock, i);
+        }
+    }
+
     private void Update()
     {
         // Spins during the warning too, so asteroids appear already tumbling.
         Spin();
         UpdateOutline();
+        UpdateDepthTint();
 
         if (!isMoving) return;
 
@@ -282,7 +305,7 @@ public class AsteroidBehavior : MonoBehaviour
         {
             // Read every frame so it follows the orbit being tuned live
             OrbitSettings orbit = OrbitSettings.Instance;
-            float swing = Mathf.Sin(elapsed * frequency * Mathf.PI * 2f) * amplitude * Mathf.Deg2Rad;
+            float swing = Mathf.Sin(elapsed * frequency * Mathf.PI * 2f) * amplitude * Mathf.Deg2Rad * (MirrorSwing ? -1f : 1f);
             float angle = baseAngle + swing;
             position.x = orbit.OrbitCenter.x + Mathf.Cos(angle) * orbit.OrbitRadius;
             position.y = orbit.OrbitCenter.y + Mathf.Sin(angle) * orbit.OrbitRadius;

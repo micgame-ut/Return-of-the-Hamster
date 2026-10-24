@@ -12,17 +12,22 @@ public class OrbitSettings : ScriptableObject
     private const string ResourcePath = "OrbitSettings"; // Assets/Resources/OrbitSettings.asset
 
     [Header("Orbit")]
-    [SerializeField] private float orbitRadius = 3f;                    // world units
-    [SerializeField] private Vector2 orbitCenter = new Vector2(0f, 1f); // world x/y; keep the gameplay camera's x/y matching so the circle sits mid-screen
+    [Tooltip("Size of the player's orbit, in world units.")]
+    [SerializeField] private float orbitRadius = 3f;
+    [Tooltip("The x/y the orbit circles around, in world space. Keep the gameplay camera's x/y matching so the circle sits mid-screen.")]
+    [SerializeField] private Vector2 orbitCenter = new Vector2(0f, 1f);
 
     [Header("Layout")]
-    [SerializeField] private float playerZ = -4f;                            // PlayerMovement moves itself here
-    [SerializeField] private Vector3 spawnerPosition = new Vector3(0f, 0f, 15f); // ObjectSpawner moves itself here
+    [Tooltip("The player's depth. PlayerMovement moves itself here when the game starts.")]
+    [SerializeField] private float playerZ = -4f;
+    [Tooltip("Where the Asteroid Spawner sits. ObjectSpawner moves itself here when the game starts.")]
+    [SerializeField] private Vector3 spawnerPosition = new Vector3(0f, 0f, 15f);
 
     public float OrbitRadius => orbitRadius;
     public Vector2 OrbitCenter => orbitCenter;
     public float PlayerZ => playerZ;
     public Vector3 SpawnerPosition => spawnerPosition;
+    public float SpawnDistance => spawnerPosition.z - playerZ; // how far ahead of the player patterns appear
 
     // The same values measured from the spawner, which is the space patterns are built in
     public Vector2 OrbitCenterFromSpawner => orbitCenter - (Vector2)spawnerPosition;

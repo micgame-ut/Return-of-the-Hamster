@@ -5,33 +5,48 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("References")]
+    [Tooltip("The visual mesh (a child of the player). It rolls and blinks separately from the root and collider.")]
     [SerializeField] private Transform meshTransform;
 
     [Header("Movement")]
     [Tooltip("Orbit distance per pixel of mouse movement, in thousandths of a world unit. 5 = 0.005.")]
     [SerializeField] private float mouseSensitivity = 1.7f;
+    [Tooltip("Degrees either side of straight up inside which sideways trackball movement is ignored. 0 = off.")]
+    [SerializeField, Range(0f, 90f)] private float forwardThreshold = 30f;
+    [Tooltip("Pixels per frame. Movement shorter than this is too small to have a reliable direction, so the threshold isn't applied.")]
+    [SerializeField] private float minInputForAngle = 2f;
 
     [Header("Orbit")]
     // Radius, center, and depth come from OrbitSettings, shared with the pattern builder
-    [SerializeField] private float startAngle = -90f; // degrees; -90 = bottom of the circle, like Gyruss
-    [SerializeField] private bool faceCenter = true; // rotate so the ship's top points at the center
+    [Tooltip("Where on the circle the ship starts, in degrees. -90 = bottom, like Gyruss.")]
+    [SerializeField] private float startAngle = -90f;
+    [Tooltip("Rotates the ship so its top always points at the center of the circle.")]
+    [SerializeField] private bool faceCenter = true;
 
     [Header("Roll")]
     [Tooltip("Degrees the mesh rolls per pixel of mouse movement.")]
     [SerializeField] private float rotationSpeed = 1.7f;
+    [Tooltip("How fast the mesh settles back to level when input stops. Higher = faster.")]
     [SerializeField] private float rollDamping = 5f;
 
     [Header("Speed")]
     [Tooltip("Speed gained per pixel of upward mouse movement, in thousandths. 33 = 0.033.")]
     [SerializeField] private float acceleration = 83f;
+    [Tooltip("Speed lost per second with no input.")]
     [SerializeField] private float speedDecay = 2f;
+    [Tooltip("The top speed. The sky, starfield, level timer and asteroids all use Speed directly, so changing this shifts them too.")]
     [SerializeField] private float maxSpeed = 10f;
+    [Tooltip("The most extra Speed lost per second in overdrive, reached at max speed. It ramps up from 0 at the start of overdrive.")]
     [SerializeField] private float topSpeedDegrade = 3f;
+    [Tooltip("Fraction of max speed where overdrive starts. 0.9 = the top 10%.")]
     [SerializeField, Range(0.5f, 1f)] private float overdriveFraction = 0.9f;
 
     [Header("Boost")]
+    [Tooltip("Sideways boost strength around the circle. The distance it covers is boostForce ÷ boostDecay.")]
     [SerializeField] private float boostForce = 5f;
+    [Tooltip("How fast a sideways boost or knockback fades out, per second.")]
     [SerializeField] private float boostDecay = 3f;
+    [Tooltip("How much Speed a forward boost adds.")]
     [SerializeField] private float speedBoost = 3f;
     [Tooltip("Seconds after the last sideways mouse movement that a click still gives a side boost.")]
     [SerializeField] private float sideInputMemory = 0.1f;
@@ -39,8 +54,10 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float boostCooldown = 3f;
 
     [Header("Hit")]
-    [SerializeField] private float invulnerableTime = 1.5f; // seconds of no hits after being hit
-    [SerializeField] private float hitBlinkInterval = 0.1f; // time between visibility flips
+    [Tooltip("Seconds of no hits after being hit.")]
+    [SerializeField] private float invulnerableTime = 1.5f;
+    [Tooltip("Seconds between visibility flips while invulnerable.")]
+    [SerializeField] private float hitBlinkInterval = 0.1f;
 
     private const float SensitivityScale = 0.001f; // Mouse Sensitivity and Acceleration are entered in thousandths, so 5 means 0.005
 
@@ -53,6 +70,7 @@ public class PlayerMovement : MonoBehaviour
 
     // Movement
     private Vector2 moveInput;
+    private Vector2 rawMoveInput; // trackball input before the forward threshold
 
     // Orbit
     private OrbitSettings orbit;
@@ -171,8 +189,8 @@ public class PlayerMovement : MonoBehaviour
     {
         // If there is mouse input, roll with its speed (pixels per second); otherwise ease back to zero.
         // The fade uses 1 - e^(-k·dt) so it eases out the same at any frame rate.
-        rollInput = moveInput.sqrMagnitude > 0f && Time.deltaTime > 0f
-            ? moveInput / Time.deltaTime
+        rollInput = rawMoveInput.sqrMagnitude > 0f && Time.deltaTime > 0f
+            ? rawMoveInput / Time.deltaTime
             : Vector2.Lerp(rollInput, Vector2.zero, 1f - Mathf.Exp(-rollDamping * Time.deltaTime));
 
         float degrees = rotationSpeed * Time.deltaTime;
@@ -254,6 +272,11 @@ public class PlayerMovement : MonoBehaviour
     private void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
+        rawMoveInput = moveInput;
+
+        if (moveInput.sqrMagnitude >= minInputForAngle * minInputForAngle &&
+            Vector2.Angle(Vector2.up, moveInput) <= forwardThreshold)
+            moveInput.x = 0f;
 
         if (moveInput.x != 0f)
         {

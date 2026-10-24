@@ -6,8 +6,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class EffectPool : MonoBehaviour
 {
-    [SerializeField] private SpawnableTemplate template; // its explosion and pickup effects are prewarmed
-    [SerializeField] private int prewarmEffects = 5;     // copies of each effect made at level start
+    [Tooltip("The SpawnableTemplate whose explosionPrefab and pickupEffectPrefab are prewarmed.")]
+    [SerializeField] private SpawnableTemplate template;
+    [Tooltip("Copies of each effect made at level start.")]
+    [SerializeField] private int prewarmEffects = 5;
 
     private static EffectPool instance;
     private readonly Dictionary<ParticleSystem, Stack<PooledEffect>> freeEffects = new Dictionary<ParticleSystem, Stack<PooledEffect>>();

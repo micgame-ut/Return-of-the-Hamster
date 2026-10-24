@@ -2,10 +2,15 @@ using UnityEngine;
 using System.Collections;
 public class CreditsPanel : MonoBehaviour
 {
+    [Tooltip("The credits text that scrolls upward. Reset to its starting position each time the panel opens.")]
     [SerializeField] private RectTransform _creditsContent;
+    [Tooltip("Seconds the credits sit still after opening, before they start scrolling.")]
     [SerializeField] private float holdDuration = 3f;
+    [Tooltip("How fast the credits scroll upward, in canvas units per second.")]
     [SerializeField] private float scrollSpeed = 3f;
+    [Tooltip("The Y position where scrolling stops.")]
     [SerializeField] private float endPositionY;
+    [Tooltip("Seconds the credits stay on screen after reaching the end, before the panel hides.")]
     [SerializeField] private float pauseDuration = 3f;
 
     private Vector2 startPosition;

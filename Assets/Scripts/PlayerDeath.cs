@@ -6,22 +6,32 @@ using UnityEngine;
 // time, since GameManager freezes everything else at game over.
 public class PlayerDeath : MonoBehaviour
 {
+    [Tooltip("The ship's visual child. It gets shaken, then hidden.")]
     [SerializeField] private Transform meshTransform;
 
     [Header("Approach")]
-    [SerializeField] private float distanceFromCamera = 3f; // where the ship stops, in front of the camera
-    [SerializeField] private float holdTime = 0.75f;        // seconds at the camera before exploding
+    [Tooltip("How far in front of the camera the ship stops.")]
+    [SerializeField] private float distanceFromCamera = 3f;
+    [Tooltip("Seconds the ship sits in front of the camera, shaking, before it explodes.")]
+    [SerializeField] private float holdTime = 0.75f;
 
     [Header("Shake")]
-    [SerializeField] private float timeToExplode = 2f;      // seconds from game over to the explosion
-    [SerializeField] private float maxShake = 0.3f;         // mesh offset at the moment it explodes
+    [Tooltip("Seconds from game over to the explosion. The approach takes timeToExplode minus holdTime.")]
+    [SerializeField] private float timeToExplode = 2f;
+    [Tooltip("How far the mesh jitters at the moment it explodes. It grows from 0.")]
+    [SerializeField] private float maxShake = 0.3f;
+    [Tooltip("New shake directions per second, so the shake looks the same at any frame rate.")]
     [SerializeField, Min(1f)] private float shakeFrequency = 60f;
 
     [Header("Explosion")]
+    [Tooltip("The particle effect spawned at the explosion.")]
     [SerializeField] private ParticleSystem explosionPrefab;
+    [Tooltip("How long the camera shakes at the explosion.")]
     [SerializeField] private float explodeShakeDuration = 0.4f;
+    [Tooltip("How hard the camera shakes at the explosion.")]
     [SerializeField] private float explodeShakeMagnitude = 0.5f;
-    [SerializeField] private float endDelay = 1.5f;          // seconds after exploding before DeathSequenceFinished
+    [Tooltip("Seconds after the explosion before DeathSequenceFinished is called.")]
+    [SerializeField] private float endDelay = 1.5f;
 
     private BoostRing ring;
 

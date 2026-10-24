@@ -12,6 +12,7 @@ public class RunStats : MonoBehaviour
     private const string TimeKey = "TimeSurvived";
     private const string LevelsKey = "LevelsBeaten";
 
+    [Tooltip("The base name. The attempt number is added after it (Apollo 3).")]
     [SerializeField] private string hamsterName = "Apollo";
 
     public int Attempt { get; private set; }
