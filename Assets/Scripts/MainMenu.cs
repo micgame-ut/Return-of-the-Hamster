@@ -44,7 +44,11 @@ public class MainMenu : MonoBehaviour
 
     public void OnQuitPressed()
     {
-        Application.Quit();
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
     }
 
     private IEnumerator BlinkText(TMP_Text text, float duration)
