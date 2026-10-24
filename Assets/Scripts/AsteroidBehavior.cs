@@ -100,6 +100,8 @@ public class AsteroidBehavior : MonoBehaviour
 
     public bool IsMoving => isMoving;
     public MovementType Movement => movementType;
+    public float Amplitude => amplitude;
+    public float Frequency => frequency;
     // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
     public bool MirrorSwing { get; set; }
     public bool IsPhased { get; private set; }

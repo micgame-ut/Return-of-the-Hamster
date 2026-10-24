@@ -180,11 +180,14 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
   Add (a checkbox, on by default) or with the **Name Children** button.
 - **Presets: built, not yet tested.** A Presets section at the top of the builder saves the placement settings to
   `Assets/Scripts/Editor/PatternPresets/<name>.json` and loads them back by name (dropdown, Load, Name + Save
-  Preset, Delete Preset). The builder's "ideas" list is otherwise done; what's left is the Wave sweep preview.
+  Preset, Delete Preset). The builder's "ideas" list is otherwise done.
+- **Wave sweep preview: built, not yet tested.** For a Wave asteroid prefab, each previewed sphere gets a cyan
+  arc showing the stretch of the orbit it swings along (`AsteroidBehavior.Amplitude`). Visual only; the fairness
+  checks still skip Wave asteroids.
 - **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
   reaches player, shortest / longest wait between steps and total length at Speed 0, a chosen Speed and the
   player's max, and the Scene labels show `+x.xx s` per step. `PatternGizmos` now has `GetSteps` and timing
-  helpers. Still to do: a Wave sweep preview.
+  helpers.
 - **Fairness checks (warnings only): built and tested.** New editor script `PatternFairness.cs` plus a
   Fairness section in the builder: overlapping asteroids, a step with no safe lane, a gap too far from the one
   before (lane reach), and power-ups that are too far from the orbit, blocked or out of reach. Red rings mark

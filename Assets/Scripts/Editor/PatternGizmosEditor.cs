@@ -75,6 +75,9 @@ public class PatternGizmosEditor : Editor
     // Rings drawn on the objects a Fairness warning is about.
     private static readonly Color WarningColor = new Color(1f, 0.15f, 0.15f, 1f);
 
+    // The arc a Wave asteroid swings along, drawn around its preview sphere.
+    private static readonly Color SweepColor = new Color(0.3f, 0.8f, 1f, 1f);
+
     // -----------------------------------------------------------------------
     // Builder settings
     //
@@ -788,6 +791,19 @@ public class PatternGizmosEditor : Editor
                 // Number each object so you can see the order it was
                 // generated in (most useful for spirals).
                 Handles.Label(p + Vector3.up * previewSize, (i + 1).ToString(), PreviewLabelStyle);
+
+                // A Wave asteroid swings round the orbit, so show the whole stretch it covers.
+                AsteroidBehavior wave = placing == Placing.Asteroid ? PickPrefab(i)?.GetComponent<AsteroidBehavior>() : null;
+                if (wave != null && wave.Movement == AsteroidBehavior.MovementType.Wave)
+                {
+                    var center = new Vector3(PatternGizmos.OrbitCenter.x, PatternGizmos.OrbitCenter.y, p.z);
+                    float angle = Mathf.Atan2(p.y - center.y, p.x - center.x) * Mathf.Rad2Deg;
+                    Vector3 from = Quaternion.Euler(0f, 0f, angle - wave.Amplitude) * Vector3.right;
+
+                    Handles.color = SweepColor;
+                    Handles.DrawWireArc(center, Vector3.forward, from, wave.Amplitude * 2f, PatternGizmos.OrbitRadius);
+                    Handles.color = previewColor; // the next sphere uses this color
+                }
             }
         }
     }

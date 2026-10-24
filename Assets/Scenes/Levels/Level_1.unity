@@ -1559,22 +1559,47 @@ MonoBehaviour:
     delayAfter: 3
     clearPoints: 100
     perfectBonus: 50
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   - pattern: {fileID: 1426364939829335137, guid: 88799a0d4c6061b4c91133e1d5d7d4de, type: 3}
     delayAfter: 3
     clearPoints: 100
     perfectBonus: 50
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   - pattern: {fileID: 1426364939829335137, guid: 2c7c34dd2bf220a43aa088764c7cc0c3, type: 3}
     delayAfter: 3
     clearPoints: 150
     perfectBonus: 50
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   - pattern: {fileID: 1426364939829335137, guid: 8e29f78f1cc066a44b89c094ae01456e, type: 3}
     delayAfter: 3
     clearPoints: 150
     perfectBonus: 50
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   - pattern: {fileID: 1426364939829335137, guid: 620d41c2b3494704382c44dea55b101f, type: 3}
     delayAfter: 3
     clearPoints: 150
     perfectBonus: 50
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   order: 1
   loop: 1
   startDelay: 2

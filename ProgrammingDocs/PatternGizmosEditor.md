@@ -141,6 +141,15 @@ the shape's depth, with the orbit's radius. `Handles.color` is set to red for th
 color afterwards, because the spheres use whatever color is current. On an Arc whose wedge only partly overlaps
 the arc, the whole wedge is drawn, including the part outside the arc, which removes nothing.
 
+When the asteroid being placed is a **Wave** asteroid, it also draws the **sweep**: a cyan arc (`SweepColor`,
+`Handles.DrawWireArc`) at the orbit's radius and the sphere's depth, showing the stretch of the orbit the
+asteroid swings along. For each sphere it asks `PickPrefab(i)` for the prefab (so a Prefab Mix shows each
+sphere's own prefab), reads that prefab's `AsteroidBehavior`, and skips it unless `Movement` is Wave. The arc's
+centre is the sphere's angle from the orbit center (`Atan2`), and it runs from `angle − Amplitude` for
+`Amplitude × 2` degrees. Example: a sphere at -90° with amplitude 30° gets a 60° arc from -120° to -60°. It
+shows the range only, not the timing, so `Frequency` isn't used. Power-ups never get one. Jitter moves the
+sphere, and the arc moves with it. `Handles.color` is put back to the preview color afterwards, like the wedge.
+
 The number labels use one `GUIStyle`, created the first time it's needed (GUI styles can't be built before
 the editor's GUI is ready). Its color is set every time the style is read, so it follows the tabs.
 

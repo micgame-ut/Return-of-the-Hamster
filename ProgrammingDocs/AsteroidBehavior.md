@@ -266,6 +266,7 @@ scene for asteroids every frame. The public properties exist for it:
 | --- | --- |
 | `IsMoving` | Whether it has finished warning and started moving |
 | `Movement` | Its `MovementType` (Linear or Wave). Read-only. The pattern builder's fairness checks read it to skip Wave asteroids |
+| `Amplitude`, `Frequency` | Read-only copies of the Wave swing settings. The pattern builder reads `Amplitude` to draw the sweep arc in the Scene view |
 | `MirrorSwing` | Settable. The spawner sets it when it flips a pattern left-right; a Wave asteroid then swings the other way (the swing is multiplied by -1). Not saved in the Inspector or prefab, starts false. Linear asteroids ignore it |
 | `ApproachSpeed` | How fast it's closing in right now |
 | `CanBreak` | Whether touching it right now would smash it |
