@@ -181,7 +181,7 @@ The Random tab is built (see `PatternGizmosEditor.md`). More ideas, all agreed a
 - **Presets: built, not yet tested.** A Presets section at the top of the builder saves the placement settings to
   `Assets/Scripts/Editor/PatternPresets/<name>.json` and loads them back by name (dropdown, Load, Name + Save
   Preset, Delete Preset). The builder's "ideas" list is otherwise done.
-- **Wave sweep preview: built, not yet tested.** For a Wave asteroid prefab, each previewed sphere gets a cyan
+- **Wave sweep preview: built and tested.** For a Wave asteroid prefab, each previewed sphere gets a cyan
   arc showing the stretch of the orbit it swings along (`AsteroidBehavior.Amplitude`). Visual only; the fairness
   checks still skip Wave asteroids.
 - **Timing readout: built, not yet tested.** The panel's Timing section shows approach speed, appears →
