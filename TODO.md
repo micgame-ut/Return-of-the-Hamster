@@ -234,7 +234,7 @@ Built one feature at a time, each with a test point.
   so it moves the Magnet's mesh child to the matching spot in front of the background camera (the mesh child is on
   the **Background** layer), and turns the effect so its arch points at the orbit's center on screen: it sets the
   material's `_Disk_Angle` per Magnet (a `MaterialPropertyBlock` on the mesh's first slot) to `90 − φ +
-  angleOffset`. **Still to do:** `MagnetMirror.md` and its README row, after you recap how it works (section 7).
+  angleOffset`. Documented in `MagnetMirror.md` (**waiting for your review**).
 - **Idea, needs scoping:** give `PlayerTwins` a single "main player" identifier that swaps places with a copy.
 - **Growing effect: built and tested.** Pulses (mesh only) for `pulseDistance` before `growDistance`, then
   the root pops to `growScale` (hitbox too) with a visual overshoot that settles over `settleTime`. Scale is
