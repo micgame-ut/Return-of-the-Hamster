@@ -8,7 +8,7 @@ using UnityEngine;
 public class AsteroidBehavior : MonoBehaviour
 {
     public enum MovementType { Linear, Wave, Spiral, Homing, StopAndGo }
-    public enum EffectType { None, Phase, Splitter, Growing, Magnet }
+    public enum EffectType { None, Phase, Splitter, Growing, Magnet, Frost }
     public enum AsteroidKind { Hazard, Destructible, BonusCarrier, Nebula }
 
     [Header("Kind")]
@@ -54,7 +54,7 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float dashMultiplier = 2.5f;
 
     [Header("Effect")]
-    [Tooltip("Extra behavior on top of the movement: None, Phase, Splitter, Growing or Magnet. A separate dropdown from movementType.")]
+    [Tooltip("Extra behavior on top of the movement: None, Phase, Splitter, Growing, Magnet or Frost. A separate dropdown from movementType.")]
     [SerializeField] private EffectType effectType = EffectType.None;
 
     [Header("Phase")]
@@ -100,6 +100,22 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float magnetRadius = 30f;
     [Tooltip("Magnet: the pull on the player at point-blank range, in degrees per second along the orbit.")]
     [SerializeField] private float magnetStrength = 60f;
+
+    [Header("Frost")]
+    [Tooltip("Frost: how far the comet has to move round the orbit ring before it leaves another patch, in units. Keep it at or below twice patchRadius so the trail has no gaps.")]
+    [SerializeField] private float dropSpacing = 3f;
+    [Tooltip("Frost: it only leaves patches while it is within this distance of the player's depth, before and after crossing it, in units.")]
+    [SerializeField] private float paintDistance = 20f;
+    [Tooltip("Frost: seconds a patch lasts before it disappears.")]
+    [SerializeField] private float patchLifetime = 6f;
+    [Tooltip("Frost: how close the player has to be to a patch's centre to be slowed, in units. Patches sit on the orbit ring.")]
+    [SerializeField] private float patchRadius = 3f;
+    [Tooltip("Frost: the fraction of the player's forward Speed lost per second inside a patch. 0 = none, 1 = all of it each second.")]
+    [SerializeField, Range(0f, 1f)] private float speedSlow = 0.5f;
+    [Tooltip("Frost: the fraction of the player's sideways movement along the orbit lost inside a patch. 0 = none, 1 = frozen in place.")]
+    [SerializeField, Range(0f, 1f)] private float orbitSlow = 0.5f;
+    [Tooltip("Frost: the particle system that draws the cloud, a child of the comet. One particle is emitted per patch. Leave empty for no visual.")]
+    [SerializeField] private ParticleSystem trail;
 
     [Header("Destruction")]
     [Tooltip("The player Speed needed to smash it (compare to maxSpeed, 10 by default).")]
@@ -172,6 +188,13 @@ public class AsteroidBehavior : MonoBehaviour
     private float settleTimer;  // seconds since the pop, for the overshoot
     private Vector3 startScale;  // the root's scale at the start, put back when a Growing asteroid is reused
     private Vector3 meshStartScale;  // the mesh child's scale at the start, for pulsing
+
+    // Frost: the trail is a list of these. A struct is a small value stored directly in the list, with no object per patch.
+    private struct FrostPatch { public Vector3 position; public float age; }
+    private readonly List<FrostPatch> patches = new List<FrostPatch>();
+    private Vector3 lastDrop;  // where the last patch was left
+    private bool hasDropped;  // a patch has been left this flight, so lastDrop means something
+    private bool retired;  // a Frost comet that has finished flying and is only waiting for its trail to run out
 
     // How fast this asteroid closes on the camera right now; rises with player speed.
     public float ApproachSpeed => template != null ? (template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier) * approachScale : 0f;
@@ -290,6 +313,10 @@ public class AsteroidBehavior : MonoBehaviour
         stopPhase = StopPhase.Approaching;
         stopTimer = 0f;
         hasSplit = false;
+        patches.Clear();
+        hasDropped = false;
+        retired = false;
+        if (rend != null) rend.enabled = true;
         if (effectType == EffectType.Splitter && splitPiece != null)
             EffectPool.PrewarmAsteroids(splitPiece, splitCount);
         hasGrown = false;
@@ -517,6 +544,80 @@ public class AsteroidBehavior : MonoBehaviour
         player.AddPull(magnetStrength * Mathf.Deg2Rad * closeness * closeness * alongOrbit);
     }
 
+    // Frost: drops a patch each time the comet has travelled dropSpacing further.
+    private void UpdateFrost()
+    {
+        float reach = patchRadius * patchRadius;
+        bool inFrost = false;
+        for (int i = patches.Count - 1; i >= 0; i--)
+        {
+            FrostPatch patch = patches[i];
+            patch.age += Time.deltaTime;
+
+            if (patch.age >= patchLifetime)
+            {
+                patches.RemoveAt(i);
+                continue;
+            }
+
+            patches[i] = patch;
+            if (player != null && (patch.position - player.transform.position).sqrMagnitude <= reach)
+                inFrost = true;
+        }
+
+        if (inFrost) player.ApplyFrost(speedSlow, orbitSlow);
+    }
+
+    // Frost: near the player's depth, leaves a patch on the orbit ring under the comet, each time it has moved dropSpacing round the ring.
+    private void PaintFrost()
+    {
+        if (dropSpacing <= 0f) return;
+
+        OrbitSettings orbit = OrbitSettings.Instance;
+        if (Mathf.Abs(transform.position.z - orbit.PlayerZ) > paintDistance) return;
+
+        Vector2 fromCenter = (Vector2)transform.position - orbit.OrbitCenter;
+        if (fromCenter.sqrMagnitude < 0.0001f) return;
+
+        Vector2 onRing = orbit.OrbitCenter + fromCenter.normalized * orbit.OrbitRadius;
+        Vector3 spot = new Vector3(onRing.x, onRing.y, orbit.PlayerZ);
+        if (hasDropped && (spot - lastDrop).sqrMagnitude < dropSpacing * dropSpacing) return;
+
+        patches.Add(new FrostPatch { position = spot, age = 0f });
+        lastDrop = spot;
+        hasDropped = true;
+    }
+
+    // Frost: draws each patch as a wire sphere, fading with age and red while the player is inside, so the trail can be seen before the particles exist.
+    private void OnDrawGizmos()
+    {
+        float reach = patchRadius * patchRadius;
+        for (int i = 0; i < patches.Count; i++)
+        {
+            bool inside = player != null && (patches[i].position - player.transform.position).sqrMagnitude <= reach;
+            Color color = inside ? Color.red : new Color(0.5f, 0.9f, 1f);
+            color.a = 1f - patches[i].age / patchLifetime;
+            Gizmos.color = color;
+            Gizmos.DrawWireSphere(patches[i].position, patchRadius);
+        }
+    }
+
+    // Despawns the asteroid, except a Frost comet that still has a trail: that one hides and waits for it to run out.
+    private void Finish()
+    {
+        if (effectType != EffectType.Frost || patches.Count == 0)
+        {
+            PatternCopy.Despawn(gameObject);
+            return;
+        }
+
+        retired = true;
+        Active.Remove(this);
+        if (trail != null) trail.Stop();
+        if (rend != null) rend.enabled = false;
+        if (col != null) col.enabled = false;
+    }
+
     private void Update()
     {
         // Spins during the warning too, so asteroids appear already tumbling.
@@ -525,6 +626,13 @@ public class AsteroidBehavior : MonoBehaviour
         UpdateDepthTint();
 
         if (!isMoving) return;
+
+        if (retired)
+        {
+            UpdateFrost();
+            if (patches.Count == 0) PatternCopy.Despawn(gameObject);
+            return;
+        }
 
         elapsed += Time.deltaTime;
         if (effectType == EffectType.Phase) UpdatePhase();
@@ -584,6 +692,11 @@ public class AsteroidBehavior : MonoBehaviour
         }
 
         transform.position = position;
+        if (effectType == EffectType.Frost)
+        {
+            UpdateFrost();
+            PaintFrost();
+        }
         if (closeCalls != null && player != null && !closeCallJudged && effectType != EffectType.Magnet) TrackCloseCall();
 
         // Asteroids fly toward -Z, so once one is far enough behind the camera it
@@ -591,7 +704,7 @@ public class AsteroidBehavior : MonoBehaviour
         if (cam != null && template != null &&
             transform.position.z < cam.position.z - template.despawnBehindCamera)
         {
-            PatternCopy.Despawn(gameObject);
+            Finish();
         }
 
         if (effectType == EffectType.Splitter && !hasSplit && splitPiece != null && player != null &&
@@ -665,6 +778,6 @@ public class AsteroidBehavior : MonoBehaviour
         if (stats != null) stats.AddAsteroidDestroyed();
         if (score != null) score.AddComboKill(scorePoints, bodyPosition);
 
-        PatternCopy.Despawn(gameObject);
+        Finish();
     }
 }
