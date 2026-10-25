@@ -182,6 +182,13 @@ use it to work out which way "along the circle" is, e.g. which way to knock the 
 Steps 3 and 4 live in their own method, **`PlaceOnOrbit`**, so `ShiftOrbit` (below) can place the ship the
 same way.
 
+**Magnet pull.** `AddPull(radiansPerSecond)` adds to `pullRate`. A Magnet asteroid calls it once a frame, and
+pulls from several Magnets add up. In step 1 (`Movement`), the angle gets `pullRate × Time.deltaTime` radians on
+top of the input's arc, and `pullRate` is then reset to 0, so each pull is spent exactly once, like a boost's
+speed but without any fade. It's added to the input, not instead of it, so the player can fight it with the
+trackball or boost out. When input is locked (before the start, after a death), `Update` returns early before
+`Movement`, so it resets `pullRate` there too. Otherwise a pull added meanwhile would pile up and fire all at once.
+
 **For the twin power-up:** `OrbitAngle` (read only) and `MeshTransform` let TwinCopy sit at an offset from the
 player's angle and copy the mesh's roll. **`ShiftOrbit(radians)`** turns the player around the orbit at once
 and places it straight away, without touching speed, boosts or roll. PlayerTwins uses it when the player is
@@ -350,7 +357,7 @@ Side effects of doing it this way:
 - **OrbitSettings**: reads the orbit's radius and center every frame, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
-- **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
+- **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`; a Magnet asteroid also calls `AddPull`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
 - **OverdriveTally**: reads `InOverdrive` every frame (through GameManager's `Player`) to count the overdrive
   score tally

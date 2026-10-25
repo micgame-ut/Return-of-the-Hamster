@@ -7,6 +7,10 @@ time. It saves all the pooled copies, keeps a free list for each effect, and han
 needed. Any script plays an effect with `EffectPool.Play(prefab, position)`, the same idea as
 `CameraShake.Shake`.
 
+It also pools **asteroids that don't belong to a pattern**, which today means the pieces a Splitter asteroid
+makes (see AsteroidBehavior). Asteroids that come from a pattern are pooled by ObjectSpawner and PatternCopy, not
+here.
+
 ## Where it lives
 
 - **Attached to:** the `Game Manager` object in `TestGame.unity`. Effect copies are kept as its children.
@@ -66,11 +70,31 @@ A copy's particles are done, so it goes back onto its effect's free list.
 `Play` is static but can call the private `GetFreeList` and `CreateEffect` on `instance`, because private
 means private to the class.
 
+### Asteroids (`freeAsteroids`)
+
+`freeAsteroids` is a second `Dictionary`, from an asteroid prefab to a `Stack` of free, switched-off copies.
+
+- **`GetFreeAsteroids` and `CreateAsteroid` (private):** like `GetFreeList` and `CreateEffect`. `CreateAsteroid`
+  makes a copy under the pool's object, switches it off, and sets its `PoolSource` to the prefab, so it knows
+  which pile to go back to. (`Instantiate` of an active prefab runs `Awake` and `OnEnable` for that instant
+  before the switch-off, which is harmless.)
+- **`GetAsteroid(prefab, position)` (static):** returns a **switched-off** asteroid at the position, taking a free
+  one or making one. The caller sets it up (for a Splitter piece: `BecomePiece`) and then switches it on, so
+  `OnEnable` runs with everything in place. With no pool in the scene it falls back to a plain `Instantiate`
+  (no `PoolSource`, so it will be destroyed when done).
+- **`PrewarmAsteroids(prefab, count)` (static):** tops up the free pile to `count`. A Splitter calls it in
+  `OnEnable`, so its pieces exist before it splits. Does nothing without a pool.
+- **`ReturnAsteroid(obj)` (static):** called by `PatternCopy.Despawn`. If the object has a `PoolSource`, it
+  switches it off and pushes it on its prefab's pile, and returns `true`. Otherwise `false`. It only pushes if
+  the object is still switched on, so a double return can't put one copy on the pile twice.
+
 ## Talks to
 
 - **PooledEffect**: adds one to each copy, calls `Init`, plays `Particles`, listens to `OnFinished`.
 - **SpawnableTemplate**: reads `explosionPrefab` and `pickupEffectPrefab` to prewarm.
-- **AsteroidBehavior** and **PowerUp**: call `Play` for the explosion and pickup effects.
+- **AsteroidBehavior** and **PowerUp**: call `Play` for the explosion and pickup effects. AsteroidBehavior
+  (Splitter) also calls `GetAsteroid` and `PrewarmAsteroids`.
+- **PatternCopy**: `Despawn` calls `ReturnAsteroid`.
 
 ## Gotchas
 

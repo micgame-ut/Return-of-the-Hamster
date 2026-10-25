@@ -59,6 +59,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
 | Asteroid Phase.shadergraph | [AsteroidPhase.md](AsteroidPhase.md) | Done |
+| Black Hole.shadergraph | [BlackHole.md](BlackHole.md) | Done |
 | Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
 | Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
 | Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |

@@ -8,7 +8,7 @@ using UnityEngine;
 public class AsteroidBehavior : MonoBehaviour
 {
     public enum MovementType { Linear, Wave, Spiral, Homing, StopAndGo }
-    public enum EffectType { None, Phase }
+    public enum EffectType { None, Phase, Splitter, Growing, Magnet }
     public enum AsteroidKind { Hazard, Destructible, BonusCarrier, Nebula }
 
     [Header("Kind")]
@@ -18,6 +18,9 @@ public class AsteroidBehavior : MonoBehaviour
     [Header("Movement")]
     [Tooltip("The path it takes: Linear, Wave, Spiral, Homing or StopAndGo.")]
     [SerializeField] private MovementType movementType = MovementType.Linear;
+    [Tooltip("Multiplies this asteroid's approach speed. 1 = normal, 0.3 = a slow drifter.")]
+    [SerializeField] private float approachScale = 1f;
+
     [Header("Wave")]
     [Tooltip("Wave: how many degrees it swings each way around the player's circle. Unused by Linear.")]
     [SerializeField] private float amplitude = 30f;
@@ -51,7 +54,7 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float dashMultiplier = 2.5f;
 
     [Header("Effect")]
-    [Tooltip("Extra behavior on top of the movement: None or Phase. A separate dropdown from movementType.")]
+    [Tooltip("Extra behavior on top of the movement: None, Phase, Splitter, Growing or Magnet. A separate dropdown from movementType.")]
     [SerializeField] private EffectType effectType = EffectType.None;
 
     [Header("Phase")]
@@ -63,6 +66,40 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float flickerTime = 0.3f;
     [Tooltip("Phase: seconds between flicker flips. 0 = no flicker.")]
     [SerializeField] private float flickerInterval = 0.05f;
+
+    [Header("Splitter")]
+    [Tooltip("Splitter: how far ahead of the player's depth it splits into pieces, in units.")]
+    [SerializeField] private float splitDistance = 40f;
+    [Tooltip("Splitter: how many pieces it splits into.")]
+    [SerializeField] private int splitCount = 3;
+    [Tooltip("Splitter: degrees between neighbouring pieces round the orbit.")]
+    [SerializeField] private float splitSpread = 20f;
+    [Tooltip("Splitter: the asteroid prefab each piece is made from (a Linear one). Its Meshes list gives each piece a random mesh.")]
+    [SerializeField] private GameObject splitPiece;
+    [Tooltip("Splitter: how much smaller than the original each piece is. 0.5 = half size.")]
+    [SerializeField] private float pieceScale = 0.5f;
+
+    [Header("Growing")]
+    [Tooltip("Growing: how far ahead of the player's depth it pops to its full size, in units.")]
+    [SerializeField] private float growDistance = 30f;
+    [Tooltip("Growing: its final size, as a multiple of its starting size. 2 = double.")]
+    [SerializeField] private float growScale = 2f;
+    [Tooltip("Growing: it starts pulsing this many units before it pops, as a warning.")]
+    [SerializeField] private float pulseDistance = 10f;
+    [Tooltip("Growing: how much the mesh swells and shrinks while pulsing, as a fraction of its size. 0.1 = 10% either way.")]
+    [SerializeField] private float pulseSize = 0.1f;
+    [Tooltip("Growing: pulses per second.")]
+    [SerializeField] private float pulseRate = 6f;
+    [Tooltip("Growing: how far past its final size the pop goes, as a fraction. 0.25 = 25% bigger for an instant.")]
+    [SerializeField] private float overshoot = 0.25f;
+    [Tooltip("Growing: seconds the overshoot takes to ease back down to the final size.")]
+    [SerializeField] private float settleTime = 0.2f;
+
+    [Header("Magnet")]
+    [Tooltip("Magnet: how close the player has to be to feel the pull, in units (3D, including depth). The pull grows the closer it gets.")]
+    [SerializeField] private float magnetRadius = 30f;
+    [Tooltip("Magnet: the pull on the player at point-blank range, in degrees per second along the orbit.")]
+    [SerializeField] private float magnetStrength = 60f;
 
     [Header("Destruction")]
     [Tooltip("The player Speed needed to smash it (compare to maxSpeed, 10 by default).")]
@@ -128,9 +165,16 @@ public class AsteroidBehavior : MonoBehaviour
     private StopPhase stopPhase;
     private float stopTimer;  // seconds it has hung still so far
     private Vector3 meshHome;  // where the mesh child normally sits, so a shake can return to it
+    private bool isPiece;  // a Splitter's piece: it moves at once, with no warning wait
+    private float fullHitRadius;  // hitRadius at the prefab's own size, so a piece can scale it
+    private bool hasSplit;  // a Splitter has already made its pieces
+    private bool hasGrown;  // a Growing asteroid has popped to its final size
+    private float settleTimer;  // seconds since the pop, for the overshoot
+    private Vector3 startScale;  // the root's scale at the start, put back when a Growing asteroid is reused
+    private Vector3 meshStartScale;  // the mesh child's scale at the start, for pulsing
 
     // How fast this asteroid closes on the camera right now; rises with player speed.
-    public float ApproachSpeed => template != null ? template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier : 0f;
+    public float ApproachSpeed => template != null ? (template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier) * approachScale : 0f;
 
     // Every revealed asteroid, so other scripts can react without searching the scene.
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
@@ -141,6 +185,8 @@ public class AsteroidBehavior : MonoBehaviour
     public float Frequency => frequency;
     // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
     public bool MirrorSwing { get; set; }
+    // Set by EffectPool on a pooled piece: the prefab it was made from, so it knows which pile to go back to.
+    public GameObject PoolSource { get; set; }
     public bool IsPhased { get; private set; }
     // Whether the player's speed can smash this kind. Hazard and Nebula can't.
     private bool BreaksBySpeed => kind == AsteroidKind.Destructible || kind == AsteroidKind.BonusCarrier;
@@ -165,12 +211,15 @@ public class AsteroidBehavior : MonoBehaviour
         // Measured now, while the collider is still on (WarnThenMove switches it off). The collider is on
         // the root, which never spins, so its footprint doesn't change.
         if (col != null) hitRadius = Mathf.Max(col.bounds.extents.x, col.bounds.extents.y);
+        fullHitRadius = hitRadius;
 
         if (template != null) warnWait = new WaitForSeconds(template.warningTime);
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
         if (mesh != null) meshHome = mesh.localPosition;
+        startScale = transform.localScale;
+        if (mesh != null) meshStartScale = mesh.localScale;
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
@@ -240,6 +289,17 @@ public class AsteroidBehavior : MonoBehaviour
         homingLocked = false;
         stopPhase = StopPhase.Approaching;
         stopTimer = 0f;
+        hasSplit = false;
+        if (effectType == EffectType.Splitter && splitPiece != null)
+            EffectPool.PrewarmAsteroids(splitPiece, splitCount);
+        hasGrown = false;
+        settleTimer = 0f;
+        if (effectType == EffectType.Growing)
+        {
+            transform.localScale = startScale;
+            if (mesh != null) mesh.localScale = meshStartScale;
+            hitRadius = fullHitRadius;
+        }
 
         StartCoroutine(WarnThenMove());
     }
@@ -249,9 +309,19 @@ public class AsteroidBehavior : MonoBehaviour
         Active.Remove(this);
     }
 
+    // Called on a piece while it's still switched off, by whatever makes it: shrinks it and has it skip the warning wait.
+    public void BecomePiece(float scale)
+    {
+        isPiece = true;
+        Vector3 fullScale = PoolSource != null ? PoolSource.transform.localScale : transform.localScale;
+        transform.localScale = fullScale * scale;
+        hitRadius = fullHitRadius * scale;
+        if (col != null) col.enabled = true;
+    }
+
     private IEnumerator WarnThenMove()
     {
-        if (template != null)
+        if (template != null && !isPiece)
         {
             // No collisions while warning, so it can't hit the player before
             // it has visibly telegraphed itself.
@@ -383,6 +453,70 @@ public class AsteroidBehavior : MonoBehaviour
         mesh.localPosition = meshHome + (shaking ? Random.insideUnitSphere * shakeMagnitude : Vector3.zero);
     }
 
+    // Splitter: replaces this asteroid with splitCount smaller pieces side by side round the orbit, centred on its angle.
+    private void Split()
+    {
+        hasSplit = true;
+
+        Vector2 center = OrbitSettings.Instance.OrbitCenter;
+        Vector2 fromCenter = (Vector2)transform.position - center;
+        float angle = Mathf.Atan2(fromCenter.y, fromCenter.x);
+        float radius = fromCenter.magnitude;
+
+        for (int i = 0; i < splitCount; i++)
+        {
+            float pieceAngle = angle + (i - (splitCount - 1) / 2f) * splitSpread * Mathf.Deg2Rad;
+            var position = new Vector3(center.x + Mathf.Cos(pieceAngle) * radius, center.y + Mathf.Sin(pieceAngle) * radius, transform.position.z);
+
+            AsteroidBehavior piece = EffectPool.GetAsteroid(splitPiece, position);
+            piece.BecomePiece(pieceScale);
+            piece.gameObject.SetActive(true);
+        }
+
+        if (template != null) EffectPool.Play(template.explosionPrefab, transform.position);
+        PatternCopy.Despawn(gameObject);
+    }
+
+    // Growing: pulses the mesh as it nears growDistance, then pops to its final size with an overshoot that settles.
+    private void UpdateGrowing()
+    {
+        if (player == null || mesh == null) return;
+
+        float gap = transform.position.z - player.transform.position.z;
+        if (!hasGrown)
+        {
+            if (gap > growDistance)
+            {
+                float pulse = gap <= growDistance + pulseDistance ? Mathf.Sin(elapsed * pulseRate * Mathf.PI * 2f) * pulseSize : 0f;
+                mesh.localScale = meshStartScale * (1f + pulse);
+                return;
+            }
+
+            hasGrown = true;
+            transform.localScale = startScale * growScale;
+            hitRadius = fullHitRadius * growScale;
+        }
+
+        settleTimer += Time.deltaTime;
+        float t = settleTime > 0f ? Mathf.Clamp01(settleTimer / settleTime) : 1f;
+        mesh.localScale = meshStartScale * (1f + overshoot * (1f - t) * (1f - t));
+    }
+
+    // Magnet: pulls the player along the orbit toward this asteroid, harder the closer it is.
+    private void UpdateMagnet()
+    {
+        if (player == null || magnetRadius <= 0f) return;
+
+        Vector3 toMagnet = transform.position - player.transform.position;
+        float distance = toMagnet.magnitude;
+        if (distance >= magnetRadius) return;
+
+        float closeness = 1f - distance / magnetRadius;
+        Vector2 direction = ((Vector2)toMagnet).normalized;
+        float alongOrbit = Vector2.Dot(direction, player.OrbitTangent);
+        player.AddPull(magnetStrength * Mathf.Deg2Rad * closeness * closeness * alongOrbit);
+    }
+
     private void Update()
     {
         // Spins during the warning too, so asteroids appear already tumbling.
@@ -401,6 +535,8 @@ public class AsteroidBehavior : MonoBehaviour
         float speedFactor = movementType == MovementType.StopAndGo ? StopAndGoFactor() : 1f;
         distance += ApproachSpeed * Time.deltaTime * speedFactor;
         if (movementType == MovementType.StopAndGo) UpdateShake();
+        if (effectType == EffectType.Growing) UpdateGrowing();
+        if (effectType == EffectType.Magnet) UpdateMagnet();
 
         // Every type travels toward the camera (-Z).
         Vector3 position = origin + Vector3.back * distance;
@@ -448,7 +584,7 @@ public class AsteroidBehavior : MonoBehaviour
         }
 
         transform.position = position;
-        if (closeCalls != null && player != null && !closeCallJudged) TrackCloseCall();
+        if (closeCalls != null && player != null && !closeCallJudged && effectType != EffectType.Magnet) TrackCloseCall();
 
         // Asteroids fly toward -Z, so once one is far enough behind the camera it
         // can never come back into view.
@@ -457,6 +593,10 @@ public class AsteroidBehavior : MonoBehaviour
         {
             PatternCopy.Despawn(gameObject);
         }
+
+        if (effectType == EffectType.Splitter && !hasSplit && splitPiece != null && player != null &&
+            transform.position.z - player.transform.position.z <= splitDistance)
+            Split();
     }
 
     // Measures the gap once, on the frame it crosses the player's depth, then judges
