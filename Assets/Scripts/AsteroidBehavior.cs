@@ -7,18 +7,48 @@ using UnityEngine;
 // starts moving, it blinks a warning glow so the player can see it coming.
 public class AsteroidBehavior : MonoBehaviour
 {
-    public enum MovementType { Linear, Wave }
+    public enum MovementType { Linear, Wave, Spiral, Homing, StopAndGo }
     public enum EffectType { None, Phase }
+    public enum AsteroidKind { Hazard, Destructible, BonusCarrier, Nebula }
+
+    [Header("Kind")]
+    [Tooltip("What it is: Hazard hurts and can't be smashed, Destructible and BonusCarrier can be smashed by speed (BonusCarrier is worth more), Nebula is a harmless cloud that slows the player.")]
+    [SerializeField] private AsteroidKind kind = AsteroidKind.Hazard;
 
     [Header("Movement")]
-    [Tooltip("The path it takes: Linear or Wave.")]
+    [Tooltip("The path it takes: Linear, Wave, Spiral, Homing or StopAndGo.")]
     [SerializeField] private MovementType movementType = MovementType.Linear;
-
     [Header("Wave")]
     [Tooltip("Wave: how many degrees it swings each way around the player's circle. Unused by Linear.")]
     [SerializeField] private float amplitude = 30f;
     [Tooltip("Wave: full back-and-forth swings per second. Unused by Linear.")]
     [SerializeField] private float frequency = 1f;
+
+    [Header("Spiral")]
+    [Tooltip("Spiral: degrees per second it drifts round the orbit. Negative = the other way. Unused by Linear and Wave.")]
+    [SerializeField] private float spiralSpeed = 45f;
+
+    [Header("Homing")]
+    [Tooltip("Homing: the fastest it can turn toward the nearest player body, in degrees per second. Unused by the other movements.")]
+    [SerializeField] private float homingSpeed = 40f;
+    [Tooltip("Homing: how close to the player's depth it stops turning and flies straight, in units, so the last stretch can be dodged.")]
+    [SerializeField] private float homingStopDistance = 8f;
+    [Tooltip("Homing: the clear space it keeps from other asteroids, as a fraction of a collider's width. 1 = a gap as wide as a collider, 0 = it only stops them touching. A Homing asteroid holds still rather than turn into one.")]
+    [SerializeField] private float homingGapScale = 1f;
+
+    [Header("Stop And Go")]
+    [Tooltip("StopAndGo: how far ahead of the player's depth it ends up stopped, in units.")]
+    [SerializeField] private float stopDistance = 30f;
+    [Tooltip("StopAndGo: it starts slowing this many units before stopDistance, so the stop is smooth. 0 = an abrupt stop.")]
+    [SerializeField] private float stopEaseDistance = 10f;
+    [Tooltip("StopAndGo: seconds it hangs still before the dash, including the shake at the end.")]
+    [SerializeField] private float stopTime = 0.75f;
+    [Tooltip("StopAndGo: seconds at the end of the stop when it shakes, as a warning.")]
+    [SerializeField] private float shakeTime = 0.3f;
+    [Tooltip("StopAndGo: how far the shake moves it, in units.")]
+    [SerializeField] private float shakeMagnitude = 0.15f;
+    [Tooltip("StopAndGo: the dash speed as a multiple of its normal approach speed.")]
+    [SerializeField] private float dashMultiplier = 2.5f;
 
     [Header("Effect")]
     [Tooltip("Extra behavior on top of the movement: None or Phase. A separate dropdown from movementType.")]
@@ -35,8 +65,6 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float flickerInterval = 0.05f;
 
     [Header("Destruction")]
-    [Tooltip("Whether the player can smash it by being fast enough. Also gives it the outline.")]
-    [SerializeField] private bool destructible = false;
     [Tooltip("The player Speed needed to smash it (compare to maxSpeed, 10 by default).")]
     [SerializeField] private float destroySpeed = 5f;
     [Tooltip("Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount.")]
@@ -91,6 +119,15 @@ public class AsteroidBehavior : MonoBehaviour
 
     // Wave swings around the player's orbit, on the player's own circle
     private float baseAngle; // radians, where on the circle it was revealed
+    private float startRadius; // its distance from the orbit center, measured when it's revealed
+    private float homingAngle;  // radians, where a Homing asteroid is on the circle right now
+    private bool homingLocked;  // it has come close enough to stop turning
+
+    // StopAndGo goes through these in order, once each.
+    private enum StopPhase { Approaching, Stopped, Dashing }
+    private StopPhase stopPhase;
+    private float stopTimer;  // seconds it has hung still so far
+    private Vector3 meshHome;  // where the mesh child normally sits, so a shake can return to it
 
     // How fast this asteroid closes on the camera right now; rises with player speed.
     public float ApproachSpeed => template != null ? template.baseApproachSpeed + PlayerMovement.Speed * template.speedMultiplier : 0f;
@@ -105,9 +142,11 @@ public class AsteroidBehavior : MonoBehaviour
     // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
     public bool MirrorSwing { get; set; }
     public bool IsPhased { get; private set; }
+    // Whether the player's speed can smash this kind. Hazard and Nebula can't.
+    private bool BreaksBySpeed => kind == AsteroidKind.Destructible || kind == AsteroidKind.BonusCarrier;
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||
-                             (destructible && PlayerMovement.Speed >= destroySpeed));
+                             (BreaksBySpeed && PlayerMovement.Speed >= destroySpeed));
 
     // XY footprint of the collider, measured once in Awake, since its bounds are only valid while it's enabled.
     public float HitRadius => col != null ? hitRadius : 0f;
@@ -131,6 +170,7 @@ public class AsteroidBehavior : MonoBehaviour
 
         // The renderer lives on the child mesh object, so that's what spins.
         mesh = rend != null ? rend.transform : null;
+        if (mesh != null) meshHome = mesh.localPosition;
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
@@ -140,10 +180,10 @@ public class AsteroidBehavior : MonoBehaviour
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
         closeCalls = GameManager.Instance != null ? GameManager.Instance.CloseCallZone : null;
 
-        // Destructible asteroids get the outline added as an extra material, which
+        // Asteroids that speed can smash get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
-        // so the Destructible toggle alone decides whether an asteroid is outlined.
-        if (destructible && rend != null && template != null && template.outlineMaterial != null)
+        // so the Kind alone decides whether an asteroid is outlined.
+        if (BreaksBySpeed && rend != null && template != null && template.outlineMaterial != null)
         {
             Material[] current = rend.sharedMaterials;
             Material[] withOutline = new Material[current.Length + 1];
@@ -195,6 +235,11 @@ public class AsteroidBehavior : MonoBehaviour
         // reverse of cos/sin, turning an x/y back into an angle.
         Vector2 fromCenter = (Vector2)origin - OrbitSettings.Instance.OrbitCenter;
         baseAngle = Mathf.Atan2(fromCenter.y, fromCenter.x);
+        startRadius = fromCenter.magnitude;
+        homingAngle = baseAngle;
+        homingLocked = false;
+        stopPhase = StopPhase.Approaching;
+        stopTimer = 0f;
 
         StartCoroutine(WarnThenMove());
     }
@@ -280,6 +325,64 @@ public class AsteroidBehavior : MonoBehaviour
         }
     }
 
+    // The angle (radians) round the orbit of the player body, or twin copy, nearest to this asteroid.
+    private float ClosestBodyAngle()
+    {
+        Vector3 body = player.transform.position;
+        if (closeCalls != null) closeCalls.NearestGap(transform.position, 0f, out body);
+
+        Vector2 fromCenter = (Vector2)body - OrbitSettings.Instance.OrbitCenter;
+        return Mathf.Atan2(fromCenter.y, fromCenter.x);
+    }
+
+    // True if moving to newPosition would bring this asteroid closer to another one than its gap allows.
+    private bool WouldCrowd(Vector3 newPosition)
+    {
+        for (int i = 0; i < Active.Count; i++)
+        {
+            AsteroidBehavior other = Active[i];
+            if (other == this || other.IsPhased || other.kind == AsteroidKind.Nebula) continue;
+
+            float required = (HitRadius + other.HitRadius) * (1f + homingGapScale);
+            float newDistance = Vector3.Distance(newPosition, other.transform.position);
+            if (newDistance < required && newDistance < Vector3.Distance(transform.position, other.transform.position))
+                return true;
+        }
+        return false;
+    }
+
+    // StopAndGo: moves through its phases and returns how fast to approach this frame, as a multiple of normal.
+    private float StopAndGoFactor()
+    {
+        if (player == null) return 1f;
+
+        if (stopPhase == StopPhase.Approaching)
+        {
+            float remaining = transform.position.z - player.transform.position.z - stopDistance;
+            if (remaining > 0f)
+                return stopEaseDistance > 0f ? Mathf.Sqrt(Mathf.Min(remaining / stopEaseDistance, 1f)) : 1f;
+            stopPhase = StopPhase.Stopped;
+        }
+
+        if (stopPhase == StopPhase.Stopped)
+        {
+            stopTimer += Time.deltaTime;
+            if (stopTimer < stopTime) return 0f;
+            stopPhase = StopPhase.Dashing;
+        }
+
+        return dashMultiplier;
+    }
+
+    // StopAndGo: shakes the mesh for the last shakeTime of the stop, as a warning before the dash.
+    private void UpdateShake()
+    {
+        if (mesh == null) return;
+
+        bool shaking = stopPhase == StopPhase.Stopped && stopTimer >= stopTime - shakeTime;
+        mesh.localPosition = meshHome + (shaking ? Random.insideUnitSphere * shakeMagnitude : Vector3.zero);
+    }
+
     private void Update()
     {
         // Spins during the warning too, so asteroids appear already tumbling.
@@ -295,7 +398,9 @@ public class AsteroidBehavior : MonoBehaviour
         // Approach speed rises with the player's speed, like the starfield, so
         // flying faster brings asteroids in faster. Distance is accumulated per
         // frame so a change in speed doesn't make the asteroid jump.
-        distance += ApproachSpeed * Time.deltaTime;
+        float speedFactor = movementType == MovementType.StopAndGo ? StopAndGoFactor() : 1f;
+        distance += ApproachSpeed * Time.deltaTime * speedFactor;
+        if (movementType == MovementType.StopAndGo) UpdateShake();
 
         // Every type travels toward the camera (-Z).
         Vector3 position = origin + Vector3.back * distance;
@@ -309,6 +414,37 @@ public class AsteroidBehavior : MonoBehaviour
             float angle = baseAngle + swing;
             position.x = orbit.OrbitCenter.x + Mathf.Cos(angle) * orbit.OrbitRadius;
             position.y = orbit.OrbitCenter.y + Mathf.Sin(angle) * orbit.OrbitRadius;
+        }
+
+        // Spiral drifts round the orbit at its own radius, in one direction.
+        if (movementType == MovementType.Spiral)
+        {
+            OrbitSettings orbit = OrbitSettings.Instance;
+            float angle = baseAngle + elapsed * spiralSpeed * Mathf.Deg2Rad * (MirrorSwing ? -1f : 1f);
+            position.x = orbit.OrbitCenter.x + Mathf.Cos(angle) * startRadius;
+            position.y = orbit.OrbitCenter.y + Mathf.Sin(angle) * startRadius;
+        }
+
+        // Homing turns toward the nearest player body until it's close, then flies straight at its own radius.
+        if (movementType == MovementType.Homing)
+        {
+            if (!homingLocked && player != null)
+            {
+                if (transform.position.z - player.transform.position.z <= homingStopDistance)
+                    homingLocked = true;
+                else
+                {
+                    float turned = Mathf.MoveTowardsAngle(homingAngle * Mathf.Rad2Deg, ClosestBodyAngle() * Mathf.Rad2Deg,
+                                                          homingSpeed * Time.deltaTime) * Mathf.Deg2Rad;
+                    Vector2 center = OrbitSettings.Instance.OrbitCenter;
+                    var ahead = new Vector3(center.x + Mathf.Cos(turned) * startRadius, center.y + Mathf.Sin(turned) * startRadius, transform.position.z);
+                    if (!WouldCrowd(ahead)) homingAngle = turned;
+                }
+            }
+
+            OrbitSettings orbit = OrbitSettings.Instance;
+            position.x = orbit.OrbitCenter.x + Mathf.Cos(homingAngle) * startRadius;
+            position.y = orbit.OrbitCenter.y + Mathf.Sin(homingAngle) * startRadius;
         }
 
         transform.position = position;

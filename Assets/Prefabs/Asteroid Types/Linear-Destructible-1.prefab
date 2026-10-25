@@ -157,6 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 320397d44b10e6241a498d41da92b2f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AsteroidBehavior
+  kind: 1
   movementType: 0
   amplitude: 5
   frequency: 1
@@ -165,7 +166,6 @@ MonoBehaviour:
   phasedTime: 1
   flickerTime: 0.3
   flickerInterval: 0.05
-  destructible: 1
   destroySpeed: 80
   scorePoints: 100
   meshes:
