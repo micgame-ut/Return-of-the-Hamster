@@ -9,10 +9,10 @@ public class AsteroidBehavior : MonoBehaviour
 {
     public enum MovementType { Linear, Wave, Spiral, Homing, StopAndGo }
     public enum EffectType { None, Phase, Splitter, Growing, Magnet, Frost }
-    public enum AsteroidKind { Hazard, Destructible, BonusCarrier, Nebula }
+    public enum AsteroidKind { Hazard, Destructible, BonusCarrier }
 
     [Header("Kind")]
-    [Tooltip("What it is: Hazard hurts and can't be smashed, Destructible and BonusCarrier can be smashed by speed (BonusCarrier is worth more), Nebula is a harmless cloud that slows the player.")]
+    [Tooltip("What it is: Hazard hurts and can't be smashed, Destructible and BonusCarrier can be smashed by speed (BonusCarrier is worth more).")]
     [SerializeField] private AsteroidKind kind = AsteroidKind.Hazard;
 
     [Header("Movement")]
@@ -106,7 +106,7 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float dropSpacing = 3f;
     [Tooltip("Frost: it only leaves patches while it is within this distance of the player's depth, before and after crossing it, in units.")]
     [SerializeField] private float paintDistance = 20f;
-    [Tooltip("Frost: seconds a patch lasts before it disappears.")]
+    [Tooltip("Frost: seconds a patch lasts before it disappears. The ribbon and the mist last this long too.")]
     [SerializeField] private float patchLifetime = 6f;
     [Tooltip("Frost: how close the player has to be to a patch's centre to be slowed, in units. Patches sit on the orbit ring.")]
     [SerializeField] private float patchRadius = 3f;
@@ -114,8 +114,10 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float speedSlow = 0.5f;
     [Tooltip("Frost: the fraction of the player's sideways movement along the orbit lost inside a patch. 0 = none, 1 = frozen in place.")]
     [SerializeField, Range(0f, 1f)] private float orbitSlow = 0.5f;
-    [Tooltip("Frost: the particle system that draws the cloud, a child of the comet. One particle is emitted per patch. Leave empty for no visual.")]
+    [Tooltip("Frost: the particle system that draws the mist, a child of the comet. Its Start Lifetime is set to patchLifetime when the comet spawns, so the mist lasts as long as a patch. Leave empty for no mist.")]
     [SerializeField] private ParticleSystem trail;
+    [Tooltip("Frost: the Trail Renderer that draws the ribbon, a child of the comet. Its Time is set to patchLifetime when the comet spawns, so the ribbon lasts as long as a patch. Leave empty for no ribbon.")]
+    [SerializeField] private TrailRenderer ribbon;
 
     [Header("Destruction")]
     [Tooltip("The player Speed needed to smash it (compare to maxSpeed, 10 by default).")]
@@ -211,7 +213,7 @@ public class AsteroidBehavior : MonoBehaviour
     // Set by EffectPool on a pooled piece: the prefab it was made from, so it knows which pile to go back to.
     public GameObject PoolSource { get; set; }
     public bool IsPhased { get; private set; }
-    // Whether the player's speed can smash this kind. Hazard and Nebula can't.
+    // Whether the player's speed can smash this kind. Hazard can't.
     private bool BreaksBySpeed => kind == AsteroidKind.Destructible || kind == AsteroidKind.BonusCarrier;
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||
@@ -317,6 +319,15 @@ public class AsteroidBehavior : MonoBehaviour
         hasDropped = false;
         retired = false;
         if (rend != null) rend.enabled = true;
+        if (effectType == EffectType.Frost)
+        {
+            if (ribbon != null) ribbon.time = patchLifetime;
+            if (trail != null)
+            {
+                ParticleSystem.MainModule main = trail.main;
+                main.startLifetime = patchLifetime;
+            }
+        }
         if (effectType == EffectType.Splitter && splitPiece != null)
             EffectPool.PrewarmAsteroids(splitPiece, splitCount);
         hasGrown = false;
@@ -438,7 +449,7 @@ public class AsteroidBehavior : MonoBehaviour
         for (int i = 0; i < Active.Count; i++)
         {
             AsteroidBehavior other = Active[i];
-            if (other == this || other.IsPhased || other.kind == AsteroidKind.Nebula) continue;
+            if (other == this || other.IsPhased) continue;
 
             float required = (HitRadius + other.HitRadius) * (1f + homingGapScale);
             float newDistance = Vector3.Distance(newPosition, other.transform.position);

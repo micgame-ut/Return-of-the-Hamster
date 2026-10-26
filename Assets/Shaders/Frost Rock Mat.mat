@@ -51,8 +51,25 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Frost_Amount: 0.35
+    - _Frost_Crust: 0.739
+    - _Frost_Smoothness: 1
+    - _Grain_Scale: 40
+    - _Grain_Softness: 0.5
+    - _Grain_Threshold: 0
+    - _Patch_Scale: 3
     - _QueueControl: 0
     - _QueueOffset: 0
-    m_Colors: []
+    - _Rim_Power: 2
+    - _Rim_Strength: 5
+    - _Sparkle_Scale: 40
+    - _Sparkle_Speed: 2
+    - _Sparkle_Strength: 4
+    - _Sparkle_Threshold: 0.8
+    m_Colors:
+    - _BaseColor: {r: 0.37187046, g: 0.35660267, b: 0.34313807, a: 1}
+    - _Frost_Color: {r: 0.82, g: 0.92, b: 1, a: 1}
+    - _Glow_Color: {r: 0.35, g: 0.75, b: 1, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

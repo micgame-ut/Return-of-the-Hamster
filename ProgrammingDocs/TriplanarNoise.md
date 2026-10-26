@@ -9,7 +9,8 @@ noise from three directions and blending them by which way each part of the surf
 
 - **File:** `Assets/Shaders/Triplanar Noise.shadersubgraph`
 - **Used by:** the `Rainbow Overlay` shader graph, twice (once for the rainbow stripes, once for the
-  ripples). See [RainbowOverlay.md](RainbowOverlay.md).
+  ripples). See [RainbowOverlay.md](RainbowOverlay.md). Also the `Frost Rock` shader graph, three times (the
+  frost grain, the frost patches and the sparkle). See [FrostRock.md](FrostRock.md).
 
 ## Inputs
 
@@ -55,6 +56,7 @@ between them are smooth, so there are no seams.
 ## Talks to
 
 - **Rainbow Overlay**: uses it for the stripe pattern and the ripple pattern.
+- **Frost Rock**: uses it for the frost grain, the frost patches and the sparkle.
 
 ## Gotchas
 

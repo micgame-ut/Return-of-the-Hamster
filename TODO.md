@@ -213,14 +213,14 @@ the player progresses and old ones can drop out.
 
 Built one feature at a time, each with a test point.
 
-- **`AsteroidKind` replaces `destructible`: built and tested.** Hazard, Destructible, BonusCarrier, Nebula.
-  BonusCarrier and Nebula don't do anything of their own yet.
+- **`AsteroidKind` replaces `destructible`: built and tested.** Hazard, Destructible, BonusCarrier. BonusCarrier
+  doesn't do anything of its own yet. (A Nebula kind was removed: the Frost effect replaced it.)
 - **Spiral movement: built and tested.** Own orbit radius, `spiralSpeed`, flips with `MirrorSwing`.
 - **Homing movement: built and tested.** Turns toward the nearest player body (`homingSpeed`), locks and
   flies straight at `homingStopDistance`, keeps its own radius (`startRadius`, renamed from `spiralRadius`).
 - **Homing spacing: built and tested.** A Homing asteroid holds its angle rather than turn within
   `(HitRadius + other.HitRadius) × (1 + homingGapScale)` of another active asteroid (3D distance; phased
-  asteroids and Nebulas are skipped).
+  asteroids are skipped).
 - **StopAndGo movement (replaces the Orbiter idea): built and tested.** Approaches, eases to one stop at
   `stopDistance`, hangs for `stopTime` (the mesh shakes for the last `shakeTime`), then dashes at
   `dashMultiplier` × the approach speed.
@@ -242,9 +242,22 @@ Built one feature at a time, each with a test point.
 - **Splitter effect: built and tested.** At `splitDistance` it bursts into `splitCount` smaller pieces
   (`splitPiece`, `pieceScale`) fanned `splitSpread` apart. Pieces are pooled by `EffectPool` (`GetAsteroid`,
   `PrewarmAsteroids`, `ReturnAsteroid`), skip the warning wait, and `PatternCopy.Despawn` sends them back.
-- **Kinds:** Nebula (a zone checked by distance, no trigger collider, slows the player, nebula-cloud look);
-  BonusCarrier (gold, smashed by speed, extra points with a small "+score" pop-up and its own explosion).
-- **Scene view:** draw the Nebula and Magnet radii in the pattern builder.
+- **Frost effect (the Frost comet): built and tested.** A comet leaves patches on the player's orbit ring
+  near the player's depth (`PaintFrost`: `dropSpacing`, `paintDistance`), each lasting `patchLifetime`.
+  Standing in one slows the player's forward `Speed` (a drag of `speedSlow`) and orbit movement
+  (`orbitSlow`) through `PlayerMovement.ApplyFrost`, the strongest request winning. A finished comet retires
+  (hidden, off `Active`, particles stopped) until its patches expire (`Finish`). Gizmos draw the patches.
+  Documented in `AsteroidBehavior.md` and `PlayerMovement.md`.
+- **Frost look: built and tested.** `Frost Rock.shadergraph` (the frosted rock, one **Frost Amount** slider),
+  `Frost Gas.shadergraph` (soft ragged puffs for the mist and the cyan dust, two materials), and
+  `Frost Trail.shadergraph` (the ribbon). Two particle layers (`Frost Clouds`, with `Frost Dust` as its child) and
+  a Trail Renderer, all set to last `patchLifetime` (`OnEnable` sets the ribbon's Time and the mist's lifetime).
+  Documented in `FrostRock.md`, `FrostGas.md` and `FrostTrail.md` (**waiting for your review**, per AGENTS.md
+  section 13).
+- **Kinds:** BonusCarrier (gold, smashed by speed, extra points with a small "+score" pop-up and its own explosion).
+- **Scene view:** draw the Magnet radius (and the Frost patch radius) in the pattern builder.
+- **Frost, loose ends:** `Frost Dust`'s lifetime isn't set from `patchLifetime` (only `Frost Clouds` is); delete the
+  unused `Nebulous` prefab in Unity.
 
 ## Small cleanup
 
