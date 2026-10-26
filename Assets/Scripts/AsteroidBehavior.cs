@@ -124,6 +124,12 @@ public class AsteroidBehavior : MonoBehaviour
     [SerializeField] private float destroySpeed = 5f;
     [Tooltip("Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount.")]
     [SerializeField] private int scorePoints = 10;
+    [Tooltip("BonusCarrier: flat extra points for smashing it, on top of scorePoints. Not multiplied by speed or power-ups, and it doesn't affect the combo.")]
+    [SerializeField] private float bonusPoints = 200f;
+    [Tooltip("BonusCarrier: the pop-up text shown with the bonus points.")]
+    [SerializeField] private string bonusLabel = "BONUS";
+    [Tooltip("BonusCarrier: its own explosion. Empty uses the template's normal explosion.")]
+    [SerializeField] private ParticleSystem bonusExplosion;
 
     [Header("Mesh")]
     [Tooltip("Models to pick from at random. Empty keeps the prefab's own mesh.")]
@@ -778,16 +784,23 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void Explode(Vector3 bodyPosition)
     {
+        bool bonus = kind == AsteroidKind.BonusCarrier;
         if (template != null)
         {
-            EffectPool.Play(template.explosionPrefab, transform.position);
+            ParticleSystem explosion = bonus && bonusExplosion != null ? bonusExplosion : template.explosionPrefab;
+            EffectPool.Play(explosion, transform.position);
 
             CameraShake.Shake(template.shakeDuration, template.shakeMagnitude);
         }
 
         RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
         if (stats != null) stats.AddAsteroidDestroyed();
-        if (score != null) score.AddComboKill(scorePoints, bodyPosition);
+        if (score != null)
+        {
+            score.AddComboKill(scorePoints, bodyPosition);
+            if (bonus && bonusPoints > 0f)
+                score.AddBonusPoints(bonusPoints, bodyPosition, bonusLabel, Score.ScoreSource.Asteroids);
+        }
 
         Finish();
     }

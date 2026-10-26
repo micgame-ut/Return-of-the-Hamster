@@ -254,7 +254,9 @@ Built one feature at a time, each with a test point.
   a Trail Renderer, all set to last `patchLifetime` (`OnEnable` sets the ribbon's Time and the mist's lifetime).
   Documented in `FrostRock.md`, `FrostGas.md` and `FrostTrail.md` (**waiting for your review**, per AGENTS.md
   section 13).
-- **Kinds:** BonusCarrier (gold, smashed by speed, extra points with a small "+score" pop-up and its own explosion).
+- **BonusCarrier kind: code built, waiting for your test.** Smashing one adds `bonusPoints` flat (200) with a
+  `bonusLabel` ("BONUS") pop-up, counted as Asteroids, and plays its own `bonusExplosion` if set. Still to do in
+  Unity: the prefab (Kind = BonusCarrier), a gold material, and a gold explosion prefab.
 - **Scene view:** draw the Magnet radius (and the Frost patch radius) in the pattern builder.
 - **Frost, loose ends:** `Frost Dust`'s lifetime isn't set from `patchLifetime` (only `Frost Clouds` is); delete the
   unused `Nebulous` prefab in Unity.

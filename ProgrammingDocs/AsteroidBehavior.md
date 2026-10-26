@@ -32,7 +32,7 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `kind` | Hazard | What it is: Hazard (hurts, only breakable by invincibility), or Destructible and BonusCarrier (smashable by speed, with the outline). BonusCarrier doesn't do anything of its own yet; for now it acts as Destructible. (A Nebula kind existed briefly and was removed: the Frost effect took its place) |
+| `kind` | Hazard | What it is: Hazard (hurts, only breakable by invincibility), or Destructible and BonusCarrier (smashable by speed, with the outline). BonusCarrier also gives bonus points and can have its own explosion when smashed (see `bonusPoints` and `bonusExplosion`). (A Nebula kind existed briefly and was removed: the Frost effect took its place) |
 | `movementType` | Linear | The path it takes: Linear, Wave, Spiral, Homing or StopAndGo |
 | `approachScale` | 1 | Multiplies this asteroid's approach speed (1 = normal, 0.3 = a slow drifter). It's folded into `ApproachSpeed`, so ObjectSpawner's reveal timing and OrbitRing see the scaled speed. The pattern builder's Timing panel doesn't (it uses the template) |
 | `amplitude` | 30 | Wave: how many degrees it swings each way around the player's circle. Unused by Linear |
@@ -76,6 +76,9 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 | `flickerInterval` | 0.05 | Phase: seconds between flicker flips. 0 = no flicker |
 | `destroySpeed` | 5 | Destructible and BonusCarrier: the player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
 | `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
+| `bonusPoints` | 200 | BonusCarrier: flat extra points for smashing it, on top of `scorePoints`. Not multiplied by speed or power-ups, and it doesn't affect the combo. 0 = no bonus pop-up |
+| `bonusLabel` | BONUS | BonusCarrier: the pop-up text shown with the bonus points |
+| `bonusExplosion` | none | BonusCarrier: its own explosion. Empty uses the template's normal explosion |
 | `template` | none | The shared SpawnableTemplate asset |
 
 The base approach speed is no longer set per asteroid. It's `baseApproachSpeed` on the SpawnableTemplate, so
@@ -392,10 +395,13 @@ rewarded even if physics missed the contact.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it `BreaksBySpeed` and the player's `Speed` is at least `destroySpeed`.
 
-   Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
+   Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy; a
+   BonusCarrier with a `bonusExplosion` plays that instead),
    shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), adds
    `scorePoints` with `Score.AddComboKill` (null-safe; Score adds the combo bonus and applies the speed
-   multiplier), and finishes with `Finish` (a despawn with `PatternCopy.Despawn`, or a retire for a Frost comet
+   multiplier), then, for a BonusCarrier with `bonusPoints` above 0, adds `bonusPoints` with
+   `Score.AddBonusPoints` (flat: no speed or power-up multiplier, no combo; it counts toward the Asteroids line of
+   the score breakdown and shows its own pop-up with `bonusLabel`; an invincible player gets it too), and finishes with `Finish` (a despawn with `PatternCopy.Despawn`, or a retire for a Frost comet
    with patches left). `Explode` takes the touching body's
    position and passes it to Score, so the score popup appears above the body that smashed it (the player
    or a twin copy), not above the asteroid. Since this branch
