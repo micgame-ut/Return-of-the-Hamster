@@ -214,6 +214,9 @@ public class AsteroidBehavior : MonoBehaviour
     public MovementType Movement => movementType;
     public float Amplitude => amplitude;
     public float Frequency => frequency;
+    public EffectType Effect => effectType;
+    public float MagnetRadius => magnetRadius;
+    public float PatchRadius => patchRadius;
     // Set by the spawner when it flips the pattern left-right: a Wave asteroid then swings the other way.
     public bool MirrorSwing { get; set; }
     // Set by EffectPool on a pooled piece: the prefab it was made from, so it knows which pile to go back to.
