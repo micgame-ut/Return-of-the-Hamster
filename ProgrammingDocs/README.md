@@ -24,6 +24,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
+| HamsterAnimationDriver.cs | [HamsterAnimationDriver.md](HamsterAnimationDriver.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
 | MagnetMirror.cs | [MagnetMirror.md](MagnetMirror.md) | Done |
 | MenuTransition.cs | [MenuTransition.md](MenuTransition.md) | Done |
