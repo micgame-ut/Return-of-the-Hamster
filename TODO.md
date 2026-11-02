@@ -209,6 +209,58 @@ the player progresses and old ones can drop out.
   Mirrored Wave asteroids swing the other way (`AsteroidBehavior.MirrorSwing`). Test This Pattern ignores the
   variation. See `ObjectSpawner.md`.
 
+## New asteroid types (AsteroidBehavior)
+
+Built one feature at a time, each with a test point.
+
+- **`AsteroidKind` replaces `destructible`: built and tested.** Hazard, Destructible, BonusCarrier. BonusCarrier
+  doesn't do anything of its own yet. (A Nebula kind was removed: the Frost effect replaced it.)
+- **Spiral movement: built and tested.** Own orbit radius, `spiralSpeed`, flips with `MirrorSwing`.
+- **Homing movement: built and tested.** Turns toward the nearest player body (`homingSpeed`), locks and
+  flies straight at `homingStopDistance`, keeps its own radius (`startRadius`, renamed from `spiralRadius`).
+- **Homing spacing: built and tested.** A Homing asteroid holds its angle rather than turn within
+  `(HitRadius + other.HitRadius) × (1 + homingGapScale)` of another active asteroid (3D distance; phased
+  asteroids are skipped).
+- **StopAndGo movement (replaces the Orbiter idea): built and tested.** Approaches, eases to one stop at
+  `stopDistance`, hangs for `stopTime` (the mesh shakes for the last `shakeTime`), then dashes at
+  `dashMultiplier` × the approach speed.
+- **Magnet effect (pull only): built and tested.** `approachScale` (per-asteroid speed), `AddPull` on
+  `PlayerMovement`, `UpdateMagnet` (`magnetRadius`, `magnetStrength`, pull along the orbit, stronger up close),
+  skipped by close-call tracking. The prefab needs its Collider component removed.
+- **Black-hole shader (`Black Hole.shadergraph`): built and tested.** Shadow, bent background, thin ring, an
+  edge-on streaked accretion disc with a top and bottom arch, a curved near-side crossing, and the far half hidden
+  behind the shadow. Documented in `BlackHole.md` (**waiting for your review**, per AGENTS.md section 13).
+- **MagnetMirror (`MagnetMirror.cs`): built and tested.** Scene Color is black on the gameplay (Overlay) camera,
+  so it moves the Magnet's mesh child to the matching spot in front of the background camera (the mesh child is on
+  the **Background** layer), and turns the effect so its arch points at the orbit's center on screen: it sets the
+  material's `_Disk_Angle` per Magnet (a `MaterialPropertyBlock` on the mesh's first slot) to `90 − φ +
+  angleOffset`. Documented in `MagnetMirror.md` (**waiting for your review**).
+- **Idea, needs scoping:** give `PlayerTwins` a single "main player" identifier that swaps places with a copy.
+- **Growing effect: built and tested.** Pulses (mesh only) for `pulseDistance` before `growDistance`, then
+  the root pops to `growScale` (hitbox too) with a visual overshoot that settles over `settleTime`. Scale is
+  restored in `OnEnable`.
+- **Splitter effect: built and tested.** At `splitDistance` it bursts into `splitCount` smaller pieces
+  (`splitPiece`, `pieceScale`) fanned `splitSpread` apart. Pieces are pooled by `EffectPool` (`GetAsteroid`,
+  `PrewarmAsteroids`, `ReturnAsteroid`), skip the warning wait, and `PatternCopy.Despawn` sends them back.
+- **Frost effect (the Frost comet): built and tested.** A comet leaves patches on the player's orbit ring
+  near the player's depth (`PaintFrost`: `dropSpacing`, `paintDistance`), each lasting `patchLifetime`.
+  Standing in one slows the player's forward `Speed` (a drag of `speedSlow`) and orbit movement
+  (`orbitSlow`) through `PlayerMovement.ApplyFrost`, the strongest request winning. A finished comet retires
+  (hidden, off `Active`, particles stopped) until its patches expire (`Finish`). Gizmos draw the patches.
+  Documented in `AsteroidBehavior.md` and `PlayerMovement.md`.
+- **Frost look: built and tested.** `Frost Rock.shadergraph` (the frosted rock, one **Frost Amount** slider),
+  `Frost Gas.shadergraph` (soft ragged puffs for the mist and the cyan dust, two materials), and
+  `Frost Trail.shadergraph` (the ribbon). Two particle layers (`Frost Clouds`, with `Frost Dust` as its child) and
+  a Trail Renderer, all set to last `patchLifetime` (`OnEnable` sets the ribbon's Time and the mist's lifetime).
+  Documented in `FrostRock.md`, `FrostGas.md` and `FrostTrail.md` (**waiting for your review**, per AGENTS.md
+  section 13).
+- **BonusCarrier kind: code built, waiting for your test.** Smashing one adds `bonusPoints` flat (200) with a
+  `bonusLabel` ("BONUS") pop-up, counted as Asteroids, and plays its own `bonusExplosion` if set. Still to do in
+  Unity: the prefab (Kind = BonusCarrier), a gold material, and a gold explosion prefab.
+- **Scene view:** draw the Magnet radius (and the Frost patch radius) in the pattern builder.
+- **Frost, loose ends:** `Frost Dust`'s lifetime isn't set from `patchLifetime` (only `Frost Clouds` is); delete the
+  unused `Nebulous` prefab in Unity.
+
 ## Small cleanup
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a

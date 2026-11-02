@@ -19,6 +19,12 @@ public class PatternGizmos : MonoBehaviour
     [SerializeField] private Color ringColor = new Color(0.3f, 0.8f, 1f, 0.6f);
     [Tooltip("Color of the ring drawn at the player's depth.")]
     [SerializeField] private Color playerRingColor = new Color(1f, 0.8f, 0.2f, 0.8f);
+    [Tooltip("Show a Magnet's pull reach and a Frost comet's patch circle in the Scene view, for the ones in the pattern and the one being placed.")]
+    [SerializeField] private bool showEffectRadii = true;
+    [Tooltip("Color of the circle showing a Magnet's pull reach at the player's depth.")]
+    [SerializeField] private Color magnetColor = new Color(0.7f, 0.4f, 1f, 0.8f);
+    [Tooltip("Color of the circle showing where a Frost comet's patch lands on the ring.")]
+    [SerializeField] private Color frostColor = new Color(0.5f, 0.9f, 1f, 0.9f);
 
 #if UNITY_EDITOR
     // One depth the pattern reveals at: its Z (spawner space), how many children share it, and how many are power-ups.
@@ -125,6 +131,10 @@ public class PatternGizmos : MonoBehaviour
         // Spine through the ring centers shows the pattern's depth at a glance.
         if (steps.Length > 1)
             Handles.DrawDottedLine(Center(steps[0].z), Center(steps[steps.Length - 1].z), 4f);
+
+        // Magnets and Frost comets show their reach at the player's depth.
+        foreach (Transform child in transform)
+            DrawEffectRadius(child.GetComponent<AsteroidBehavior>(), transform.localPosition + child.localPosition);
     }
 
     private static Vector3 Center(float z) => new Vector3(OrbitCenter.x, OrbitCenter.y, z);
@@ -133,6 +143,28 @@ public class PatternGizmos : MonoBehaviour
     {
         Handles.DrawWireDisc(Center(z), Vector3.forward, OrbitRadius);
         Handles.Label(Center(z) + Vector3.up * OrbitRadius, label);
+    }
+
+    // Draws a Magnet's pull reach or a Frost comet's patch circle, at the player's depth, for an asteroid sitting at
+    // `position` (spawner space). Does nothing for any other asteroid. Call it inside a DrawingScope in spawner space.
+    public void DrawEffectRadius(AsteroidBehavior asteroid, Vector3 position)
+    {
+        if (!showEffectRadii || asteroid == null) return;
+
+        if (asteroid.Effect == AsteroidBehavior.EffectType.Magnet)
+        {
+            Handles.color = magnetColor;
+            Handles.DrawWireDisc(new Vector3(position.x, position.y, PlayerZ), Vector3.forward, asteroid.MagnetRadius);
+        }
+        else if (asteroid.Effect == AsteroidBehavior.EffectType.Frost)
+        {
+            Vector2 fromCenter = (Vector2)position - OrbitCenter;
+            if (fromCenter.sqrMagnitude < 1e-6f) return;
+
+            Vector2 onRing = OrbitCenter + fromCenter.normalized * OrbitRadius;
+            Handles.color = frostColor;
+            Handles.DrawWireDisc(new Vector3(onRing.x, onRing.y, PlayerZ), Vector3.forward, asteroid.PatchRadius);
+        }
     }
 #endif
 }

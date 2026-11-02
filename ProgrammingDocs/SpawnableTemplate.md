@@ -30,7 +30,7 @@ The other option would be putting all these fields on AsteroidBehavior itself. T
 carry its own copy, and changing the knockback would mean editing every prefab and making sure they
 match. With a ScriptableObject, there's one copy of the settings and every asteroid just points to it.
 
-The per-asteroid settings (movement type, wave, destructible) stay on AsteroidBehavior because
+The per-asteroid settings (kind, movement type, wave) stay on AsteroidBehavior because
 they're meant to differ between asteroids.
 
 ## Inspector settings

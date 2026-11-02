@@ -61,11 +61,11 @@ public class PatternCopy : MonoBehaviour
     }
 
     // Use instead of Destroy for anything a pattern spawns: it goes home if it
-    // belongs to a pooled pattern copy, and is destroyed as before if not.
+    // belongs to a pooled pattern copy or is one of EffectPool's pieces, and is destroyed as before if not.
     public static void Despawn(GameObject obj)
     {
         PatternCopy copy = obj.GetComponentInParent<PatternCopy>();
         if (copy != null) copy.Return(obj.transform);
-        else Destroy(obj);
+        else if (!EffectPool.ReturnAsteroid(obj)) Destroy(obj);
     }
 }
