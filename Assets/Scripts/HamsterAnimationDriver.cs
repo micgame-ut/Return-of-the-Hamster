@@ -17,28 +17,35 @@ public class HamsterAnimationDriver : MonoBehaviour
 
     private Animator animator;
     private PlayerHealth playerHealth;
+    private GameManager gameManager;
 
     private static readonly int Speed01Param = Animator.StringToHash("Speed01");
     private static readonly int RunSpeedParam = Animator.StringToHash("RunSpeed");
     private static readonly int HitParam = Animator.StringToHash("Hit");
+    private static readonly int InMenuParam = Animator.StringToHash("InMenu");
 
     private void Awake()
     {
         animator = GetComponent<Animator>();
         playerHealth = GetComponentInParent<PlayerHealth>();
+        gameManager = GameManager.Instance;
+        animator.SetBool(InMenuParam, gameManager != null && !gameManager.HasStarted);
     }
 
     private void OnEnable()
     {
         if (playerHealth != null) playerHealth.OnLifeLost += HandleLifeLost;
+        if (gameManager != null) gameManager.OnGameStarted += HandleGameStarted;
     }
 
     private void OnDisable()
     {
         if (playerHealth != null) playerHealth.OnLifeLost -= HandleLifeLost;
+        if (gameManager != null) gameManager.OnGameStarted -= HandleGameStarted;
     }
 
     private void HandleLifeLost() => animator.SetTrigger(HitParam);
+    private void HandleGameStarted() => animator.SetBool(InMenuParam, false);
 
     private void Update()
     {
