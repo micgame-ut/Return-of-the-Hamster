@@ -150,9 +150,10 @@ sits on its tip. `orbitAngle` is the direction the hand points. The ship starts 
 
 Every frame:
 
-1. **How far to slide.** `arc = moveInput.x × mouseSensitivity × 0.001 + boostVelocity × Time.deltaTime`:
-   the horizontal mouse movement this frame (already a distance, so not scaled by time) plus the boost or
-   knockback (a speed, so scaled by time). Positive = counter-clockwise.
+1. **How far to slide.** `arc = (moveInput.x × mouseSensitivity × 0.001 + boostVelocity × Time.deltaTime) ×
+   (1 − frostOrbitSlow)`: the horizontal mouse movement this frame (already a distance, so not scaled by time)
+   plus the boost or knockback (a speed, so scaled by time), reduced by any Frost slow (0 = no slow, so the
+   factor is 1). Positive = counter-clockwise.
 2. **Turn distance into an angle.** `orbitAngle += arc / CircleRadius`. Angles are stored in radians, and a
    radian is defined as "the angle you turn when you travel one radius along the rim." So dividing the
    distance by the radius gives how much to turn. Because of this, the ship covers the same on-screen
@@ -181,6 +182,27 @@ use it to work out which way "along the circle" is, e.g. which way to knock the 
 
 Steps 3 and 4 live in their own method, **`PlaceOnOrbit`**, so `ShiftOrbit` (below) can place the ship the
 same way.
+
+**Magnet pull.** `AddPull(radiansPerSecond)` adds to `pullRate`. A Magnet asteroid calls it once a frame, and
+pulls from several Magnets add up. In step 1 (`Movement`), the angle gets `pullRate × Time.deltaTime` radians on
+top of the input's arc, and `pullRate` is then reset to 0, so each pull is spent exactly once, like a boost's
+speed but without any fade. It's added to the input, not instead of it, so the player can fight it with the
+trackball or boost out. When input is locked (before the start, after a death), `Update` returns early before
+`Movement`, so it resets `pullRate` there too. Otherwise a pull added meanwhile would pile up and fire all at once.
+
+**Frost slow.** `ApplyFrost(speedSlow, orbitSlow)` is called by a Frost comet's patches each frame the player is
+inside one. It keeps the **strongest** request of the frame with `Mathf.Max` into `frostSpeedSlow` and
+`frostOrbitSlow` (a pull adds up, but a slow doesn't, so two comets never freeze the player). The two values
+are used like this:
+- **Orbit:** step 1 above multiplies the mouse and boost movement by `1 − frostOrbitSlow`. The Magnet's pull isn't
+  slowed. At `orbitSlow` 0.5 the ship slides at half speed, at 1 it can't slide at all.
+- **Speed:** `UpdateSpeed` subtracts a drag, `Speed × frostSpeedSlow × Time.deltaTime`. That is a fraction of `Speed`
+  per second, so it bites harder the faster you go: at `Speed` 8 and a slow of 0.5 it costs about 4 per second, at
+  `Speed` 2 about 1 per second. Forward input still adds speed against it, so the player settles at a lower
+  speed instead of stopping dead.
+
+Both values are reset to 0 in `Movement`, after `UpdateSpeed` has used them (the same frame-by-frame pattern as
+`pullRate`), and in the locked branch of `Update`, so a request made while input is locked never fires later.
 
 **For the twin power-up:** `OrbitAngle` (read only) and `MeshTransform` let TwinCopy sit at an offset from the
 player's angle and copy the mesh's roll. **`ShiftOrbit(radians)`** turns the player around the orbit at once
@@ -237,6 +259,9 @@ Every frame:
   local `nearMaxSpeed` at the **start** of the method, before this frame's speed change, and RunStats
   reads it to time overdrive. SkyboxSpeedController reads `OverdriveFraction` directly (it's static, so
   no reference to the player is needed) to know where to start fading in the streams.
+- **Frost drag:** after the overdrive drain, `Speed -= Speed × frostSpeedSlow × Time.deltaTime` (see "Frost slow"
+  above). It is before the clamp, so the usual 0–`maxSpeed` limits still apply, and before the invincibility lock,
+  so an invincible player isn't slowed.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
 - **Invincibility lock:** last of all, if PlayerInvincibility's `LocksMaxSpeed` is true (the power-up is
@@ -350,7 +375,8 @@ Side effects of doing it this way:
 - **OrbitSettings**: reads the orbit's radius and center every frame, and the player's depth in `Awake`
 - **LevelTimer**: checks `IsComplete` to stop acceleration after the earth arrives
 - **PlayerInvincibility**: found in `Awake` on the same object; reads `LocksMaxSpeed` every frame to hold max speed
-- **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`
+- **AsteroidBehavior**: calls `TakeHit` and reads `OrbitTangent`; a Magnet asteroid also calls `AddPull`, and a
+  Frost comet calls `ApplyFrost`
 - **OrbitRing**: reads `OrbitCenter` and `CircleRadius` to draw the circle
 - **OverdriveTally**: reads `InOverdrive` every frame (through GameManager's `Player`) to count the overdrive
   score tally
@@ -389,5 +415,9 @@ Side effects of doing it this way:
   ring back to start a new roll.
 - After game over, PlayerMovement does nothing. Anything that should happen to the ship then belongs in
   PlayerDeath. The collider stays on, but physics is frozen, so no hits can happen.
+- **A Frost slow lasts one frame.** `ApplyFrost` has to be called every frame the player is slowed. If the comet
+  stops calling it (the player leaves the patch, or the comet is switched off), the slow ends the next frame.
+- **An invincible player's `Speed` isn't slowed** (the max-speed lock overrides the drag), but their orbit movement
+  still is.
 - Invulnerability ignores hits in code, it doesn't disable the collider. Anything else that reacts to
   touching the player (not through `TakeHit`) will still react during invulnerability.

@@ -70,14 +70,16 @@ picked up, or past the camera). It's static, so callers don't need a reference t
 `CameraShake.Shake`.
 
 It looks up the hierarchy (`GetComponentInParent`) for a PatternCopy. That's why children stay parented to
-their copy. If it finds one, it calls `Return`. If not (an object placed directly in a scene), it falls back
-to `Destroy`, as before pooling.
+their copy. If it finds one, it calls `Return`. If not, it asks `EffectPool.ReturnAsteroid`, which takes the
+object back if it's one of the pool's Splitter pieces (it has a `PoolSource`). Anything else (an object placed
+directly in a scene, a power-up, or any scene with no pool) falls back to `Destroy`, as before pooling.
 
 ## Talks to
 
 - **ObjectSpawner**: creates it, calls `Init`, `BeginReveal`, `ChildRevealed` and `EndReveal`, and listens to
   `OnReleased`.
 - **AsteroidBehavior** and **PowerUp**: call `Despawn` instead of `Destroy`.
+- **EffectPool**: `Despawn` calls `ReturnAsteroid` for objects that aren't in a pattern copy.
 
 ## Gotchas
 

@@ -115,6 +115,7 @@ public class PatternGizmosEditor : Editor
     private static float z;                // depth; lower Z spawns first
     private static int count = 8;          // how many objects to place
     private static float previewSize = 1f; // diameter of the preview spheres
+    private static float magnetOutside = 2f; // how far outside the ring a Magnet is placed and snapped, in units
 
     // Ring: count objects evenly spaced all the way around.
     private static float ringStartAngle = -90f;
@@ -408,6 +409,7 @@ public class PatternGizmosEditor : Editor
         z = EditorGUILayout.FloatField(new GUIContent("Z", "Depth in spawner space. Lower Z spawns first."), z);
         count = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("Count", "How many objects to place (at least 1). In Twist, the number in each ring."), count)); // never fewer than 1
         previewSize = Mathf.Max(0.05f, EditorGUILayout.FloatField(new GUIContent("Preview Size", "Size of the preview spheres. Only affects the preview."), previewSize));
+        magnetOutside = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Magnet Distance Outside", "How far outside the orbit ring a Magnet is placed, in units. Other asteroids aren't moved. Snap to Circle uses it too."), magnetOutside));
 
         // Only show the settings for the selected shape.
         switch (shape)
@@ -781,7 +783,7 @@ public class PatternGizmosEditor : Editor
 
             for (int i = 0; i < PlacedCount; i++)
             {
-                Vector3 p = ShapePosition(i);
+                Vector3 p = PlacedPosition(i);
 
                 // SphereHandleCap draws a solid sphere. The first argument is a
                 // control ID, which only matters for clickable handles; 0 is
@@ -905,6 +907,30 @@ public class PatternGizmosEditor : Editor
             PatternGizmos.OrbitCenter.x + Mathf.Cos(a) * r,
             PatternGizmos.OrbitCenter.y + Mathf.Sin(a) * r,
             z);
+    }
+
+    // Whether a prefab is a Magnet.
+    private static bool IsMagnet(GameObject prefab)
+    {
+        AsteroidBehavior asteroid = prefab != null ? prefab.GetComponent<AsteroidBehavior>() : null;
+        return asteroid != null && asteroid.Effect == AsteroidBehavior.EffectType.Magnet;
+    }
+
+    // Where object i goes: the shape's position, pushed out by magnetOutside if it's a Magnet.
+    private static Vector3 PlacedPosition(int i)
+    {
+        Vector3 p = ShapePosition(i);
+        return IsMagnet(PickPrefab(i)) ? PushOut(p, magnetOutside) : p;
+    }
+
+    // Moves a position straight out from the orbit center by `distance` (in, if negative), keeping its depth.
+    private static Vector3 PushOut(Vector3 p, float distance)
+    {
+        Vector2 fromCenter = (Vector2)p - PatternGizmos.OrbitCenter;
+        if (fromCenter.sqrMagnitude < 1e-6f) return p; // exactly at the center: no direction to push along
+
+        Vector2 moved = (Vector2)p + fromCenter.normalized * distance;
+        return new Vector3(moved.x, moved.y, p.z);
     }
 
     // Nudges a position by a small random amount round the orbit and in depth. The same seed and object number
@@ -1064,7 +1090,7 @@ public class PatternGizmosEditor : Editor
             // Tells Undo "this object was just created"; undoing deletes it.
             Undo.RegisterCreatedObjectUndo(placed, undoName);
 
-            placed.transform.localPosition = ShapePosition(i) - rootOffset;
+            placed.transform.localPosition = PlacedPosition(i) - rootOffset;
         }
 
         if (autoNameOnAdd) NameChildren(pattern);

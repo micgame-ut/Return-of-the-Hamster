@@ -75,6 +75,9 @@ public class PlayerMovement : MonoBehaviour
     // Orbit
     private OrbitSettings orbit;
     private float orbitAngle; // radians, increasing = counter-clockwise on screen
+    private float pullRate; // radians per second of pull collected this frame from Magnet asteroids
+    private float frostSpeedSlow; // strongest speed slow asked for this frame
+    private float frostOrbitSlow; // strongest orbit slow asked for this frame
 
     // Direction a positive boost/knockback pushes the player (counter-clockwise tangent)
     public Vector2 OrbitTangent => new Vector2(-Mathf.Sin(orbitAngle), Mathf.Cos(orbitAngle));
@@ -175,7 +178,13 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         // Before the start, and once the game is over or won, stop here. On a death, PlayerDeath moves the ship instead.
-        if (InputLocked) return;
+        if (InputLocked)
+        {
+            pullRate = 0f;
+            frostSpeedSlow = 0f;
+            frostOrbitSlow = 0f;
+            return;
+        }
 
         if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
 
@@ -208,8 +217,11 @@ public class PlayerMovement : MonoBehaviour
         // Distance travelled along the circle this frame; positive = counter-clockwise
         // The mouse delta is already distance per frame, so it isn't scaled by time; the boost is a speed, so it is.
         // Distance divided by radius = angle in radians, so we can add it to the orbitAngle directly.
-        float arc = (moveInput.x * mouseSensitivity * SensitivityScale) + (boostVelocity * Time.deltaTime);
-        orbitAngle += arc / CircleRadius;
+        float arc = ((moveInput.x * mouseSensitivity * SensitivityScale) + (boostVelocity * Time.deltaTime)) * (1f - frostOrbitSlow);
+        orbitAngle += arc / CircleRadius + pullRate * Time.deltaTime;
+        pullRate = 0f;
+        frostSpeedSlow = 0f;
+        frostOrbitSlow = 0f;
         PlaceOnOrbit();
 
         // Boost fades out over time instead of cutting off instantly. 1 - e^(-k·dt) fades the same at any frame rate.
@@ -225,6 +237,16 @@ public class PlayerMovement : MonoBehaviour
 
         if (faceCenter)
             transform.rotation = Quaternion.Euler(0f, 0f, orbitAngle * Mathf.Rad2Deg + 90f);
+    }
+
+    // Magnet asteroids call this each frame to drag the player along the orbit. Pulls from several add up.
+    public void AddPull(float radiansPerSecond) => pullRate += radiansPerSecond;
+
+    // Frost patches call this each frame the player is inside one. Only the strongest request counts.
+    public void ApplyFrost(float speedSlow, float orbitSlow)
+    {
+        frostSpeedSlow = Mathf.Max(frostSpeedSlow, speedSlow);
+        frostOrbitSlow = Mathf.Max(frostOrbitSlow, orbitSlow);
     }
 
     // Jumps the player around the orbit at once (PlayerTwins), keeping speed and boosts.
@@ -261,6 +283,9 @@ public class PlayerMovement : MonoBehaviour
             float overdriveDepth = Mathf.InverseLerp(OverdriveFraction, 1f, Speed01);
             Speed -= topSpeedDegrade * overdriveDepth * Time.deltaTime;
         }
+
+        // Frost: drags Speed down by a fraction of itself each second.
+        Speed -= Speed * frostSpeedSlow * Time.deltaTime;
 
         Speed = Mathf.Clamp(Speed, 0f, maxSpeed);
 

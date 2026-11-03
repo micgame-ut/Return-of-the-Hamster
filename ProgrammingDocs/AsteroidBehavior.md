@@ -8,8 +8,9 @@ wave). When it touches the player, it
 either breaks (if the player is fast enough) or knocks the player back.
 
 Each asteroid has a **movement type** (how it travels) and, separately, an **effect type** (extra behavior on
-top), so any movement can have any effect. The one effect so far is **Phase**: the asteroid phases in and out,
-and while phased its collider is off and it shows a hologram look.
+top), so any movement can have any effect. The effects are **Phase** (the asteroid phases in and out, and while
+phased its collider is off and it shows a hologram look), **Splitter**, **Growing**, **Magnet**, and **Frost** (a
+comet that leaves slowing patches on the player's orbit ring).
 
 ## Where it lives
 
@@ -31,17 +32,53 @@ explosion, etc.) are on the SpawnableTemplate asset instead.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `movementType` | Linear | The path it takes: Linear or Wave |
+| `kind` | Hazard | What it is: Hazard (hurts, only breakable by invincibility), or Destructible and BonusCarrier (smashable by speed, with the outline). BonusCarrier also gives bonus points and can have its own explosion when smashed (see `bonusPoints` and `bonusExplosion`). (A Nebula kind existed briefly and was removed: the Frost effect took its place) |
+| `movementType` | Linear | The path it takes: Linear, Wave, Spiral, Homing or StopAndGo |
+| `approachScale` | 1 | Multiplies this asteroid's approach speed (1 = normal, 0.3 = a slow drifter). It's folded into `ApproachSpeed`, so ObjectSpawner's reveal timing and OrbitRing see the scaled speed. The pattern builder's Timing panel doesn't (it uses the template) |
 | `amplitude` | 30 | Wave: how many degrees it swings each way around the player's circle. Unused by Linear |
 | `frequency` | 1 | Wave: full back-and-forth swings per second. Unused by Linear |
-| `effectType` | None | Extra behavior on top of the movement: None or Phase. A separate dropdown from `movementType` |
+| `spiralSpeed` | 45 | Spiral: degrees per second it drifts round the orbit, at its own radius. Negative = the other way. Unused by Linear and Wave |
+| `homingSpeed` | 40 | Homing: the fastest it can turn toward the nearest player body, in degrees per second. Unused by the other movements |
+| `homingStopDistance` | 8 | Homing: how close to the player's depth it stops turning and flies straight, in units. 0 = never locks |
+| `homingGapScale` | 1 | Homing: the clear space it keeps from other asteroids, as a fraction of a collider's width. 1 = a gap as wide as a collider, 0 = it only stops them touching |
+| `stopDistance` | 30 | StopAndGo: how far ahead of the player's depth it ends up stopped, in units |
+| `stopEaseDistance` | 10 | StopAndGo: it starts slowing this many units before `stopDistance`. 0 = an abrupt stop |
+| `stopTime` | 0.75 | StopAndGo: seconds it hangs still before the dash, including the shake at the end |
+| `shakeTime` | 0.3 | StopAndGo: seconds at the end of the stop when the mesh shakes, as a warning |
+| `shakeMagnitude` | 0.15 | StopAndGo: how far the shake moves the mesh, in units |
+| `dashMultiplier` | 2.5 | StopAndGo: the dash speed as a multiple of the normal approach speed |
+| `effectType` | None | Extra behavior on top of the movement: None, Phase, Splitter, Growing, Magnet or Frost. A separate dropdown from `movementType` |
+| `splitDistance` | 40 | Splitter: how far ahead of the player's depth it splits, in units |
+| `splitCount` | 3 | Splitter: how many pieces |
+| `splitSpread` | 20 | Splitter: degrees between neighbouring pieces round the orbit |
+| `splitPiece` | none | Splitter: the asteroid prefab each piece is made from (a Linear one). Its `meshes` list gives each piece a random mesh. With none set, the Splitter does nothing |
+| `pieceScale` | 0.5 | Splitter: how much smaller than the original each piece is |
+| `magnetRadius` | 30 | Magnet: how close the player has to be to feel the pull, in units (3D, including depth) |
+| `magnetStrength` | 60 | Magnet: the pull on the player at point-blank range, in degrees per second along the orbit |
+| `dropSpacing` | 3 | Frost: how far the comet has to move round the orbit ring before it leaves another patch, in units. At or below twice `patchRadius` the patches overlap into a strip; above that they are separate spots |
+| `paintDistance` | 20 | Frost: it only leaves patches while it is within this distance of the player's depth, in units. A small value means only around the moment it crosses |
+| `patchLifetime` | 6 | Frost: seconds a patch lasts before it disappears. The ribbon and the mist are set to last this long too |
+| `patchRadius` | 3 | Frost: how close the player has to be to a patch's centre to be slowed, in units. Patches sit on the orbit ring |
+| `speedSlow` | 0.5 | Frost: the fraction of the player's forward `Speed` lost per second inside a patch (slider 0–1). 1 = all of it each second |
+| `orbitSlow` | 0.5 | Frost: the fraction of the player's sideways movement along the orbit lost inside a patch (slider 0–1). 1 = frozen in place |
+| `trail` | none | Frost: the particle system that draws the mist, a child of the comet. Its Start Lifetime is set to `patchLifetime` when the comet spawns. Child systems of it are stopped with it, but their lifetime isn't set. Empty = no mist |
+| `ribbon` | none | Frost: the Trail Renderer that draws the ribbon, a child of the comet. Its Time is set to `patchLifetime` when the comet spawns. Empty = no ribbon |
+| `growDistance` | 30 | Growing: how far ahead of the player's depth it pops to its full size, in units |
+| `growScale` | 2 | Growing: its final size, as a multiple of its starting size |
+| `pulseDistance` | 10 | Growing: it starts pulsing this many units before it pops, as a warning |
+| `pulseSize` | 0.1 | Growing: how much the mesh swells and shrinks while pulsing, as a fraction of its size |
+| `pulseRate` | 6 | Growing: pulses per second |
+| `overshoot` | 0.25 | Growing: how far past its final size the pop goes, as a fraction (the mesh only) |
+| `settleTime` | 0.2 | Growing: seconds the overshoot takes to ease back down to the final size |
 | `solidTime` | 1.5 | Phase: seconds solid in each cycle |
 | `phasedTime` | 1 | Phase: seconds phased (collider off, hologram look) in each cycle |
 | `flickerTime` | 0.3 | Phase: seconds of flicker just before each switch, as a warning |
 | `flickerInterval` | 0.05 | Phase: seconds between flicker flips. 0 = no flicker |
-| `destructible` | false | Whether the player can smash it by being fast enough. Also gives it the outline |
-| `destroySpeed` | 5 | The player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
+| `destroySpeed` | 5 | Destructible and BonusCarrier: the player `Speed` needed to smash it (compare to `maxSpeed`, 10 by default) |
 | `scorePoints` | 10 | Base points for smashing it, before Score's combo bonus and speed multiplier. Set per prefab so each asteroid type can be worth a different amount. Indestructible asteroids smashed while invincible give theirs too |
+| `bonusPoints` | 200 | BonusCarrier: flat extra points for smashing it, on top of `scorePoints`. Not multiplied by speed or power-ups, and it doesn't affect the combo. 0 = no bonus pop-up |
+| `bonusLabel` | BONUS | BonusCarrier: the pop-up text shown with the bonus points |
+| `bonusExplosion` | none | BonusCarrier: its own explosion. Empty uses the template's normal explosion |
 | `template` | none | The shared SpawnableTemplate asset |
 
 The base approach speed is no longer set per asteroid. It's `baseApproachSpeed` on the SpawnableTemplate, so
@@ -59,9 +96,10 @@ feed into how fast the asteroid approaches.
 4. **`Update`**: every frame it spins, updates the outline color and the depth tint, and (once moving)
    moves toward the camera.
 5. It **despawns** when the player **smashes** it, or when it gets far enough **behind the camera**:
-   `PatternCopy.Despawn` switches it off and puts it back at its spot in its pattern copy, ready to be
-   revealed again on the pattern's next use (object pooling). An asteroid that isn't in a pooled pattern is
-   destroyed as before.
+   `Finish` calls `PatternCopy.Despawn`, which switches it off and puts it back at its spot in its pattern copy,
+   ready to be revealed again on the pattern's next use (object pooling). An asteroid that isn't in a pooled
+   pattern is destroyed as before. The one exception is a Frost comet that still has patches: it **retires**
+   instead and despawns when its last patch is gone (see Frost below).
 
 ### `Awake`: setup
 
@@ -72,10 +110,11 @@ feed into how fast the asteroid approaches.
   GameManager once instead of looking them up on each hit.
 - Creates `warnWait`, one `WaitForSeconds(warningTime)` that every warning reuses (see `WarnThenMove`).
   Only when there's a template, since that's where `warningTime` lives.
-- **Destructible outline:** if `destructible` is on, it adds the template's `outlineMaterial` as an extra
-  material slot on the renderer. A mesh with two materials gets drawn twice, and the outline shader
-  draws the second copy slightly larger and inside out (an "inverted hull"), so only a rim shows around
-  the edge. Doing this in code means ticking `destructible` is all it takes to get an outline.
+- **Destructible outline:** if the asteroid `BreaksBySpeed` (its `kind` is Destructible or BonusCarrier), it adds
+  the template's `outlineMaterial` as an extra material slot on the renderer. A mesh with two materials gets
+  drawn twice, and the outline shader draws the second copy slightly larger and inside out (an "inverted
+  hull"), so only a rim shows around the edge. Doing this in code means choosing the `kind` is all it takes to
+  get an outline.
 - **`hitRadius`:** the collider's on-screen footprint (`Max(bounds.extents.x, bounds.extents.y)`), measured
   once here while the collider is still on. The collider is on the root, which never spins, so its size never
   changes. `HitRadius` returns this, so it stays right while the collider is off (warning, phased).
@@ -100,9 +139,15 @@ with `SetActive(true)`. That fires `OnEnable`, which:
 - Resets the phase: `IsPhased = false` and `SetLook(false)` (solid materials), in case it was despawned while
   phased. The collider needs no reset: `WarnThenMove` switches it off and back on.
 - Picks a random `spinAxis` so every asteroid tumbles differently.
-- Works out `baseAngle`, the angle it sits at around the orbit center, for Wave movement. It uses
-  `Mathf.Atan2(y, x)`, the reverse of cos/sin: cos/sin take an angle and give you an x/y, and Atan2 takes
+- Works out `baseAngle`, the angle it sits at around the orbit center, for Wave, Spiral and Homing movement. It
+  uses `Mathf.Atan2(y, x)`, the reverse of cos/sin: cos/sin take an angle and give you an x/y, and Atan2 takes
   an x/y and gives you the angle back (in radians). The orbit center comes from `OrbitSettings`.
+- Records `startRadius`, its distance from the orbit center (the length of that same vector), for Spiral and
+  Homing. Resets `homingAngle` to `baseAngle` and `homingLocked` to false for a Homing asteroid.
+  (`WouldCrowd` reads the other asteroids from the static `Active` list, so it needs no setup.)
+- Resets the Frost state: clears the `patches` list, sets `hasDropped` and `retired` to false, and switches the
+  renderer back on (a retired comet hid it). For a Frost comet it then sets the `ribbon`'s `time` and the `trail`
+  particle system's `main.startLifetime` to `patchLifetime`, so both last as long as a patch.
 - Starts the `WarnThenMove` coroutine.
 
 ### `WarnThenMove`: the warning wait
@@ -173,10 +218,11 @@ If it turns solid while overlapping the player, that's a normal hit; the flicker
 
 **Moving.** Once `isMoving` is true:
 
-1. **How fast to approach.** `ApproachSpeed = template.baseApproachSpeed + PlayerMovement.Speed × template.speedMultiplier`.
+1. **How fast to approach.** `ApproachSpeed = (template.baseApproachSpeed + PlayerMovement.Speed × template.speedMultiplier) × approachScale`.
    The player never really moves forward, so asteroids coming in faster is what makes flying faster feel
    faster.
-2. **How far it has come.** `distance += ApproachSpeed × Time.deltaTime`. Like `orbitAngle` in
+2. **How far it has come.** `distance += ApproachSpeed × Time.deltaTime × speedFactor`. `speedFactor` is 1 for
+   every movement except StopAndGo (see below). Like `orbitAngle` in
    PlayerMovement, this is a running total built up each frame. If it were calculated fresh as
    `ApproachSpeed × total time`, any change in the player's speed would make every asteroid jump.
 3. **Forward.** `position = origin + Vector3.back * distance`. Every asteroid moves toward -Z (toward the
@@ -195,11 +241,129 @@ If it turns solid while overlapping the player, that's a normal hit; the flicker
       player uses. They're read every frame, so they follow the asset if it's tuned in Play mode.
 
    Because `sin(0)` is 0, the swing starts at the same angle the asteroid was placed at.
-5. **Place it.** `transform.position = position`. Then, until the close call has been judged, it calls
-   `TrackCloseCall` (see below).
-6. **Despawn.** Once it's more than `despawnBehindCamera` units behind the camera, it calls
-   `PatternCopy.Despawn(gameObject)`. It's flying away from the player at that point, so it can never come
-   back into view.
+
+   **Spiral: drift round the orbit at its own radius.** Also replaces the x/y from step 3, but it never swings
+   back. `angle = baseAngle + elapsed × spiralSpeed × Deg2Rad`, then `center + (cos(angle), sin(angle)) ×
+   startRadius`. `startRadius` is the asteroid's distance from the orbit center, measured in `OnEnable`, so a
+   Spiral placed on the orbit stays on it, and one placed inside spirals in a smaller ring. The center is read from
+   `OrbitSettings` each frame, but the radius isn't. A negative `spiralSpeed`, or `MirrorSwing` (set by the
+   spawner when it flips a pattern), reverses the direction. Example: placed at -90°, `spiralSpeed` 45: 0° at
+   2 s, 90° at 4 s.
+
+   **Homing: turn toward the nearest player body, then lock.** `homingAngle` is a running total (it carries on from
+   last frame, since the target keeps moving). While `homingLocked` is false and there's a player: if the
+   asteroid's depth ahead of the player (`z` minus the player's `z`) is at most `homingStopDistance`, it sets
+   `homingLocked` and never turns again. Otherwise `homingAngle` moves toward `ClosestBodyAngle()` by at most
+   `homingSpeed × Time.deltaTime` degrees, the short way round (`Mathf.MoveTowardsAngle`, which works in degrees,
+   so the radians are converted in and out). It's then placed at `startRadius` and `homingAngle`, like Spiral.
+   `ClosestBodyAngle` reuses `CloseCallZone.NearestGap`'s `out` argument to get the position of the nearest body
+   (the player or a twin copy), then turns it into an angle round the orbit center with `Atan2`. Example: the
+   asteroid at 90°, the player at -90°, `homingSpeed` 40: it can turn 4° per 0.1 s frame, and reaches the player's
+   angle after 4.5 s if the player hasn't moved. A player who slides away before the lock is missed, because after
+   the lock it flies straight.
+
+   **Keeping apart.** Before taking its new angle, a Homing asteroid works out where that would put it (at its
+   current depth) and asks `WouldCrowd`. That method walks `Active` and skips itself and phased asteroids.
+   For each other asteroid it needs a centre-to-centre distance of at least `(HitRadius + other.HitRadius) ×
+   (1 + homingGapScale)`, using real 3D distance, so asteroids at very different depths never block each other.
+   It says "crowded" only if the new spot is inside that distance **and** closer than the asteroid is now, so one
+   that spawned overlapping, or is being left behind, can still move away. If crowded, `homingAngle` isn't
+   changed this frame, so the asteroid holds still. Example: two asteroids with `HitRadius` 0.5 and scale 1 need
+   2.0 between centres (touching is 1.0, so the gap is 1.0, one collider width). A locked asteroid skips all
+   of this.
+
+   **StopAndGo: approach, one stop, then a dash.** It doesn't change the x/y at all. It only changes how fast
+   `distance` grows, through `speedFactor` from `StopAndGoFactor`, which moves it through `stopPhase`
+   (Approaching, Stopped, Dashing, once each, reset in `OnEnable`). *Approaching:* the factor is 1 until it's within
+   `stopEaseDistance` of `stopDistance` (measured as depth ahead of the player), then `√(remaining ÷
+   stopEaseDistance)`, a steady deceleration that reaches 0 exactly at `stopDistance`. An ease distance of 0 stops
+   it abruptly. *Stopped:* the factor is 0 and `stopTimer` counts up to `stopTime`. *Dashing:* the factor is
+   `dashMultiplier`, abruptly, for the rest of the flight, so the dash is still faster when the player is. Example
+   at approach speed 20, `stopDistance` 30, ease 10: factor 0.77 at depth 36, stopped at 30, then 50 units/s. An
+   asteroid that spawns inside `stopDistance` stops on its first frame. For the last `shakeTime` of the stop,
+   `UpdateShake` offsets the mesh child (not the collider) by a random amount up to `shakeMagnitude` each frame,
+   from `meshHome` (its authored `localPosition`, remembered in `Awake`), and puts it back exactly on the frame
+   the dash starts.
+
+   **Splitter (an effect, so it works with any movement).** At the end of `Update`, a Splitter that hasn't
+   split yet (`hasSplit`) and has a `splitPiece` checks its depth ahead of the player. At `splitDistance` or less
+   it calls `Split`, which takes its angle and radius round the orbit center from where it is now, makes
+   `splitCount` pieces with `EffectPool.GetAsteroid` at that radius and depth, fanned `splitSpread` degrees
+   apart and centred on its angle (offset `(i − (count − 1) ÷ 2) × spread`; for 3 pieces at -90° with spread 20:
+   -110°, -90°, -70°), calls `BecomePiece(pieceScale)` on each and switches it on, then plays the explosion
+   effect and removes itself with `PatternCopy.Despawn`. It doesn't count as smashed (no score, no stats), but
+   its wave counts it as gone. The pieces aren't part of the wave. In `OnEnable` a Splitter asks
+   `EffectPool.PrewarmAsteroids` for `splitCount` free pieces, so they exist before the split.
+
+   **Growing (an effect, so it works with any movement).** `UpdateGrowing` runs each frame while moving, and
+   only changes scale. *Pulse:* from `growDistance + pulseDistance` inwards the **mesh child's** scale is
+   `meshStartScale × (1 + sin(elapsed × pulseRate × 2π) × pulseSize)`, a constant-strength swell and shrink, so
+   the collider doesn't change. *Pop:* the first frame at `growDistance` or closer, `hasGrown` is set, the
+   **root's** scale becomes `startScale × growScale` (collider and mesh together) and `hitRadius` becomes
+   `fullHitRadius × growScale`, so the hitbox is its final size from that instant. *Settle:* `settleTimer` runs
+   from 0 to `settleTime`, with `t` = progress 0 to 1, and the mesh scale is `meshStartScale × (1 + overshoot ×
+   (1 − t)²)`: it starts 25% too big and eases down to exactly 1. The overshoot is visual only, and it happens
+   before the asteroid reaches the player. Example (approach speed 20, defaults): pulsing from 40 ahead (about 3
+   pulses), the pop at 30 (mesh 2.5 times, hitbox 2 times), settled at 2 times 0.2 s later. An asteroid placed
+   inside `growDistance` pops on its first frame with no pulsing. `startScale`, `meshStartScale` and
+   `hitRadius` are put back in `OnEnable` for a Growing asteroid, because `PatternCopy.Return` doesn't restore
+   scale; this is gated on the effect, so a Splitter piece's scale (set by `BecomePiece`) isn't undone.
+
+   **Magnet (an effect, so it works with any movement).** Meant as a slow, large void (`approachScale` ~0.3)
+   that sits just outside the orbit and has **no Collider component** on its prefab (unticking it isn't enough:
+   `WarnThenMove` switches it back on). `UpdateMagnet` runs each frame while moving. It takes the 3D distance
+   `d` to the player; at `magnetRadius` or more it does nothing. Otherwise `closeness = 1 − d ÷ magnetRadius`
+   (0 at the edge, 1 at point-blank), and the pull is `magnetStrength × closeness² × alongOrbit`, converted to
+   radians per second and passed to `PlayerMovement.AddPull`. `alongOrbit` is the dot product of the XY direction
+   from the player to the Magnet with the player's `OrbitTangent`: how much of that direction runs round the orbit
+   (1 = fully along, 0 = straight in or out, negative = clockwise). So a Magnet straight outside the player pulls
+   nothing sideways, and one off to a side pulls toward it. Squaring `closeness` makes the pull build slowly and
+   then fast. Example (radius 30, strength 60, `alongOrbit` 0.95): about 25°/s at distance 10 and 40°/s at
+   distance 5. A Magnet is **skipped by `TrackCloseCall`**, since a void you can't hit isn't a near miss. Its
+   look is the Black Hole shader ([BlackHole.md](BlackHole.md)). That shader's bending uses Scene Color, which is
+   black on the gameplay camera (an Overlay camera in a stack, with no Opaque Texture of its own), so the Magnet also
+   carries a **MagnetMirror** that moves its mesh child to the matching spot in front of the background camera, and
+   turns the effect so its arch points at the orbit's centre. The mesh child goes on the Background layer.
+   **Prefab setup:** a big sphere mesh child on the Background layer with the Black Hole material, **no Collider
+   component** on the root, an empty **Meshes** list, `approachScale` about 0.3, and Effect set to Magnet.
+
+   **Frost (an effect, so it works with any movement).** A comet that leaves slowing patches on the player's
+   orbit ring. A patch is a `FrostPatch`: a small `struct` (a position and an age) stored directly in the
+   `patches` list, so a patch is a few numbers and not an object. After the comet is placed each frame, a Frost
+   comet calls `UpdateFrost` and then `PaintFrost`.
+   - **`UpdateFrost`** ages every patch by the frame time and removes it once its age reaches `patchLifetime`
+     (the list is walked backwards, so a removal doesn't make it skip the next patch). A patch is a `struct`, a
+     value type, so the loop works on a copy and writes it back with `patches[i] = patch`. It then checks the
+     player: if the player's position is within `patchRadius` of any patch (compared as squared distances, so
+     there's no square root), it calls `PlayerMovement.ApplyFrost(speedSlow, orbitSlow)` once. Overlapping
+     patches never stack: you are either in frost or not.
+   - **`PaintFrost`** leaves patches while the comet is within `paintDistance` of the player's depth. It takes the
+     comet's direction from the orbit center and scales it to the orbit radius, so the patch lands **on the ring**
+     at the player's depth, under the comet. It only adds one if there is none yet, or the new spot is at least
+     `dropSpacing` from the last one (`lastDrop`, compared as squared distances). A comet at the exact center has
+     no direction and is skipped. A Linear comet's spot never moves, so it leaves one patch; a Spiral or Wave
+     comet sweeps round the ring and leaves a line of them. Example: `dropSpacing` 4, `patchRadius` 1: patches 4
+     apart with 1-unit reach are separate spots; at spacing 2 they join into one strip.
+   - **Patches don't move.** They sit on the ring until they expire. (An earlier version moved them toward the
+     camera at the comet's own speed, which kept every patch stuck on the comet and left no trail.)
+   - **Retiring.** `Finish` is called wherever the comet used to despawn directly: flying behind the camera, and
+     being smashed while the player is invincible. For anything but a Frost comet with patches left, it just calls
+     `PatternCopy.Despawn`. For a Frost comet with patches, it sets `retired`, removes itself from `Active` (so the
+     hidden comet doesn't hold up winning the level or draw an OrbitRing arc), hides its renderer, switches its
+     collider off and calls `trail.Stop()`. From then on `Update` only runs `UpdateFrost` and despawns the comet
+     once `patches` is empty.
+   - **Look.** The `ribbon` (a Trail Renderer) and the `trail` particle system (the mist, with an optional child
+     system for fine dust) are separate from the gameplay patches: they follow the comet's whole flight, and
+     `OnEnable` sets both lifetimes from `patchLifetime`. The rock, mist and ribbon use the Frost Rock, Frost Gas
+     and Frost Trail shaders ([FrostRock.md](FrostRock.md), [FrostGas.md](FrostGas.md),
+     [FrostTrail.md](FrostTrail.md)).
+   - **Gizmos.** `OnDrawGizmos` draws every patch as a wire sphere of `patchRadius`: cyan and fading with age,
+     red while the player is inside it. It only shows while playing (the list is empty otherwise).
+5. **Place it.** `transform.position = position`. A Frost comet then runs `UpdateFrost` and `PaintFrost`. Until the
+   close call has been judged, it calls `TrackCloseCall` (see below).
+6. **Despawn.** Once it's more than `despawnBehindCamera` units behind the camera, it calls `Finish`, which
+   despawns it with `PatternCopy.Despawn(gameObject)`, or retires it if it's a Frost comet with patches left. It's
+   flying away from the player at that point, so it can never come back into view.
 
 ### `TrackCloseCall`: near misses
 
@@ -229,12 +393,16 @@ rewarded even if physics missed the contact.
    it falls back to `other.transform.IsChildOf(player.transform)`. Anything else, or no player at all, is
    ignored. Any touch sets `hitPlayer`, so this flight can't score a close call.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
-   **invincible**, or it's `destructible` and the player's `Speed` is at least `destroySpeed`.
+   **invincible**, or it `BreaksBySpeed` and the player's `Speed` is at least `destroySpeed`.
 
-   Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy),
+   Exploding plays the template's `explosionPrefab` through `EffectPool.Play` (a reused effect copy; a
+   BonusCarrier with a `bonusExplosion` plays that instead),
    shakes the camera, adds one to `RunStats.AsteroidsDestroyed` through GameManager (null-safe), adds
    `scorePoints` with `Score.AddComboKill` (null-safe; Score adds the combo bonus and applies the speed
-   multiplier), and despawns the asteroid with `PatternCopy.Despawn`. `Explode` takes the touching body's
+   multiplier), then, for a BonusCarrier with `bonusPoints` above 0, adds `bonusPoints` with
+   `Score.AddBonusPoints` (flat: no speed or power-up multiplier, no combo; it counts toward the Asteroids line of
+   the score breakdown and shows its own pop-up with `bonusLabel`; an invincible player gets it too), and finishes with `Finish` (a despawn with `PatternCopy.Despawn`, or a retire for a Frost comet
+   with patches left). `Explode` takes the touching body's
    position and passes it to Score, so the score popup appears above the body that smashed it (the player
    or a twin copy), not above the asteroid. Since this branch
    comes first, an invincible player gets no knockback, speed loss or lost life. Twin copies smash
@@ -265,16 +433,19 @@ scene for asteroids every frame. The public properties exist for it:
 | Property | What it tells you |
 | --- | --- |
 | `IsMoving` | Whether it has finished warning and started moving |
-| `Movement` | Its `MovementType` (Linear or Wave). Read-only. The pattern builder's fairness checks read it to skip Wave asteroids |
+| `Movement` | Its `MovementType` (Linear, Wave, Spiral, Homing or StopAndGo). Read-only. The pattern builder's fairness checks read it to skip Wave asteroids (the others are checked as if they were Linear) |
 | `Amplitude`, `Frequency` | Read-only copies of the Wave swing settings. The pattern builder reads `Amplitude` to draw the sweep arc in the Scene view |
+| `PoolSource` | Settable. Set by `EffectPool` on a pooled piece to the prefab it was made from, so `Despawn` can send it back to the right pile. Null for every other asteroid |
+| `BecomePiece(scale)` | Method. Called on a piece while it's still switched off: sets `isPiece` (it skips the warning wait in `WarnThenMove`), scales it to `scale` times the prefab's size, scales `HitRadius` to match (`fullHitRadius × scale`, measured in `Awake`), and makes sure its collider is on |
 | `MirrorSwing` | Settable. The spawner sets it when it flips a pattern left-right; a Wave asteroid then swings the other way (the swing is multiplied by -1). Not saved in the Inspector or prefab, starts false. Linear asteroids ignore it |
 | `ApproachSpeed` | How fast it's closing in right now |
 | `CanBreak` | Whether touching it right now would smash it |
 | `HitRadius` | How wide its collider is on screen, measured once in `Awake`, so it's right even while the collider is off |
 | `IsPhased` | Whether a Phase asteroid is phased out right now (collider off). OrbitRing draws its arc blue then |
 
-`CanBreak` is the one rule for "would this break?": `!IsPhased && ((invincible) || (destructible && Speed >=
-destroySpeed))`. A phased asteroid can never be broken.
+`CanBreak` is the one rule for "would this break?": `!IsPhased && ((invincible) || (BreaksBySpeed && Speed >=
+destroySpeed))`. A phased asteroid can never be broken. `BreaksBySpeed` is a private property that's true for the
+Destructible and BonusCarrier kinds.
 The outline color, OrbitRing's arc color and `OnTriggerEnter` all use it, so what the player sees always
 matches what happens. "Invincible" comes from the PlayerInvincibility reference each asteroid grabs from
 GameManager once in `Awake`, so checking it costs no searching. If there's no GameManager or no
@@ -282,7 +453,8 @@ PlayerInvincibility, that part is just false.
 
 ## Talks to
 
-- **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`.
+- **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`. A Magnet calls
+  `AddPull` each frame, and a Frost comet calls `ApplyFrost` each frame the player is inside a patch.
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).
 - **SpawnableTemplate**: reads almost all of its shared settings from it, and `GetDepthTint` for the depth fade.
   A Phase asteroid gets its hologram look from `phasedMaterial` (the Asteroid Phase shader, see
@@ -304,6 +476,8 @@ PlayerInvincibility, that part is just false.
 - **OrbitRing**: reads the `Active` list and the properties above.
 - **PatternCopy**: `Despawn` takes the asteroid back into its pattern copy instead of destroying it.
 - **EffectPool**: `Play` shows the explosion from a pool of reused effect copies.
+- **A Particle System and a Trail Renderer** (a Frost comet's children): `OnEnable` sets their lifetimes from
+  `patchLifetime`, and `Finish` stops the particle system.
 
 ## Gotchas
 
@@ -319,8 +493,8 @@ PlayerInvincibility, that part is just false.
 - **A Phase asteroid needs the template's `phasedMaterial`** for its look. Without it, it still phases (the
   collider switches) but never looks different, which is unfair to the player.
 - **`phasedTime` 0** means it never phases, but it still flickers near the end of each cycle.
-- **`destructible` is only read in `Awake`.** Ticking it on a live asteroid in Play mode lets it be smashed,
-  but it won't get an outline.
+- **`kind` decides the outline only in `Awake`.** Changing it on a live asteroid in Play mode changes whether it
+  can be smashed, but it won't gain or lose the outline.
 - **`warningTime` is only read into `warnWait` in `Awake`.** Changing it on the template in Play mode won't
   change how long existing asteroids wait. Stop and press Play again after tuning it.
 - **The depth tint needs `_BaseColor`.** It works on URP Lit materials (the asteroid material). A body
@@ -335,8 +509,21 @@ PlayerInvincibility, that part is just false.
   pooling the same asteroid is revealed again on every later use of its pattern. So `OnEnable` has to reset
   everything, which it does. Any new state added to the script should be reset there too. `Awake` runs only
   once per copy, so per-copy setup like the outline material is done once.
-- **Never `Destroy` it in code; call `PatternCopy.Despawn`.** Destroying a pooled asteroid leaves a hole in
-  its pattern copy.
+- **Never `Destroy` it in code; call `PatternCopy.Despawn` (or `Finish`).** Destroying a pooled asteroid leaves a
+  hole in its pattern copy.
+- **A Frost comet owns its patches.** They live in the comet's own list, so the comet has to stay switched on until
+  they expire, which is what retiring does. Switching it off any other way deletes its patches.
+- **Frost's `trail` and `ribbon` fields must be assigned in the Inspector.** If either is empty, that part is
+  skipped without any message: no mist or ribbon lifetime sync (or no visual at all).
+- **Only the `trail` system gets its lifetime set from `patchLifetime`.** A child system (such as the fine dust
+  layer) is stopped with it but keeps its own saved Start Lifetime. Set that by hand to match.
+- **Sizes don't follow the prefab's scale.** `patchRadius`, `dropSpacing` and `paintDistance`, the Trail Renderer's
+  width and the particle sizes and shape radii are all in world units (the particle systems' Scaling Mode is
+  Local). If you scale the Frost prefab's root, change these by the same factor.
+- **`dropSpacing` above twice `patchRadius` leaves gaps** between patches (separate spots). Below it they overlap
+  into a strip.
+- **Patches are made near the player's depth.** A large `paintDistance` paints early and late too, and a very small
+  one can miss a fast comet's crossing frames. If a Linear comet leaves no patch, raise it a little.
 - **Smashing works while invulnerable.** The smash check happens before `TakeHit`, so it ignores the
   player's invulnerability window. Smashing never costs a life.
 - **Non-destructible asteroids have no outline.** While the player is invincible, their arcs turn green,

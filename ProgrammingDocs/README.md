@@ -24,7 +24,9 @@ It lives outside `Assets/` so Unity does not import these files.
 | ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
+| HamsterAnimationDriver.cs | [HamsterAnimationDriver.md](HamsterAnimationDriver.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
+| MagnetMirror.cs | [MagnetMirror.md](MagnetMirror.md) | Done |
 | MenuTransition.cs | [MenuTransition.md](MenuTransition.md) | Done |
 | MultiplierDisplay.cs | [MultiplierDisplay.md](MultiplierDisplay.md) | Done |
 | ObjectSpawner.cs | [ObjectSpawner.md](ObjectSpawner.md) | Done |
@@ -59,6 +61,10 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
 | Asteroid Phase.shadergraph | [AsteroidPhase.md](AsteroidPhase.md) | Done |
+| Black Hole.shadergraph | [BlackHole.md](BlackHole.md) | Done |
+| Frost Gas.shadergraph | [FrostGas.md](FrostGas.md) | Done |
+| Frost Rock.shadergraph | [FrostRock.md](FrostRock.md) | Done |
+| Frost Trail.shadergraph | [FrostTrail.md](FrostTrail.md) | Done |
 | Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
 | Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
 | Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
