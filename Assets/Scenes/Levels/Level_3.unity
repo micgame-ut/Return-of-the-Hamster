@@ -1055,10 +1055,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50da0a134bed7d347af877809f34bb72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  waves: []
+  waves:
+  - pattern: {fileID: 1426364939829335137, guid: 8e29f78f1cc066a44b89c094ae01456e, type: 3}
+    delayAfter: 400
+    clearPoints: 400
+    perfectBonus: 200
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 0
+    rotationStep: 0
+    mirrorChance: 0
+  - pattern: {fileID: 1426364939829335137, guid: 1d587c318660bf94294e131c43e20313, type: 3}
+    delayAfter: 400
+    clearPoints: 400
+    perfectBonus: 200
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 0
+    rotationStep: 0
+    mirrorChance: 0
   order: 1
   loop: 1
-  startDelay: 2
+  startDelay: 0.1
   prewarmPerPattern: 1
 --- !u!1 &367037844
 GameObject:

@@ -1055,10 +1055,82 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50da0a134bed7d347af877809f34bb72, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  waves: []
+  waves:
+  - pattern: {fileID: 1426364939829335137, guid: 8e29f78f1cc066a44b89c094ae01456e, type: 3}
+    delayAfter: 0.4
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 620d41c2b3494704382c44dea55b101f, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 1d587c318660bf94294e131c43e20313, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 5483fe8cbb9c4c044a7440597a1afb49, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
+  - pattern: {fileID: 1426364939829335137, guid: 2fa847fb9209fca42abf73fcd904be1e, type: 3}
+    delayAfter: 0.5
+    clearPoints: 200
+    perfectBonus: 100
+    fromProgress: 0
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 0
+    mirrorChance: 0.5
   order: 1
   loop: 1
-  startDelay: 2
+  startDelay: 0.1
   prewarmPerPattern: 1
 --- !u!1 &367037844
 GameObject:
