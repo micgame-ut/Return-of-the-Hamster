@@ -4,7 +4,8 @@
 
 Drives the hamster's Animator from the player's speed, and plays the hit reaction when a life is lost.
 The hamster idles when the player is slow, scurries faster as `Speed` rises, and winds down gently when
-the player lets go.
+the player lets go. While Level 1's menu is showing, he floats with his arms and legs out instead, and
+breaks into the run when the level starts.
 
 ## Where it lives
 
@@ -12,9 +13,11 @@ the player lets go.
   in `hamter.prefab`, and the same object in `Twin Copy.prefab`
 - **Requires:**
   - An **Animator** on the same GameObject, using the `HamsterAnimator` controller. The controller needs
-    three parameters with exactly these names: `Speed01` (Float), `RunSpeed` (Float) and `Hit` (Trigger)
+    four parameters with exactly these names: `Speed01` (Float), `RunSpeed` (Float), `Hit` (Trigger) and
+    `InMenu` (Bool)
   - A `PlayerHealth` somewhere above it in the hierarchy (optional: twin copies don't have one)
-- **The animations** come from `Apollo_Rigged.fbx`: **Scurry**, **Idle** and **Hit**
+  - A `GameManager` in the scene (optional: without one, `InMenu` stays false)
+- **The animations** come from `Apollo_Rigged.fbx`: **Scurry**, **Idle**, **Hit** and **Float**
 
 ## Inspector settings
 
@@ -36,18 +39,34 @@ The script only sets parameters. What they do is decided in the controller:
   of the whole state.
 - **Hit** is its own state. **Any State → Hit** fires on the `Hit` trigger (no exit time, so a hit interrupts
   whatever is playing), and Hit goes back to Locomotion when it ends.
+- **Float** is the menu pose: arms and legs out, a slow 5-second loop of small limb drift and a gentle bob.
+  **Any State → Float** fires when `InMenu` is true (no blend, and *Can Transition To Self* is off so it doesn't
+  restart every frame). **Float → Locomotion** fires when `InMenu` is false, with a 0.4 s blend so the limbs
+  ease from the float into the run. Locomotion stays the default state, so a level without a menu, or a restart,
+  never shows Float.
 
 ### `Awake`
 
-Finds the two things the script needs, once: the Animator on this GameObject (`GetComponent`) and the
-`PlayerHealth` above it (`GetComponentInParent`). On a twin copy there's no `PlayerHealth`, so that one stays
-`null`, and the script copes with that.
+Finds the things the script needs, once: the Animator on this GameObject (`GetComponent`), the `PlayerHealth`
+above it (`GetComponentInParent`) and the `GameManager` (`GameManager.Instance`). On a twin copy there's no
+`PlayerHealth`, so that one stays `null`, and the script copes with that.
+
+It also sets `InMenu` to true if there is a `GameManager` and the game hasn't started yet. `GameManager`'s
+`Awake` runs first (`[DefaultExecutionOrder(-100)]`), so `HasStarted` is already decided. On a restart or a level
+without a menu it is already true, so `InMenu` is false from the first frame and Float never shows.
 
 ### `OnEnable` and `OnDisable`
 
 `OnEnable` subscribes `HandleLifeLost` to `PlayerHealth`'s `OnLifeLost` event, but only if a `PlayerHealth` was
-found. `OnDisable` unsubscribes it again, so the event never ends up with the same method twice, or with a method
-on a destroyed object. `Awake` runs before `OnEnable`, so `playerHealth` is already filled in by then.
+found, and `HandleGameStarted` to `GameManager`'s `OnGameStarted`, but only if a `GameManager` was found.
+`OnDisable` unsubscribes both again, so an event never ends up with the same method twice, or with a method
+on a destroyed object. `Awake` runs before `OnEnable`, so both references are already filled in by then.
+
+### `HandleGameStarted`
+
+Sets `InMenu` to false. `OnGameStarted` fires from `GameManager.StartGame()`, which `MenuTransition` calls at the
+end of its transition (3 seconds after Start is pressed, with the scene's values). The hamster floats while he
+glides into position, then blends into the run as control begins.
 
 ### `HandleLifeLost`
 
@@ -80,12 +99,13 @@ together with `Speed01`.
 
 - **PlayerMovement**: reads the static `Speed01` every frame (no reference needed)
 - **PlayerHealth**: subscribes to `OnLifeLost`
-- **Animator** and the **`HamsterAnimator`** controller: sets `Speed01` and `RunSpeed`, reads `Speed01`, and
-  sets the `Hit` trigger
+- **GameManager**: reads `HasStarted` in `Awake` and subscribes to `OnGameStarted`
+- **Animator** and the **`HamsterAnimator`** controller: sets `Speed01` and `RunSpeed`, reads `Speed01`, sets
+  the `Hit` trigger and sets the `InMenu` bool
 
 ## Gotchas
 
-- **The parameter names must match the controller exactly** (`Speed01`, `RunSpeed`, `Hit`, case-sensitive). The
+- **The parameter names must match the controller exactly** (`Speed01`, `RunSpeed`, `Hit`, `InMenu`, case-sensitive). The
   names are text, so a mismatch doesn't fail to compile or throw an error. Unity only prints
   "Parameter ... does not exist" in the Console, and the animation silently doesn't play.
 - **The script must be on the same GameObject as the Animator.** `GetComponent` only looks at its own object,
@@ -100,5 +120,11 @@ together with `Speed01`.
   asteroid) never reach `LoseLife`.
 - **Time is frozen on the last hit.** GameManager sets `Time.timeScale` to 0 on game over, and the Animator
   runs on scaled time, so the Hit animation freezes with everything else on the final life.
-- **Renaming `Hit`, `Speed01` or `RunSpeed` in the controller** means changing the matching string in the script
-  as well.
+- **Renaming `Hit`, `Speed01`, `RunSpeed` or `InMenu` in the controller** means changing the matching string in
+  the script as well.
+- **The Float pose follows `HamsterMenuFloat`'s spin.** The Animator only poses the limbs; `HamsterMenuFloat`
+  moves and rotates the whole hamster, and `MenuTransition` glides him into place. The two don't interfere.
+- **Don't switch this script off on the menu hamster.** It's what turns `InMenu` back to false when the level
+  starts. With it off, the hamster would stay in Float forever.
+- **Float is baked into `Apollo_Rigged.fbx`.** Changing the pose or timing means editing the `Float` action in
+  Blender and re-exporting the FBX (with the NLA-strip export, so the clip names stay plain).

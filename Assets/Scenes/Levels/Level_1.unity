@@ -5525,6 +5525,11 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!4 &1233760873 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+  m_PrefabInstance: {fileID: 1499651218}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1237936164
 GameObject:
   m_ObjectHideFlags: 0
@@ -6334,6 +6339,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6807492912756224308, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      propertyPath: meshTransform
+      value: 
+      objectReference: {fileID: 1233760873}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8144,9 +8153,9 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   idleSpeed: 1
-  overdriveMusicSpeed: 2
+  overdriveMusicSpeed: 8
   idlePitch: 1
-  overdriveMusicPitch: 3
+  overdriveMusicPitch: 1
   riseRate: 0.5
   fallRate: 0.25
   reverseFallRate: 1
