@@ -1212,6 +1212,7 @@ GameObject:
   - component: {fileID: 322731931}
   - component: {fileID: 322731930}
   - component: {fileID: 322731929}
+  - component: {fileID: 322731932}
   m_Layer: 5
   m_Name: Start Button
   m_TagString: Untagged
@@ -1345,6 +1346,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 322731927}
   m_CullTransparentMesh: 1
+--- !u!114 &322731932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322731927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
+  clickSounds:
+  - button squeaks
+  hoverSound: 
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -2700,6 +2716,7 @@ GameObject:
   - component: {fileID: 715283421}
   - component: {fileID: 715283420}
   - component: {fileID: 715283419}
+  - component: {fileID: 715283422}
   m_Layer: 5
   m_Name: Options Button
   m_TagString: Untagged
@@ -2821,6 +2838,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 715283417}
   m_CullTransparentMesh: 1
+--- !u!114 &715283422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715283417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
+  clickSounds:
+  - button squeaks
+  hoverSound: 
 --- !u!1 &724802478
 GameObject:
   m_ObjectHideFlags: 0
@@ -2833,6 +2865,7 @@ GameObject:
   - component: {fileID: 724802482}
   - component: {fileID: 724802481}
   - component: {fileID: 724802480}
+  - component: {fileID: 724802483}
   m_Layer: 5
   m_Name: Exit Button
   m_TagString: Untagged
@@ -2954,6 +2987,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724802478}
   m_CullTransparentMesh: 1
+--- !u!114 &724802483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724802478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
+  clickSounds:
+  - button squeaks
+  hoverSound: 
 --- !u!1 &808032563
 GameObject:
   m_ObjectHideFlags: 0
@@ -5118,6 +5166,7 @@ GameObject:
   - component: {fileID: 1148761478}
   - component: {fileID: 1148761477}
   - component: {fileID: 1148761476}
+  - component: {fileID: 1148761479}
   m_Layer: 5
   m_Name: Credits Button
   m_TagString: Untagged
@@ -5251,6 +5300,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1148761474}
   m_CullTransparentMesh: 1
+--- !u!114 &1148761479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1148761474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
+  clickSounds:
+  - button squeaks
+  hoverSound: 
 --- !u!1 &1188475116
 GameObject:
   m_ObjectHideFlags: 0
@@ -8099,6 +8163,7 @@ GameObject:
   - component: {fileID: 1809026622}
   - component: {fileID: 1809026621}
   - component: {fileID: 1809026624}
+  - component: {fileID: 1809026625}
   m_Layer: 0
   m_Name: AudioManager
   m_TagString: Untagged
@@ -8146,7 +8211,7 @@ MonoBehaviour:
   idleSpeed: 1
   overdriveMusicSpeed: 2
   idlePitch: 1
-  overdriveMusicPitch: 3
+  overdriveMusicPitch: 1
   riseRate: 0.5
   fallRate: 0.25
   reverseFallRate: 1
@@ -8213,6 +8278,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71917dbad5321854196f290b85c71eb3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelMusicStarter
+--- !u!114 &1809026625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19209231eb4681343ae6eb31611b1521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SFXManager
+  sounds:
+  - id: button squeaks
+    clips:
+    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
+    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
+    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
+    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
+    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
+    volume: 0
+    pitchRange: {x: 0.95, y: 1.05}
+  masterVolume: 1
+  voices: 8
+  sfxMixerGroup: {fileID: 0}
 --- !u!1 &1811917838
 GameObject:
   m_ObjectHideFlags: 0
