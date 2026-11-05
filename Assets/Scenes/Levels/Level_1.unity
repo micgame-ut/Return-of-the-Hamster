@@ -1849,6 +1849,11 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!4 &447059895 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8124262161344390682, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+  m_PrefabInstance: {fileID: 1499651218}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &467482489
 GameObject:
   m_ObjectHideFlags: 0
@@ -5589,11 +5594,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!4 &1233760873 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
-  m_PrefabInstance: {fileID: 1499651218}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1237936164
 GameObject:
   m_ObjectHideFlags: 0
@@ -6406,7 +6406,7 @@ PrefabInstance:
     - target: {fileID: 6807492912756224308, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       propertyPath: meshTransform
       value: 
-      objectReference: {fileID: 1233760873}
+      objectReference: {fileID: 447059895}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8307,7 +8307,24 @@ MonoBehaviour:
     - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
     - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
     - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
-    volume: 0
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  - id: asteroid collisions
+    clips:
+    - {fileID: 8300000, guid: 8171ae790521c3d49ad1c18b1f2caeed, type: 3}
+    - {fileID: 8300000, guid: 451eff3231f9b0144a70b7b807cb5e9e, type: 3}
+    - {fileID: 8300000, guid: a2aa1c903c56ec64b9faf3735d0c566e, type: 3}
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  - id: death explosion
+    clips:
+    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  - id: nooooooo
+    clips:
+    - {fileID: 8300000, guid: c26d36e55ed93d048b0d5f314360646e, type: 3}
+    volume: 1
     pitchRange: {x: 0.95, y: 1.05}
   masterVolume: 1
   voices: 8
