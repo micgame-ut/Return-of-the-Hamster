@@ -17,6 +17,12 @@ public class StarfieldStreamer : MonoBehaviour
     [Tooltip("Seconds for the stars to speed up from still to normal once the game starts.")]
     [SerializeField] private float rampTime = 1f;
 
+    [Header("Boost")]
+    [Tooltip("Extra star speed, in units/sec, the instant a forward boost fires. It fades back to normal over Boost Burst Time.")]
+    [SerializeField] private float boostBurstSpeed = 120f;
+    [Tooltip("Seconds the star burst takes to fade out after a forward boost. 0 = no burst.")]
+    [SerializeField] private float boostBurstTime = 0.5f;
+
     [Header("Field Shape")]
     [Tooltip("Stars spawn up to this far from the middle...")]
     [SerializeField] private float fieldRadius = 300f;
@@ -49,6 +55,8 @@ public class StarfieldStreamer : MonoBehaviour
     private ParticleSystem.VelocityOverLifetimeModule velocityModule;
     private ParticleSystem.EmissionModule emission;
     private bool emitting = true; // last value given to emission.enabled
+    private PlayerMovement movement;
+    private float burstTimer; // seconds left on the boost burst; 0 = none
     private Material fallbackMaterial;
 
     private void Awake()
@@ -59,7 +67,20 @@ public class StarfieldStreamer : MonoBehaviour
         stars = BuildParticleSystem();
         velocityModule = stars.velocityOverLifetime;
         emission = stars.emission;
+        movement = GameManager.Instance != null ? GameManager.Instance.Player : null;
     }
+
+    private void OnEnable()
+    {
+        if (movement != null) movement.OnSpeedBoost += StartBurst;
+    }
+
+    private void OnDisable()
+    {
+        if (movement != null) movement.OnSpeedBoost -= StartBurst;
+    }
+
+    private void StartBurst() => burstTimer = boostBurstTime;
 
     private void Update()
     {
@@ -75,7 +96,14 @@ public class StarfieldStreamer : MonoBehaviour
 
         // Recompute forward streaming speed from the player's current speed
         // and push it into the cached velocity module.
-        float speed = (baseSpeed + PlayerMovement.Speed * speedMultiplier) * ramp;
+        float burst = 0f;
+        if (burstTimer > 0f)
+        {
+            burstTimer -= Time.deltaTime;
+            float t = Mathf.Clamp01(burstTimer / boostBurstTime);
+            burst = boostBurstSpeed * t * t; // squared, so the rush is sharp and fades fast
+        }
+        float speed = (baseSpeed + PlayerMovement.Speed * speedMultiplier + burst) * ramp;
         velocityModule.z = new ParticleSystem.MinMaxCurve(-speed, -speed);
     }
 

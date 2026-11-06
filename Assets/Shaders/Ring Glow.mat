@@ -87,9 +87,11 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _Breathe_Amount: 0.3
+    - _Breathe_Speed: 2
     - _BumpScale: 1
     - _Charge: 1
-    - _Charging_Glow: 0.5
+    - _Charging_Glow: 1.5
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -99,7 +101,7 @@ Material:
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
-    - _Fade_End: 0.5
+    - _Fade_End: 0.55
     - _Fade_Start: 0.3
     - _GlossMapScale: 0
     - _Glossiness: 0
@@ -107,10 +109,17 @@ Material:
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
+    - _Pulse_Glow: 10
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Ready_Glow: 3
+    - _Ready_Glow: 6
+    - _Ready_Pulse: 0
     - _ReceiveShadows: 1
+    - _Ring_1_Radius: 0.38
+    - _Ring_2_Radius: 0.47
+    - _Ring_Brightness: 2
+    - _Ring_Core: 0.008
+    - _Ring_Edge: 0.014
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -122,11 +131,13 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Base_Color: {r: 0.5707547, g: 0.9720504, b: 1, a: 1}
+    - _Base_Color: {r: 0.15, g: 0.25, b: 0.3, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Fade_Axis: {r: 0, g: 1, b: 0, a: 0}
-    - _Glow_Color: {r: 0, g: 0.07270121, b: 0.49999994, a: 1}
+    - _Glow_Color: {r: 0, g: 0.9, b: 1, a: 1}
+    - _Ring_1_Color: {r: 0.2, g: 1.5, b: 2, a: 1}
+    - _Ring_2_Color: {r: 0.40837693, g: 1.1131727, b: 2, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

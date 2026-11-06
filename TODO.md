@@ -4,6 +4,88 @@ Planned work, in no particular order. Each item is a **new feature**, so follow 
 ask the user for the variables first (section 5), explain the logic before any code (section 2), and work
 one snippet at a time (section 3).
 
+**The "End-product needs" section below takes priority over everything else on this list.**
+
+## End-product needs (top priority)
+
+Needed for the finished game. All of these come before any other item.
+
+**Effects and death**
+- [x] **Explosion VFX:** add the `vfx_explosion` prefab to the player explosion and the asteroid explosion.
+  **Done and tested.** `vfx_explosion` has a timer `ParticleSystem` on its root so the pool and `PlayerDeath` can use
+  it, and **Use Unscaled Time** is on for all five systems (the death explosion spawns while time is frozen). It's
+  in `PlayerDeath`, `SpawnableTemplate`, the Bonus prefab and the Twin's destroyed-body effect. The old
+  `Player Explosion`, `Asteroid Explosion` and `Gold Explosion` prefabs are now unused and can be deleted.
+- [x] **Fix the player death animation** (`PlayerDeath`): turn the player to face the camera, and shake the whole
+  player (ball, hamster and ring) all at once.
+  **Done and tested.** The whole root shakes and `Slerp`s to face the camera over the approach. The exhaust flame
+  also now trails behind the ship and thins out over `deathFadeTime` (`ExhaustFlame`, on unscaled time). The ring
+  tips down `ringTilt` (25°) toward the camera while the hamster is moved out from under it and keeps facing the
+  camera. New `PlayerDeath.OnArrived` and `OnExploded` events. See `PlayerDeath.md` and `ExhaustFlame.md`.
+
+**Audio and dialogue**
+- [x] **Audio on every event that needs it.** Drag-and-drop: each event gets a sound-effect slot in the Inspector,
+  and an empty slot just plays nothing. (`SFXManager` and `ButtonSFX` already exist in `Assets/Scripts/Audio`;
+  build on those.)
+  **Done and tested.** `GameSFX.cs` (on the `AudioManager`) has 23 slots for the player, power-up, asteroid and
+  level events. New events: `PlayerMovement.OnBoostReady`, `PlayerTwins.OnBodyLost`, `AsteroidBehavior.OnSmashed` /
+  `OnSplit` / `OnCloseCall`, `PlayerDeath.OnExploded`. Docs: `GameSFX.md` (**waiting for your review**).
+  Not covered yet: the shield (`PlayerShell`), and the end-screen and menu sounds beyond `ButtonSFX`.
+- [x] **Small dialogue that reacts to in-game events:** being hit, getting a power-up, reaching the end, starting
+  the level and a close call.
+  **Done and tested.** It's in `GameSFX.cs`: a `DialogueSlot` (clips, volume, pitch and a `chance`, default 0.3)
+  for hit, level start, close call, win, game over and each power-up type, played alongside the normal sound. A
+  shared `minLineGap` (2 s) stops him talking over himself. The last hit uses `gameOverLine` instead of
+  `hitLine`, and it plays when the hamster reaches the screen in the death animation (`PlayerDeath.OnArrived`).
+  Docs: `GameSFX.md` (**waiting for your review**).
+
+**Menu and flow**
+- [ ] **Tutorial phase before Level 1** that the player can choose to skip.
+- [x] **Menu navigation with mouse input:** every menu item selectable by scrolling between the options using input
+  from the mouse (not the keyboard), and pressing Space to choose, instead of clicking. Decided: the trackball movement
+  (the mouse delta), no mouse pointer at all.
+  **Done and tested.** New `MenuNavigator` (one per page) plus `EndScreen.Show` no longer shows
+  the cursor. Needs a `Menu Navigator` on the main menu, credits, Game Over, Win and stats pages, with each Button's
+  Selected Color set. The main menu shows a triangle `marker` beside the selected button instead (added in Unity as
+  an Image under Menu Canvas). Docs: new `MenuNavigator.md` (**waiting for your review**), `EndScreen.md` updated.
+- [ ] **Anchor the menu selection items** so they move with the window. **Handled by a teammate; skipped here.**
+- [x] **More dynamic menu float:** adjust `HamsterMenuFloat` so the player moves in a livelier way on the menu.
+  **Done and tested.** He now drifts in a box on all three axes (`boxHalfHeight`, `boxHalfDepth`, `ySpeed`,
+  `zSpeed`), turning slowly and overshooting the walls (`turnEase`), with a small extra wobble (`wobbleAmount`,
+  `wobbleSpeed`), a swelling sideways speed (`speedVariation`, `speedVariationRate`), and per-axis spin paces with a
+  lean (`tumbleSway`, `tumbleSwaySpeed`). Docs: new `HamsterMenuFloat.md` (**waiting for your review**).
+
+**HUD and text**
+- [x] **Reformat the stats and the other text items** with the new font.
+  **Done and tested.** The end-screen stats, score total, name and score rows were resized for PublicPixel (one
+  character is as wide as the font size) and set to no wrapping. Inspector edits only. Still on other fonts: the
+  `Exclamation` prefab (LiberationSans) and `OptionsText` in `Level_1` (Press Start 2P).
+- [x] **Score popups stack instead of overlapping each other** (`ScorePopups`), so each one stays readable. (Today
+  popups that come at the same time, such as a smash plus a close call plus a power-up label, land on top of one
+  another.)
+  **Done and tested.** New popups start above any popup they'd overlap (`stackSpacing`, `stackWidth`), and
+  each stays fully opaque for `holdTime` before fading. Set `lifetime` to about 1.1 on the HUD canvas. Docs:
+  `ScorePopups.md` updated.
+
+**Look and feel of the player**
+- [ ] **Player shell:** adjust `PlayerShell` so only the back faces show to the player.
+  **Built, waiting for your test.** Done in the graph, not the script: `Rainbow Overlay.shadergraph`'s Render Face
+  is now Back, so the shield and the rainbow both show only the far side of the bubble. Docs: `RainbowOverlay.md` and
+  `PlayerShell.md` updated.
+- [x] **Ring brightness gradient:** adjust it (the Ring Glow graph) so the glow is more noticeable and the player
+  can truly tell when a dodge is ready.
+  **Done and tested.** Material values brighter (step 1, in the Inspector). In `Ring Glow.shadergraph`:
+  the charging glow follows Charge² (dark until near the end), a flash when the boost becomes ready (`Ready Pulse` /
+  `Pulse Glow`, set by `BoostRing` from the new `readyPulseTime` and `OnBoostReady`), the ready glow breathes
+  (`Breathe Amount` / `Breathe Speed`), and two sharp bright rings (`Ring 1/2 Radius`, `Ring Core`, `Ring Edge`,
+  two HDR colors, `Ring Brightness`). Docs: `RingGlow.md`, `BoostRing.md` (**waiting for your review**).
+- [x] **Forward boost:** adjust it so it's noticeable.
+  **Done and tested.** On a forward boost: an FOV punch (`boostFovKick` 8°, `boostFovTime` 0.4) and a
+  camera shake (`boostShakeDuration` 0.3, `boostShakeMagnitude` 0.12) in `PlayerCamera`, and a star burst
+  (`boostBurstSpeed` 120, `boostBurstTime` 0.5) in `StarfieldStreamer`. Still to do in Unity: set `speedBoost` on the
+  player from 3 to about 4.5, then update the `speedBoost` row in `PlayerMovement.md`. Docs: `PlayerCamera.md` and
+  `StarfieldStreamer.md` updated.
+
 ## Twin power-up
 
 **Built and tested** (branch `twin-powerup`). Each Twin pickup adds a copy of the player, spaced evenly around

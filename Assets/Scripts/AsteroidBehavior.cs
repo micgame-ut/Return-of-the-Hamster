@@ -209,6 +209,9 @@ public class AsteroidBehavior : MonoBehaviour
 
     // Every revealed asteroid, so other scripts can react without searching the scene.
     public static readonly List<AsteroidBehavior> Active = new List<AsteroidBehavior>();
+    public static event System.Action<AsteroidKind> OnSmashed; // the player smashed an asteroid, and which kind
+    public static event System.Action OnSplit; // a Splitter burst into pieces
+    public static event System.Action OnCloseCall; // a close call was scored
 
     public bool IsMoving => isMoving;
     public MovementType Movement => movementType;
@@ -521,6 +524,7 @@ public class AsteroidBehavior : MonoBehaviour
         }
 
         if (template != null) EffectPool.Play(template.explosionPrefab, transform.position);
+        OnSplit?.Invoke();
         PatternCopy.Despawn(gameObject);
     }
 
@@ -749,7 +753,10 @@ public class AsteroidBehavior : MonoBehaviour
         closeCallJudged = true;
 
         if (!hitPlayer && closeCallThreat && closeCallGap > 0f && closeCallGap <= closeCalls.Distance && score != null)
+        {
             score.AddCloseCall(closeCallBody);
+            OnCloseCall?.Invoke();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -805,6 +812,7 @@ public class AsteroidBehavior : MonoBehaviour
                 score.AddBonusPoints(bonusPoints, bodyPosition, bonusLabel, Score.ScoreSource.Asteroids);
         }
 
+        OnSmashed?.Invoke(kind);
         Finish();
     }
 }

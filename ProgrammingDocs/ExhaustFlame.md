@@ -4,8 +4,8 @@
 
 Handles the LineRenderer properties that need to change while the game runs, for the exhaust flame behind
 the player: its length and width with speed, a flicker, a stretch on a forward boost, a drag that bends it as
-the player moves around the orbit, the rainbow color while invincible, the hit blink, and turning it off when
-the level ends.
+the player moves around the orbit, the rainbow color while invincible, the hit blink, thinning out behind the
+ship as it flies to the camera when the player dies, and turning it off when the level ends.
 
 The flame is two lines: a larger orange **outer flame**, and a thinner, shorter, brighter white **inner
 core** inside it.
@@ -46,6 +46,7 @@ core** inside it.
 | `normalColor` | white | (set in the prefab) | The outer flame's gradient, head to tail |
 | `rainbowColor` | white | (set in the prefab) | The outer flame's gradient while the rainbow shows |
 | `growTime` | 0.6 | 0.6 | Seconds for the flame to grow from nothing to its normal size once the game starts |
+| `deathFadeTime` | 1.25 | 1.25 | Seconds the flame takes to thin out and disappear after the player dies, while the ship flies to the camera. 0 = it vanishes at once. The default matches `PlayerDeath`'s approach time |
 
 The three gradients are `[GradientUsage(true)]` (HDR), so their colors can go brighter than white and glow
 with Bloom. They replace the LineRenderers' own Color setting, which the script overwrites.
@@ -69,19 +70,34 @@ afterwards `movement` is never null. Then it sets up each line once:
 ### `OnEnable` / `OnDisable`: subscribing to events
 
 These are about **this script component** being switched on or off, not the lines. `OnEnable` subscribes to
-four events, and `OnDisable` unsubscribes from them so nothing calls into a disabled or destroyed script:
+five events, and `OnDisable` unsubscribes from them so nothing calls into a disabled or destroyed script:
 
 | Event | From | Handler |
 | --- | --- | --- |
 | `OnSpeedBoost` | PlayerMovement | `HandleSpeedBoost` |
 | `OnOrbitShifted` | PlayerMovement (only the player's own flame, `onPlayer`) | `HandleOrbitShifted` |
 | `OnRainbowChanged` | PlayerInvincibility | `HandleRainbowChanged` |
-| `OnGameOver` / `OnWin` | GameManager | `HandleLevelEnded` |
+| `OnGameOver` | GameManager | `HandleGameOver` |
+| `OnWin` | GameManager | `HandleLevelEnded` |
 
 ### `Update`: every frame
 
 Reads the player's speed and blink state, and works out each line's size. The bending itself happens in
 `FollowLine`.
+
+**Frame length and the death fade (first, before the steps below).** `frameTime` is this frame's length:
+`Time.deltaTime` normally, but `Time.unscaledDeltaTime` once `deathTimer` has started (GameManager sets
+`Time.timeScale` to 0 at game over, so `deltaTime` would be 0 and the flame would freeze). While dying,
+`deathTimer` counts up by `frameTime` and `fade = 1 − SmoothStep(0, 1, deathTimer ÷ deathFadeTime)`. When `fade`
+reaches 0 it calls `HandleLevelEnded` and returns. `fade` multiplies the length and width (step 3), so the flame
+shortens and thins out while still trailing behind the ship. With `deathFadeTime` 1.25 and a full-speed flame
+(length 5, width 0.2):
+
+| Seconds since death | `fade` | Length | Width |
+| --- | --- | --- | --- |
+| 0 | 1 | 5 | 0.2 |
+| 0.625 | 0.5 | 2.5 | 0.1 |
+| 1.25 | 0 | gone, lines off | |
 
 0. **Grow in at the start:** `grow = SmoothStep(0, 1, GameManager.TimeSinceStart / growTime)`. During
    Level 1's menu `TimeSinceStart` is 0, so `grow` is 0: the flame is hidden. When play begins it eases to 1
@@ -100,8 +116,8 @@ Reads the player's speed and blink state, and works out each line's size. The be
    | 0.15 | 1.25 |
    | 0 | 1 |
 
-3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch × grow` and
-   `width = Lerp(maxWidth, minWidth, Speed01) × grow`. Faster means longer and narrower. The table below is
+3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch × grow × fade` and
+   `width = Lerp(maxWidth, minWidth, Speed01) × grow × fade`. Faster means longer and narrower. The table below is
    once `grow` has reached 1.
 4. **Flicker:** Perlin noise (−1 to 1) wobbles the width by up to `Lerp(maxFlicker, minFlicker, Speed01)`.
 
@@ -129,8 +145,10 @@ For each point:
    `TransformPoint`. The object moves with the player, so this is how the player's position comes in.
 3. **Catch-up time:** `τ = dragIntensity × f`. The head (τ = 0) snaps to the exhaust, so the line never
    detaches. Further back is lazier.
-4. **Ease:** move `1 − e^(−dt/τ)` of the way to the target, which gives the same result at any frame rate. With
-   `snap` true (from `Awake`), or τ = 0, it jumps straight there.
+4. **Ease:** move `1 − e^(−dt/τ)` of the way to the target, which gives the same result at any frame rate. Here
+   `dt` is `frameTime`, so the drag keeps working after game over, when scaled time is 0. With `snap` true (from
+   `Awake`), or τ = 0, it jumps straight there. (`Awake`'s `snap` short-circuits, so it never reads the
+   not-yet-set `frameTime`.)
 
 At 60 fps with `dragIntensity` 0.1, the outer tail closes 15% of the gap each frame, and is still about 0.37
 units behind 0.1 s after a sudden 1-unit move.
@@ -157,9 +175,15 @@ Handles the invincibility power-up's change to the flame: swaps the **outer** li
 `rainbowColor` and `normalColor`. It follows the rainbow event (not invincibility itself), so it flickers in
 step with the shell's warning blink. The inner core stays white.
 
+### `HandleGameOver`
+
+Runs when GameManager's `OnGameOver` event fires: sets `deathTimer` to 0, which starts the death fade in
+`Update`. It doesn't hide anything itself, so the flame stays on and trails behind the ship while
+`PlayerDeath` flies it to the camera. A win still hides the flame at once (`HandleLevelEnded`).
+
 ### `HandleLevelEnded`
 
-Runs when GameManager's `OnGameOver` or `OnWin` event announces the level has ended: hides both lines and
+Runs when the death fade finishes, and straight away on GameManager's `OnWin` event: hides both lines and
 switches the script off (`enabled = false`), so `Update` stops. Switching off runs `OnDisable`, which
 unsubscribes from the events.
 
@@ -168,7 +192,7 @@ unsubscribes from the events.
 - **PlayerMovement**: reads the static `Speed01` and `MeshVisible` every frame; subscribes to `OnSpeedBoost`,
   and (player's flame only) `OnOrbitShifted`.
 - **PlayerInvincibility**: subscribes to `OnRainbowChanged`.
-- **GameManager**: subscribes to `OnGameOver` and `OnWin`. On a twin copy, gets `Player` and
+- **GameManager**: subscribes to `OnGameOver` (starts the death fade) and `OnWin` (hides at once). On a twin copy, gets `Player` and
   `PlayerInvincibility` in `Awake`. Reads `TimeSinceStart` every frame to grow in at the start.
 
 ## Gotchas
@@ -192,3 +216,9 @@ unsubscribes from the events.
 - **No Base Map on the material.** A round particle texture with Texture Mode Stretch makes the line fade at
   the head and show as broken pieces.
 - **It switches itself off at the level end.** Re-enabling the component doesn't show the lines again.
+- **The death fade runs on unscaled time.** Everything in `Update` that must keep moving after game over uses
+  `frameTime`, not `Time.deltaTime`. The flicker still reads `Time.time`, which is frozen then, so the width
+  holds steady while it fades.
+- **`deathFadeTime` is separate from `PlayerDeath`'s timing.** It matches the approach (`timeToExplode` −
+  `holdTime`) by default, but changing one doesn't change the other. The ring, and the flame under it, is
+  switched off at the explosion whatever is left of the fade.

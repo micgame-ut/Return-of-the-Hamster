@@ -55,10 +55,6 @@ public class EndScreen : MonoBehaviour
         parts.panel.SetActive(true);
         if (scoreHud != null) scoreHud.SetActive(false);
         if (scoreBreakdown != null) scoreBreakdown.Play(parts.scoreTotalText, parts.scoreRowContainer);
-
-        // PlayerMovement locked the cursor for flying; the buttons need it back.
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
     }
 
     private void FillStats(ScreenParts parts)
