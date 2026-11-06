@@ -9,7 +9,7 @@ itself.
 ## Where it lives
 
 - **File:** `Assets/Shaders/Rainbow Overlay.shadergraph` (URP, Unlit, transparent, **additive** blending,
-  front faces)
+  **back faces only**)
 - **Materials:** `RainbowOverlayMat` (Rainbow 1, Opacity 1) and `ShieldOverlayMat` (Rainbow 0.1, so mostly
   Shield Color with a hint of rainbow, and Opacity 0.4). Both use this graph with different values.
 - **Shown by:** PlayerShell, which picks which material the overlay uses. See [PlayerShell.md](PlayerShell.md).
@@ -61,6 +61,17 @@ mesh. See [TriplanarNoise.md](TriplanarNoise.md).
 The overlay **adds** light on top of the player instead of covering it, so it reads as a glow. With additive
 blending, the cleanest "opacity" is to scale the color itself: 0.4 adds 40% as much light. Alpha stays at 1.
 
+### Why back faces only
+
+The graph's **Render Face** is set to **Back**. The shell is a sphere around the player, and the camera sits behind
+him. With front faces, the half of the sphere between the camera and the hamster is drawn, so the shield or
+rainbow lies over him like a veil. With back faces only, that near half isn't drawn: you see just the inside of
+the far side of the bubble. The hamster is opaque and in front of it, so the shell shows as a glowing rim around
+and behind him, and he stays clear. The same idea is used by Asteroid Outline (see AsteroidOutline.md).
+
+Both materials use this graph, so the shield and the rainbow change together. The materials' own `_Cull` value is
+ignored, because the graph has Allow Material Override off.
+
 ## Talks to
 
 - **PlayerShell**: shows the overlay and switches between the rainbow and shield materials.
@@ -71,4 +82,8 @@ blending, the cleanest "opacity" is to scale the color itself: 0.4 adds 40% as m
 - **Unused leftover nodes:** a Length of Position, a Split of Position into an Add, and a Vector1 (0.2) × 2
   into an Add aren't connected to the output. They do nothing (Shader Graph skips them) and can be deleted.
 - **Additive on a bright background** can wash out. Opacity is the knob to calm it down.
+- **With back faces only, only the far half of the sphere is drawn,** so there's less light overall than with front
+  faces. If the shell looks too faint, raise `Strength` (or `Opacity`) on the two materials.
+- **The far half is hidden behind the hamster.** It only shows around his silhouette, because he's opaque and in
+  front of it. A smaller shell hides more; a bigger one shows more rim.
 - **Six noise reads** (two Triplanar Noise uses × three projections). Fine on the small player mesh.

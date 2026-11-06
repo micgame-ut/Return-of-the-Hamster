@@ -80,10 +80,11 @@ says which screen you want. Both use one private `Show(parts)`:
 
 1. **`FillStats(parts)`** first, so the panel never shows a frame of placeholder text.
 2. Switches that screen's panel on.
-3. **Unlocks and shows the cursor.** PlayerMovement locks it to the center and hides it for flying.
-   Without these two lines, the buttons couldn't be clicked.
+3. **Doesn't touch the cursor.** The game has no mouse pointer: the buttons are used with the trackball and the
+   one button through each panel's `MenuNavigator`, which keeps the cursor hidden and locked. (`Show` used to
+   unlock and show the cursor so the buttons could be clicked.)
 
-Time is frozen on both screens (`Time.timeScale = 0`), but UI clicks still work.
+Time is frozen on both screens (`Time.timeScale = 0`). `MenuNavigator` runs on real input, so it still works.
 
 ### `FillStats`
 
@@ -151,7 +152,8 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
   through it. Restart sets the static `SkipMenuOnce`.
 - **RunStats**: reads `ApolloName` and every stat.
 - **LevelTimer**: reads `Progress`.
-- **PlayerMovement**: no direct link, but undoes its cursor lock.
+- **MenuNavigator**: one per panel (Game Over, Win and the stats overlay) selects and presses these buttons, and
+  keeps the cursor hidden. No direct link: it just presses whichever `Button` is selected.
 - **SceneManager** (Unity): loads scenes for Restart, Next Level and Menu.
 
 ## Gotchas

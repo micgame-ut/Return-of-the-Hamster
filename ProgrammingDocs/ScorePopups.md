@@ -24,7 +24,10 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `prewarmCount` | 5 | Popups made at level start. More are made if needed |
 | `startOffset` | 40 | Canvas units above the earning body where a popup appears |
 | `riseDistance` | 80 | Canvas units it rises over its life |
-| `lifetime` | 0.8 | Seconds to rise and fade out |
+| `lifetime` | 0.8 (1.1 on the HUD canvas) | Seconds to rise and fade out, including the `holdTime` |
+| `holdTime` | 0.3 | Seconds a popup stays fully opaque before it starts to fade. Keep it below `lifetime` |
+| `stackSpacing` | 50 | Canvas units between stacked popups, times the popup's scale. A new popup starts this far above any popup it would overlap |
+| `stackWidth` | 300 | How close sideways two popups must be to count as overlapping, in canvas units. Keep it larger than a label's width |
 | `minScale` | 1 | Size for a tiny gain |
 | `maxScale` | 2 | Size at `pointsForMaxScale` and above |
 | `pointsForMaxScale` | 1000 | The final gain (points × multiplier) that reaches `maxScale` |
@@ -96,8 +99,21 @@ popup, at the smallest size, with no `+points` part. Clearing a label in the Ins
 ### `Spawn`
 
 The shared part of every popup: take one from the pool, place it `startOffset` above the world position on
-the canvas, set its text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp`
-both use it, so points popups and labels behave the same.
+the canvas, push that start up with `FindFreeStart` if it would sit on a popup that's already showing, set its
+text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp` both use it, so points
+popups and labels behave the same.
+
+### `FindFreeStart`
+
+Stops popups covering each other, so each one stays readable. It goes through the `active` popups and checks each
+one's **current** position (`localPosition`, not its start, because older popups have been rising). If one is within
+`stackWidth` sideways and within `stackSpacing × scale` vertically, the new start moves to just above it. That can
+land on another popup, so it repeats, at most `active.Count + 1` times, until a full pass moves nothing. The new
+popup isn't in `active` yet, so it never checks itself.
+
+Example (spacing 50, scale 1): `+250` is at y = 47. A close call spawns at 40 and finds it within 50, so it
+starts at 97. A power-up label spawns at 40, moves to 97, then finds that one and moves to 147. A popup more than
+`stackWidth` away sideways is ignored. With nothing showing, nothing moves.
 
 | Gain | Text | Final | Size |
 | --- | --- | --- | --- |
@@ -112,7 +128,9 @@ Animates every active popup. For each one, its age grows by `Time.unscaledDeltaT
 `t = age ÷ lifetime` goes from 0 to 1:
 
 - Position: `start + up × riseDistance × t`, calculated fresh from `start` each frame.
-- Opacity: `1 − t`.
+- Opacity: fully opaque until `age` reaches `holdTime`, then it fades to 0 over the rest of `lifetime`:
+  `fadeT = Clamp01((age − holdTime) ÷ max(lifetime − holdTime, 0.01))`, opacity `1 − fadeT`. The `max` avoids
+  dividing by zero if `holdTime` is `lifetime` or more. The rise still uses the whole `lifetime`.
 - When `t` reaches 1, it's switched off, removed from `active`, and pushed back onto `free`.
 
 Unscaled time lets popups finish rising and fading during the game-over freeze. The loop runs backward,
@@ -145,4 +163,8 @@ slid into the removed slot.
 - **Keep the `OnCollected` unsubscribe in `OnDisable`.** It's a static event; removing the `-=` leaves
   destroyed popups subscribed after every restart.
 - **A new power-up type needs a label here** (a field and a line in `ShowPowerUp`), or it shows no popup.
+- **Stacking only looks at popups sideways-close and still showing.** A popup that has faded out and returned to the
+  pool no longer blocks anything. A busy moment can push popups high up the screen, because each new one goes above
+  the whole stack.
+- **Set `lifetime` to about 1.1 on the canvas.** With the 0.8 default and a 0.3 hold, the fade lasts only 0.5 s.
 - **Overdrive won't use these popups.** It will get its own running-tally popup (stage 6 in TODO.md).

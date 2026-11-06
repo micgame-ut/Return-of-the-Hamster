@@ -30,6 +30,7 @@ public class PlayerTwins : MonoBehaviour
     public bool CanAddBody => twinPrefab != null && copies.Count + 1 < maxBodies; // false at the cap, so a Twin pickup would do nothing
     public IReadOnlyList<TwinCopy> Copies => copies;
     public event Action<bool> OnTwinChanged; // true when the twin starts, false when the last copy is gone
+    public event Action OnBodyLost; // a twin body was destroyed by a hit
 
     private void Awake()
     {
@@ -69,6 +70,7 @@ public class PlayerTwins : MonoBehaviour
         if (lost == null) return;
 
         EffectPool.Play(destroyEffect, where);
+        OnBodyLost?.Invoke();
         if (destroyShakeDuration > 0f) CameraShake.Shake(destroyShakeDuration, destroyShakeMagnitude);
 
         copies.Remove(lost);

@@ -298,6 +298,10 @@ Pressing the button boosts, depending on the current input, unless the boost is 
 - **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). It does nothing once
   the level is complete. It raises **`OnSpeedBoost`**, which ExhaustFlame uses to stretch the flame.
 
+**Boost ready.** `Update` counts `cooldownTimer` down, and on the frame it reaches 0 it raises
+**`OnBoostReady`** once (GameSFX uses it for the "boost ready" sound). It sits after the input-locked return, so
+it stays silent on the menu and after game over.
+
 **How far a side boost goes.** `boostVelocity` fades by `boostDecay` per second (the `1 − e^(−k·dt)` fade in
 `Movement`), and a speed fading like that covers a total distance of **`boostForce ÷ boostDecay`**: 5 ÷ 3 ≈ 1.7
 units along the orbit, about 32° on a radius-3 orbit. After `t` seconds it has covered `1 − e^(−boostDecay·t)`
@@ -388,6 +392,7 @@ Side effects of doing it this way:
   flame) `OnOrbitShifted`
 - **BoostRing**: subscribes to `OnSideBoost` to roll the ring, and reads `BoostDecay` and `BoostCharge01` (on
   the player's ring and every twin copy's)
+- **GameSFX**: subscribes to `OnSideBoost`, `OnSpeedBoost` and `OnBoostReady` to play their sounds
 - **Score**: reads the static `Speed01` for its speed multiplier
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over

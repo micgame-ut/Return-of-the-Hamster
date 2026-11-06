@@ -16,6 +16,12 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private float riseDistance = 80f;
     [Tooltip("Seconds to rise and fade out.")]
     [SerializeField] private float lifetime = 0.8f;
+    [Tooltip("Seconds a popup stays fully opaque before it starts to fade, so it can be read. Keep it below lifetime.")]
+    [SerializeField] private float holdTime = 0.3f;
+    [Tooltip("Canvas units between stacked popups, times the popup's scale. A new popup starts this far above any popup it would overlap.")]
+    [SerializeField] private float stackSpacing = 50f;
+    [Tooltip("How close sideways two popups must be to count as overlapping, in canvas units. Labels are wide, so keep it larger than a number's width.")]
+    [SerializeField] private float stackWidth = 300f;
     [Tooltip("Size for a tiny gain.")]
     [SerializeField] private float minScale = 1f;
     [Tooltip("Size at pointsForMaxScale and above.")]
@@ -87,7 +93,9 @@ public class ScorePopups : MonoBehaviour
             }
 
             popup.text.rectTransform.localPosition = popup.start + Vector2.up * (riseDistance * t);
-            popup.text.alpha = 1f - t;
+            // Fully opaque for holdTime, then fades out over the rest of lifetime. The Max stops a divide by zero if holdTime is set to lifetime or more.
+            float fadeT = Mathf.Clamp01((popup.age - holdTime) / Mathf.Max(lifetime - holdTime, 0.01f));
+            popup.text.alpha = 1f - fadeT;
         }
     }
 
@@ -119,6 +127,28 @@ public class ScorePopups : MonoBehaviour
         if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition);
     }
 
+    // Returns a start position pushed up until it no longer sits on a popup that's already showing.
+    private Vector2 FindFreeStart(Vector2 start, float scale)
+    {
+        float gap = stackSpacing * scale;
+        bool moved = true;
+        // Repeat until a full pass finds nothing in the way, since moving up can land on another popup.
+        for (int tries = 0; moved && tries < active.Count + 1; tries++)
+        {
+            moved = false;
+            foreach (Popup other in active)
+            {
+                Vector2 otherNow = other.text.rectTransform.localPosition;
+                if (Mathf.Abs(otherNow.x - start.x) < stackWidth && Mathf.Abs(otherNow.y - start.y) < gap)
+                {
+                    start.y = otherNow.y + gap;
+                    moved = true;
+                }
+            }
+        }
+        return start;
+    }
+
     private void Spawn(string text, float scale, Vector3 worldPosition)
     {
         Popup popup = free.Count > 0 ? free.Pop() : CreatePopup();
@@ -126,6 +156,7 @@ public class ScorePopups : MonoBehaviour
         Vector2 screenPoint = cam.WorldToScreenPoint(worldPosition);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, null, out Vector2 local);
         popup.start = local + Vector2.up * startOffset;
+        popup.start = FindFreeStart(popup.start, scale);
         popup.age = 0f;
 
         popup.text.text = text;

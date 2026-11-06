@@ -109,8 +109,10 @@ bounds aren't updated, so it returns 0 then instead of reading them.
 ## The overlay shader
 
 `Assets/Shaders/Rainbow Overlay.shadergraph` is used by both materials. It's an **Unlit**,
-**Transparent**, **Additive** Shader Graph. Additive means it only brightens what's behind it (black adds
-nothing), so it reads as light shining over the ship.
+**Transparent**, **Additive** Shader Graph that draws **back faces only**. Additive means it only brightens what's
+behind it (black adds nothing), so it reads as light shining around the ship. Back faces only means the near half
+of the shell sphere isn't drawn, so the shield or rainbow shows as a rim around and behind the hamster instead of
+over him (see RainbowOverlay.md, "Why back faces only").
 
 - **The rainbow moves** because of the time and speed properties. The noise sets the hue at each point,
   and `Time × Scroll Speed` slides the hue along over time.

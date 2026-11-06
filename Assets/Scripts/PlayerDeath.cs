@@ -6,7 +6,10 @@ using UnityEngine;
 // time, since GameManager freezes everything else at game over.
 public class PlayerDeath : MonoBehaviour
 {
-    [Tooltip("The ship's visual child. It gets shaken, then hidden.")]
+    public static event System.Action OnExploded; // the death sequence's explosion has just played
+    public static event System.Action OnArrived; // the ship has reached the camera, after the approach and before the hold
+
+    [Tooltip("The ship's visual child. It is hidden at the explosion.")]
     [SerializeField] private Transform meshTransform;
 
     [Header("Approach")]
@@ -18,10 +21,16 @@ public class PlayerDeath : MonoBehaviour
     [Header("Shake")]
     [Tooltip("Seconds from game over to the explosion. The approach takes timeToExplode minus holdTime.")]
     [SerializeField] private float timeToExplode = 2f;
-    [Tooltip("How far the mesh jitters at the moment it explodes. It grows from 0.")]
+    [Tooltip("How far the whole player (ball, hamster and ring) jitters at the moment it explodes. It grows from 0.")]
     [SerializeField] private float maxShake = 0.3f;
     [Tooltip("New shake directions per second, so the shake looks the same at any frame rate.")]
     [SerializeField, Min(1f)] private float shakeFrequency = 60f;
+
+    [Header("Ring")]
+    [Tooltip("Degrees the ring tips down toward the camera as the ship arrives, so the hamster inside can be seen better. 0 = no tilt. A negative number tips it the other way.")]
+    [SerializeField] private float ringTilt = 25f;
+    [Tooltip("The hamster (Apollo, under the ring). When the death starts it's taken out from under the ring so he keeps facing the camera while the ring tilts. Empty = he tilts with the ring.")]
+    [SerializeField] private Transform hamster;
 
     [Header("Explosion")]
     [Tooltip("The particle effect spawned at the explosion.")]
@@ -61,20 +70,29 @@ public class PlayerDeath : MonoBehaviour
 
         Transform cam = GameManager.Instance.GameplayCamera.transform;
         Vector3 startPosition = transform.position;
+        Quaternion startRotation = transform.rotation;
         Vector3 target = cam.position + cam.forward * distanceFromCamera;
+        Quaternion faceCamera = Quaternion.LookRotation(-cam.forward, cam.up);
+
+        // Take the hamster out from under the ring (keeping where he is), so the ring can tilt without tilting him.
+        if (hamster != null) hamster.SetParent(transform, true);
+        // BoostRing would keep setting the ring's rotation if the death came mid-roll, and fight the tilt.
+        if (ring != null) ring.enabled = false;
+        Quaternion ringStart = ring != null ? ring.transform.localRotation : Quaternion.identity;
 
         float approachTime = timeToExplode - holdTime;
-        Vector3 lastOffset = Vector3.zero;
         Vector3 shakeDirection = Vector3.zero;
         float directionTimer = 0f;
+        bool arrived = false;
 
         for (float elapsed = 0f; elapsed < timeToExplode; elapsed += Time.unscaledDeltaTime)
         {
             float moveT = approachTime > 0f ? Mathf.Clamp01(elapsed / approachTime) : 1f;
-            transform.position = Vector3.Lerp(startPosition, target, moveT);
-
-            // Same trick as CameraShake: undo last frame's offset before adding a new one.
-            meshTransform.localPosition -= lastOffset;
+            if (!arrived && moveT >= 1f)
+            {
+                arrived = true;
+                OnArrived?.Invoke();
+            }
             // A new direction shakeFrequency times a second, not every frame, so the shake looks the same at any frame rate.
             directionTimer -= Time.unscaledDeltaTime;
             if (directionTimer <= 0f)
@@ -82,21 +100,24 @@ public class PlayerDeath : MonoBehaviour
                 shakeDirection = Random.insideUnitSphere;
                 directionTimer = 1f / shakeFrequency;
             }
-            lastOffset = shakeDirection * maxShake * (elapsed / timeToExplode);
-            meshTransform.localPosition += lastOffset;
+            Vector3 shakeOffset = shakeDirection * maxShake * (elapsed / timeToExplode);
+            transform.position = Vector3.Lerp(startPosition, target, moveT) + shakeOffset;
+            transform.rotation = Quaternion.Slerp(startRotation, faceCamera, moveT);
+            if (ring != null) ring.transform.localRotation = Quaternion.AngleAxis(ringTilt * moveT, Vector3.right) * ringStart;
 
             yield return null;
         }
 
-        meshTransform.localPosition -= lastOffset;
         transform.position = target;
 
         if (explosionPrefab != null)
             Instantiate(explosionPrefab, transform.position, Quaternion.identity);
+        OnExploded?.Invoke();
         CameraShake.Shake(explodeShakeDuration, explodeShakeMagnitude);
 
         meshTransform.gameObject.SetActive(false);
         if (ring != null) ring.gameObject.SetActive(false);
+        if (hamster != null) hamster.gameObject.SetActive(false);
 
         yield return new WaitForSecondsRealtime(endDelay);
 

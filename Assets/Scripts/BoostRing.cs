@@ -5,14 +5,20 @@ using UnityEngine;
 public class BoostRing : MonoBehaviour
 {
     private static readonly int ChargeId = Shader.PropertyToID("_Charge");
+    private static readonly int PulseId = Shader.PropertyToID("_Ready_Pulse");
 
     [Tooltip("The ring's local axis to roll around. Its sign sets which way the ring rolls for a given dodge. Flip to (0, 0, -1) to reverse.")]
     [SerializeField] private Vector3 spinAxis = Vector3.forward;
+
+    [Tooltip("Seconds the ring's flash takes to fade out after the boost becomes ready. 0 = no flash.")]
+    [SerializeField] private float readyPulseTime = 0.5f;
 
     private PlayerMovement movement;
     private Renderer ringRenderer;
     private MaterialPropertyBlock props;
     private float shownCharge = -1f; // last Charge sent to the shader; -1 so the first frame always sends it
+    private float shownPulse = -1f;  // last Ready Pulse sent to the shader; -1 so the first frame always sends it
+    private float pulseTimer;        // seconds left on the ready flash; 0 = no flash
 
     private Quaternion restRotation; // the ring's local rotation when not spinning
     private float spinTime;          // seconds since the current spin started
@@ -32,12 +38,16 @@ public class BoostRing : MonoBehaviour
     private void OnEnable()
     {
         if (movement != null) movement.OnSideBoost += StartSpin;
+        if (movement != null) movement.OnBoostReady += StartPulse;
     }
 
     private void OnDisable()
     {
         if (movement != null) movement.OnSideBoost -= StartSpin;
+        if (movement != null) movement.OnBoostReady -= StartPulse;
     }
+
+    private void StartPulse() => pulseTimer = readyPulseTime;
 
     private void StartSpin(float direction)
     {
@@ -64,17 +74,28 @@ public class BoostRing : MonoBehaviour
         if (share >= 1f) spinDirection = 0f;
     }
 
-    // Sends the boost charge to the Ring Glow shader, only on frames where it changed.
+    // Sends the boost charge and the ready flash to the Ring Glow shader, only on frames where either changed.
     private void UpdateGlow()
     {
         if (movement == null || ringRenderer == null) return;
 
         float charge = movement.BoostCharge01;
-        if (charge == shownCharge) return;
+        // The flash only belongs to a ready boost, so a boost during it cancels it.
+        if (charge < 1f) pulseTimer = 0f;
+        float pulse = 0f;
+        if (pulseTimer > 0f)
+        {
+            pulseTimer -= Time.deltaTime;
+            float t = Mathf.Clamp01(pulseTimer / readyPulseTime);
+            pulse = t * t; // squared, so it falls away fast after the first flash
+        }
+        if (charge == shownCharge && pulse == shownPulse) return;
 
         shownCharge = charge;
+        shownPulse = pulse;
         ringRenderer.GetPropertyBlock(props);
         props.SetFloat(ChargeId, charge);
+        props.SetFloat(PulseId, pulse);
         ringRenderer.SetPropertyBlock(props);
     }
 }

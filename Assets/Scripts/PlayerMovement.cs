@@ -106,6 +106,7 @@ public class PlayerMovement : MonoBehaviour
     public event Action OnSpeedBoost;
     private float cooldownTimer; // seconds until the next boost; 0 or below = ready
     public event Action<float> OnSideBoost; // direction: +1 counter-clockwise, -1 clockwise
+    public event Action OnBoostReady; // the boost cooldown has just finished
     public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
     public float BoostDecay => boostDecay;
     public event Action OnOrbitShifted;
@@ -186,7 +187,11 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (cooldownTimer > 0f) cooldownTimer -= Time.deltaTime;
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer -= Time.deltaTime;
+            if (cooldownTimer <= 0f) OnBoostReady?.Invoke();
+        }
 
         Roll();
         UpdateSpeed();

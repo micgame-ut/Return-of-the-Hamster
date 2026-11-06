@@ -59,6 +59,10 @@ public class ExhaustFlame : MonoBehaviour
     [Tooltip("Seconds for the flame to grow from nothing to its normal size once the game starts.")]
     [SerializeField] private float growTime = 0.6f;
 
+    [Header("Death")]
+    [Tooltip("Seconds the flame takes to thin out and disappear after the player dies, while the ship flies to the camera. 0 = it vanishes at once.")]
+    [SerializeField] private float deathFadeTime = 1.25f;
+
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;
     private bool coreVisible; // last value given to both lines' enabled
@@ -67,6 +71,8 @@ public class ExhaustFlame : MonoBehaviour
     private Vector3[] innerPoints; // world position of each inner point, head first
     private bool onPlayer; // false on a twin copy, which follows the player through GameManager
     private bool snapNext; // set when the player jumps; the next Update places the points straight
+    private float deathTimer = -1f; // seconds since game over; -1 while the player is alive
+    private float frameTime; // this frame's length: normal time, but unscaled after game over, since time is frozen then
 
     private void Awake()
     {
@@ -97,7 +103,7 @@ public class ExhaustFlame : MonoBehaviour
         if (invincibility != null) invincibility.OnRainbowChanged += HandleRainbowChanged;
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.OnGameOver += HandleLevelEnded;
+            GameManager.Instance.OnGameOver += HandleGameOver;
             GameManager.Instance.OnWin += HandleLevelEnded;
         }
     }
@@ -109,7 +115,7 @@ public class ExhaustFlame : MonoBehaviour
         if (invincibility != null) invincibility.OnRainbowChanged -= HandleRainbowChanged;
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.OnGameOver -= HandleLevelEnded;
+            GameManager.Instance.OnGameOver -= HandleGameOver;
             GameManager.Instance.OnWin -= HandleLevelEnded;
         }
     }
@@ -119,6 +125,20 @@ public class ExhaustFlame : MonoBehaviour
         // Hidden on the menu, then grows from nothing over growTime once the game starts.
         GameManager gm = GameManager.Instance;
         float grow = gm == null ? 1f : Mathf.SmoothStep(0f, 1f, gm.TimeSinceStart / Mathf.Max(growTime, 0.01f));
+
+        bool dying = deathTimer >= 0f;
+        frameTime = dying ? Time.unscaledDeltaTime : Time.deltaTime;
+        float fade = 1f;
+        if (dying)
+        {
+            deathTimer += frameTime;
+            fade = 1f - Mathf.SmoothStep(0f, 1f, deathTimer / Mathf.Max(deathFadeTime, 0.01f));
+            if (fade <= 0f)
+            {
+                HandleLevelEnded();
+                return;
+            }
+        }
 
         bool visible = movement.MeshVisible && grow > 0f;
         if (visible != coreVisible)
@@ -131,13 +151,13 @@ public class ExhaustFlame : MonoBehaviour
         float stretch = 1f;
         if (boostTimer > 0f)
         {
-            boostTimer -= Time.deltaTime;
+            boostTimer -= frameTime;
             stretch = Mathf.Lerp(1f, boostLengthMultiplier, boostTimer / boostDuration);
         }
 
         float t = PlayerMovement.Speed01;
-        float length = Mathf.Lerp(minLength, maxLength, t) * stretch * grow;
-        float width = Mathf.Lerp(maxWidth, minWidth, t) * grow;
+        float length = Mathf.Lerp(minLength, maxLength, t) * stretch * grow * fade;
+        float width = Mathf.Lerp(maxWidth, minWidth, t) * grow * fade;
 
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f) * 2f - 1f;
         width *= 1f + noise * Mathf.Lerp(maxFlicker, minFlicker, t);
@@ -158,7 +178,7 @@ public class ExhaustFlame : MonoBehaviour
             float f = i / (points.Length - 1f) * lengthFraction;
             Vector3 target = core.transform.TransformPoint(Vector3.forward * lineLength * f);
             float tau = dragIntensity * f;
-            points[i] = snap || tau <= 0f ? target : Vector3.Lerp(points[i], target, 1f - Mathf.Exp(-Time.deltaTime / tau));
+            points[i] = snap || tau <= 0f ? target : Vector3.Lerp(points[i], target, 1f - Mathf.Exp(-frameTime / tau));
         }
     }
 
@@ -173,6 +193,8 @@ public class ExhaustFlame : MonoBehaviour
     {
         core.colorGradient = on ? rainbowColor : normalColor;
     }
+
+    private void HandleGameOver() => deathTimer = 0f;
 
     private void HandleLevelEnded()
     {

@@ -451,8 +451,20 @@ matches what happens. "Invincible" comes from the PlayerInvincibility reference 
 GameManager once in `Awake`, so checking it costs no searching. If there's no GameManager or no
 PlayerInvincibility, that part is just false.
 
+### The static events
+
+Three **static** events let other scripts react without a reference to any one asteroid (asteroids are pooled and
+come and go, so there's nothing stable to subscribe to). GameSFX uses them for sound.
+
+| Event | Fires | Carries |
+| --- | --- | --- |
+| `OnSmashed` | in `Explode`, once per smashed asteroid | its `AsteroidKind`, so a BonusCarrier can sound different |
+| `OnSplit` | in `Split`, when a Splitter bursts into pieces | nothing |
+| `OnCloseCall` | in `TrackCloseCall`, in the same `if` as `score.AddCloseCall`, so exactly when the close call scores | nothing |
+
 ## Talks to
 
+- **GameSFX**: subscribes to the three static events above.
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`. A Magnet calls
   `AddPull` each frame, and a Frost comet calls `ApplyFrost` each frame the player is inside a patch.
 - **OrbitSettings**: reads the orbit center (in `OnEnable`) and the center and radius (every frame, Wave only).

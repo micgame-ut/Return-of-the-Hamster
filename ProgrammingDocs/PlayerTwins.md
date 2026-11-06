@@ -104,7 +104,8 @@ Called by AsteroidBehavior when a body is hit while twinned.
    body, the jump in the next step moves it, and the explosion has to play where it was hit.
 3. **Pick the copy to remove:** the player was hit → `JumpToNearestCopy()`; a copy was hit → that copy
    (`copies.Find`, another lambda).
-4. Play `destroyEffect` and the camera shake at `where`.
+4. Play `destroyEffect`, raise **`OnBodyLost`** (GameSFX plays the "body lost" sound from it) and do the camera
+   shake at `where`. When the last copy goes, `OnBodyLost` and `OnTwinChanged(false)` fire on the same frame.
 5. Remove the copy from the list and destroy it.
 6. Copies left → `Respace()`. None → `OnTwinChanged(false)`.
 
@@ -137,6 +138,7 @@ shortest signed gap (−180° to 180°), and `Abs` drops the direction. A copy a
 - **PowerUp**: calls `FindBody` on contact, `AddBody` for the Twin type, and reads `IsTwinned` (Health gives
   nothing while twinned) and `CanAddBody` (to skip wasted picks in a Random roll).
 - **DangerWarning** and **PlayerShell**: subscribe to `OnTwinChanged`, read `IsTwinned`.
+- **GameSFX**: subscribes to `OnTwinChanged` and `OnBodyLost` to play their sounds.
 - **CloseCallZone**: reads `Copies` to measure close calls from every body and draw its gizmo around them.
 - **GameManager**: exposes it as `PlayerTwins` for scripts not on the player.
 

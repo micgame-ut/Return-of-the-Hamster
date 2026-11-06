@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AsteroidTemplate
   warningTime: 0
   spinSpeed: 30
-  explosionPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
+  explosionPrefab: {fileID: 9150867761222077859, guid: 3458a08d4b4832141a45198bd58a37e5, type: 3}
   shakeDuration: 0.2
   shakeMagnitude: 0.3
   outlineMaterial: {fileID: 2100000, guid: 4934b75270d22af4288831a4e76b43e3, type: 2}
@@ -32,7 +32,7 @@ MonoBehaviour:
   darkenEnd: 1
   farColor: {r: 0.12578616, g: 0.12578616, b: 0.1509434, a: 1}
   powerUpSpinSpeed: 90
-  pickupEffectPrefab: {fileID: 4060269408424394151, guid: 3095dbf28528c924f8925e7c669e98e9, type: 3}
+  pickupEffectPrefab: {fileID: 9150867761222077859, guid: 3458a08d4b4832141a45198bd58a37e5, type: 3}
   pickupShakeDuration: 0
   pickupShakeMagnitude: 0
   invincibleDuration: 5

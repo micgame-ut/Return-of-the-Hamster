@@ -37,8 +37,9 @@ Camera sits.
 
 ## Inspector settings
 
-Only `baseSpeed` and `speedMultiplier` are read while the game runs. Everything else is only used once, in
-`Awake`, to build the particle system. Changing them in Play mode does nothing.
+Only `baseSpeed`, `speedMultiplier`, `rampTime`, `boostBurstSpeed` and `boostBurstTime` are read while the game
+runs. Everything else is only used once, in `Awake`, to build the particle system. Changing them in Play mode
+does nothing.
 
 ### Speed
 
@@ -48,6 +49,8 @@ Only `baseSpeed` and `speedMultiplier` are read while the game runs. Everything 
 | `speedMultiplier` | 15 | How much faster they go for each point of player `Speed` |
 | `rampTime` | 1 | Seconds for the stars to speed up from still to normal once the game starts. Read every frame |
 | `sidewaysDrift` | 2 | Each star also drifts **outward** (away from the middle) at a random speed up to this, so they don't all move in perfect parallel lines |
+| `boostBurstSpeed` | 120 | Extra star speed, in units/sec, the instant a forward boost fires. It fades back to normal over `boostBurstTime`. Read every frame |
+| `boostBurstTime` | 0.5 | Seconds the star burst takes to fade out after a forward boost. 0 = no burst. Read every frame |
 
 ### Field Shape
 
@@ -151,9 +154,30 @@ arriving at full rush:
 On levels without a menu, and restarts, `started` is true from the first frame and the same ramp plays from
 the load. A `rampTime` of 0 is kept at 0.01, so the stars start at full speed without dividing by zero.
 
+### The boost burst (`Awake`, `OnEnable` / `OnDisable`, `StartBurst`)
+
+`Awake` also gets the player's `PlayerMovement` from `GameManager.Instance.Player` (this script isn't on the
+player). `OnEnable` subscribes `StartBurst` to its `OnSpeedBoost` event and `OnDisable` unsubscribes. `StartBurst`
+runs when a forward boost fires and sets `burstTimer` to `boostBurstTime`. `Update` turns that into extra speed
+(next section). Without a `GameManager` there's no burst.
+
 ### `Update`: matching the player's speed
 
-`speed = (baseSpeed + PlayerMovement.Speed × speedMultiplier) × ramp`
+`speed = (baseSpeed + PlayerMovement.Speed × speedMultiplier + burst) × ramp`
+
+`burst` is 0 normally. While `burstTimer` is above 0 it counts down, and `burst = boostBurstSpeed × t²` where
+`t = burstTimer ÷ boostBurstTime` (1 at the instant of the boost, 0 at the end). Squaring makes the rush sharp and
+quick to fade. The velocity applies to every star on screen, so the whole field surges at once, and the streaks
+stretch because their length follows their speed. With 120 over 0.5 s:
+
+| Time since boost | `burst` |
+| --- | --- |
+| 0 s | +120 units/sec |
+| 0.1 s | +77 |
+| 0.25 s | +30 |
+| 0.5 s | 0 |
+
+The `ramp` still multiplies the total, so a burst can't make stars rush before the game starts.
 
 Once the ramp has finished (`ramp` = 1):
 
@@ -185,8 +209,9 @@ flying into the earth; the starfield never reaches the earth, so that check was 
 
 ## Talks to
 
-- **PlayerMovement**: reads the static `Speed` every frame.
-- **GameManager**: reads `HasStarted` and `TimeSinceStart` every frame for the menu and the ramp.
+- **PlayerMovement**: reads the static `Speed` every frame, and subscribes to `OnSpeedBoost` for the burst.
+- **GameManager**: reads `HasStarted` and `TimeSinceStart` every frame for the menu and the ramp, and gets `Player`
+  in `Awake`.
 - **Earth Camera** (indirectly): draws the stars, through the Camera Rig's layer.
 
 ## Gotchas
@@ -195,7 +220,8 @@ flying into the earth; the starfield never reaches the earth, so that check was 
   only live about 8 seconds. At 30 units/sec, they get about 240 units before fading out. Stars only
   stream all the way past the camera once the player is moving. Raising `lifetime` fixes this, but keeps
   more stars alive at once.
-- **Most settings only apply at startup.** Only `baseSpeed`, `speedMultiplier` and `rampTime` can be tuned in Play mode.
+- **Most settings only apply at startup.** Only `baseSpeed`, `speedMultiplier`, `rampTime`, `boostBurstSpeed` and
+  `boostBurstTime` can be tuned in Play mode.
   Everything else is baked into the particle system in `Awake`.
 - **No stars at all?** Check Earth Camera's Culling Mask includes the Camera Rig's layer (Background). The stars
   are put on the rig's layer.

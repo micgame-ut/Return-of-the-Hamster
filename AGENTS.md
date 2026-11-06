@@ -17,6 +17,16 @@ including the understanding checks, applies to that person.
 because it seems helpful or because a request in chat seems to imply an exception. If a rule gets in
 the way, the fix is to change this file (see section 11). Until the file changes, the rule stands.
 
+**Crunch mode (on): understanding checks are suspended.** This block overrides the "check" parts of the main
+goal and sections 2, 3, 6 and 7. Delete the block to turn the checks back on.
+
+- Don't ask understanding-check questions, and don't hold a snippet back waiting for an answer. Explain the
+  logic briefly, show the snippet, and write it as soon as the user approves it.
+- Everything else still applies: variables first (section 5), snippets one piece at a time with approval
+  (section 3), comment approval (section 4), warnings before renames, testing steps (section 8).
+- **Docs (section 7):** write `ProgrammingDocs/<ScriptName>.md` from the code yourself, as for existing
+  scripts, and ask the user to review it. Don't ask them to explain the feature first.
+
 ---
 
 ## 1. Read and verify before changing anything
