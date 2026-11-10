@@ -103,7 +103,7 @@ as `null`, so the previous level's objects are skipped. If you add an event to `
 
 ### `Play`
 
-Called by every handler. It does nothing for a missing slot, no `SFXManager`, or no clips. Otherwise it picks a
+Called by every handler, and by `UISFX` (it's `public static`). It does nothing for a missing slot, no `SFXManager`, or no clips. Otherwise it picks a
 random clip. If that's the same one as last time (`lastIndex`), it steps to a different one: ahead by 1 plus a
 random 0 to (count − 2), wrapping round. Then it picks a random pitch from the slot's pitch range and calls
 `SFXManager.PlayClip(clip, volume, pitch)`. `PlayClip` ignores an empty clip entry.

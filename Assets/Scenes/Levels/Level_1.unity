@@ -1234,7 +1234,6 @@ GameObject:
   - component: {fileID: 322731931}
   - component: {fileID: 322731930}
   - component: {fileID: 322731929}
-  - component: {fileID: 322731932}
   m_Layer: 5
   m_Name: Start Button
   m_TagString: Untagged
@@ -1368,21 +1367,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 322731927}
   m_CullTransparentMesh: 1
---- !u!114 &322731932
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 322731927}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
-  clickSounds:
-  - button squeaks
-  hoverSound: 
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1875,11 +1859,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!4 &447059895 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8124262161344390682, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
-  m_PrefabInstance: {fileID: 1499651218}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &467482489
 GameObject:
   m_ObjectHideFlags: 0
@@ -3012,6 +2991,7 @@ MonoBehaviour:
   clickSounds:
   - button squeaks
   hoverSound: 
+  button: {fileID: 0}
 --- !u!1 &724802478
 GameObject:
   m_ObjectHideFlags: 0
@@ -3024,7 +3004,6 @@ GameObject:
   - component: {fileID: 724802482}
   - component: {fileID: 724802481}
   - component: {fileID: 724802480}
-  - component: {fileID: 724802483}
   m_Layer: 5
   m_Name: Exit Button
   m_TagString: Untagged
@@ -3146,21 +3125,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724802478}
   m_CullTransparentMesh: 1
---- !u!114 &724802483
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 724802478}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
-  clickSounds:
-  - button squeaks
-  hoverSound: 
 --- !u!1 &808032563
 GameObject:
   m_ObjectHideFlags: 0
@@ -5327,7 +5291,6 @@ GameObject:
   - component: {fileID: 1148761478}
   - component: {fileID: 1148761477}
   - component: {fileID: 1148761476}
-  - component: {fileID: 1148761479}
   m_Layer: 5
   m_Name: Credits Button
   m_TagString: Untagged
@@ -5461,21 +5424,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1148761474}
   m_CullTransparentMesh: 1
---- !u!114 &1148761479
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1148761474}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
-  clickSounds:
-  - button squeaks
-  hoverSound: 
 --- !u!1 &1188475116
 GameObject:
   m_ObjectHideFlags: 0
@@ -8457,6 +8405,7 @@ GameObject:
   - component: {fileID: 1809026624}
   - component: {fileID: 1809026625}
   - component: {fileID: 1809026626}
+  - component: {fileID: 1809026627}
   m_Layer: 0
   m_Name: AudioManager
   m_TagString: Untagged
@@ -8583,33 +8532,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19209231eb4681343ae6eb31611b1521, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SFXManager
-  sounds:
-  - id: button squeaks
-    clips:
-    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
-    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
-    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
-    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
-    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
-  - id: asteroid collisions
-    clips:
-    - {fileID: 8300000, guid: 8171ae790521c3d49ad1c18b1f2caeed, type: 3}
-    - {fileID: 8300000, guid: 451eff3231f9b0144a70b7b807cb5e9e, type: 3}
-    - {fileID: 8300000, guid: a2aa1c903c56ec64b9faf3735d0c566e, type: 3}
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
-  - id: death explosion
-    clips:
-    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
-  - id: nooooooo
-    clips:
-    - {fileID: 8300000, guid: c26d36e55ed93d048b0d5f314360646e, type: 3}
-    volume: 1
-    pitchRange: {x: 0.95, y: 1.05}
   masterVolume: 1
   voices: 8
   sfxMixerGroup: {fileID: 0}
@@ -8786,6 +8708,70 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
     chance: 0.3
+--- !u!114 &1809026627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1809026620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74eaa399b94ac8a4389bb3ac99c15230, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UISFX
+  menuMove:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  buttonHover:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  menuSelect:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  buttonBlocked:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  startPressed:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  creditsOpen:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  creditsClose:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  endScreenShown:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  statsOpen:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  statsClose:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scoreRow:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scoreTotal:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scorePopup:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
 --- !u!1 &1811917838
 GameObject:
   m_ObjectHideFlags: 0

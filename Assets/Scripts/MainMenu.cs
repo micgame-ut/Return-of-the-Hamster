@@ -21,9 +21,12 @@ public class MainMenu : MonoBehaviour
     [Tooltip("The CreditsPanel opened after the Credits blink.")]
     [SerializeField] private CreditsPanel creditsPanel;
 
+    public static event System.Action OnStartClicked;
+
     public void OnStartPressed()
     {
         startButton.interactable = false;
+        OnStartClicked?.Invoke();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         menuTransition.Play();
@@ -67,6 +70,7 @@ public class MainMenu : MonoBehaviour
     private IEnumerator OpenCreditsAfterBlink()
     {
         yield return new WaitForSeconds(creditsBlinkDuration);
+        creditsButton.interactable = true;
         creditsPanel.OpenCredits();
     }
 

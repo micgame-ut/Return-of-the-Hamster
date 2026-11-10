@@ -13,6 +13,9 @@ public class CreditsPanel : MonoBehaviour
     [Tooltip("Seconds the credits stay on screen after reaching the end, before the panel hides.")]
     [SerializeField] private float pauseDuration = 3f;
 
+    public static event System.Action OnOpened;
+    public static event System.Action OnClosed;
+
     private Vector2 startPosition;
 
     private void Awake()
@@ -25,6 +28,7 @@ public class CreditsPanel : MonoBehaviour
         gameObject.SetActive(true);
         _creditsContent.anchoredPosition = startPosition;
         StartCoroutine(PlayCredits());
+        OnOpened?.Invoke();
     }
 
     private IEnumerator PlayCredits()
@@ -40,6 +44,7 @@ public class CreditsPanel : MonoBehaviour
         _creditsContent.anchoredPosition = new Vector2(_creditsContent.anchoredPosition.x, endPositionY); // this ensures the final position is set to the end position
         yield return new WaitForSeconds(pauseDuration); // waits for the pause duration before hiding the credits panel
         gameObject.SetActive(false); // hides the credits panel after the pause duration
+        OnClosed?.Invoke();
 
         MusicManager.Instance.ReturnToTitle();   // stops credits, brings the title music back
     }

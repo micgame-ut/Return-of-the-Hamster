@@ -61,7 +61,8 @@ the button's four corners in world space (0 = bottom-left, 1 = top-left), so the
 middle of the left edge. `marker.position` is set to it, then `markerOffset` is added to `anchoredPosition` (canvas
 units). Example: a button at x = 12 with width 200 has its left edge at −88, so with the default offset the marker
 sits at −138. It does nothing if there's no `marker`. `LateUpdate` calls it every frame for the top page, so the
-marker follows the button if the layout or window changes.
+marker follows the button if the layout or window changes. `LateUpdate` also switches the `marker` off whenever
+its page isn't the top page (for example while Credits is open over the main menu) and back on when it is.
 
 `FindUsable` is the search for the next button.
 `FindUsable(from, direction)` walks `direction` (+1 or −1) from `from`, wrapping if `wrapAround` is on, and
@@ -93,6 +94,10 @@ up starts again from 0.
 - **EndScreen**: its panels each have a `MenuNavigator`. `EndScreen` no longer shows the cursor.
 - **MainMenu**: its Start, Options, Credits and Exit buttons are navigated. `MainMenu.OnStartPressed` also locks the
   cursor, which is harmless.
+- **UISFX**: subscribes to the static events `OnHighlighted` (raised in `Select`, so on every fresh highlight: a
+  move, a page opening, or the page below becoming top again), `OnMoved` (the selection landed on a different button, not raised when a
+  page opens or when nothing else is usable), `OnPressed` (Space on a button that can be pressed) and `OnBlocked`
+  (Space on one that can't). Only the top page's `Update` raises them.
 - **PlayerMovement**: no direct link. It ignores input before the start, after game over and after a win, so the
   same Space press can't dodge.
 
@@ -105,7 +110,7 @@ up starts again from 0.
   menu; keep one array in a field if it's ever used somewhere busy.
 - **An empty `buttons` list does nothing** (no errors). A null entry is skipped.
 - **The Unity UI pointer still exists at the centre of the screen** while the cursor is locked. If a button there
-  looks hovered, or `ButtonSFX` plays its hover sound, clear the Point and Click bindings on the EventSystem's
+  looks hovered, clear the Point and Click bindings on the EventSystem's
   Input System UI Input Module.
 - **Pages must be switched on and off to open and close.** The page stack is built in `OnEnable` and `OnDisable`.
   A page that is only hidden some other way (such as a CanvasGroup) stays on the stack and keeps reacting.

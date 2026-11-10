@@ -36,6 +36,10 @@ public class EndScreen : MonoBehaviour
     [Tooltip("The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings.")]
     [SerializeField] private string menuSceneName = "Level_1";
 
+    public static event System.Action OnShown;
+    public static event System.Action OnStatsOpened;
+    public static event System.Action OnStatsClosed;
+
     private ScoreBreakdown scoreBreakdown;
 
     private void Awake()
@@ -53,6 +57,7 @@ public class EndScreen : MonoBehaviour
     {
         FillStats(parts);
         parts.panel.SetActive(true);
+        OnShown?.Invoke();
         if (scoreHud != null) scoreHud.SetActive(false);
         if (scoreBreakdown != null) scoreBreakdown.Play(parts.scoreTotalText, parts.scoreRowContainer);
     }
@@ -82,8 +87,17 @@ public class EndScreen : MonoBehaviour
     }
 
     // Stats button on either panel, and the overlay's Close button.
-    public void ShowStats() => statsOverlay.SetActive(true);
-    public void CloseStats() => statsOverlay.SetActive(false);
+    public void ShowStats()
+    {
+        statsOverlay.SetActive(true);
+        OnStatsOpened?.Invoke();
+    }
+
+    public void CloseStats()
+    {
+        statsOverlay.SetActive(false);
+        OnStatsClosed?.Invoke();
+    }
 
     public void Restart()
     {

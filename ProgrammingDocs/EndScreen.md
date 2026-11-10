@@ -154,6 +154,8 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
 - **LevelTimer**: reads `Progress`.
 - **MenuNavigator**: one per panel (Game Over, Win and the stats overlay) selects and presses these buttons, and
   keeps the cursor hidden. No direct link: it just presses whichever `Button` is selected.
+- **UISFX**: subscribes to the static events `OnShown` (raised in `Show`, after the panel is switched on),
+  `OnStatsOpened` (`ShowStats`) and `OnStatsClosed` (`CloseStats`).
 - **SceneManager** (Unity): loads scenes for Restart, Next Level and Menu.
 
 ## Gotchas
