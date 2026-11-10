@@ -29,6 +29,8 @@ public class MenuTransition : MonoBehaviour
     [SerializeField] private Transform[] uiElements;
     [Tooltip("How far behind the camera the UI finishes, in world units.")]
     [SerializeField] private float uiEndBehindCamera = 2f;
+    [Tooltip("The whole menu canvas. Switched off when the menu is put away, so its page and selection arrow stop too.")]
+    [SerializeField] private GameObject menuCanvas;
 
     private Camera cam;
     private HamsterMenuFloat hamsterFloat;
@@ -57,6 +59,7 @@ public class MenuTransition : MonoBehaviour
     {
         nearPlanet.gameObject.SetActive(false);
         foreach (Transform ui in uiElements) ui.gameObject.SetActive(false);
+        if (menuCanvas != null) menuCanvas.SetActive(false);
     }
 
     public void Play() => Play(false);

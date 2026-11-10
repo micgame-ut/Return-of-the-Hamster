@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 // Plays a sound for each UI event. Every slot takes clips by drag and drop, and an empty slot plays nothing.
 // Sits on the AudioManager next to GameSFX and plays through it.
@@ -27,10 +28,18 @@ public class UISFX : MonoBehaviour
     [Header("End screen")]
     [Tooltip("The Game Over or Win screen appears.")]
     [SerializeField] private GameSFX.Slot endScreenShown;
-    [Tooltip("The stats overlay opens.")]
-    [SerializeField] private GameSFX.Slot statsOpen;
-    [Tooltip("The stats overlay closes.")]
-    [SerializeField] private GameSFX.Slot statsClose;
+    [Tooltip("The leaderboard opens.")]
+    [FormerlySerializedAs("statsOpen")]
+    [SerializeField] private GameSFX.Slot leaderboardOpen;
+    [Tooltip("The leaderboard closes.")]
+    [FormerlySerializedAs("statsClose")]
+    [SerializeField] private GameSFX.Slot leaderboardClose;
+    [Tooltip("A name letter changes, or steps back a slot.")]
+    [SerializeField] private GameSFX.Slot letterChange;
+    [Tooltip("A name letter is locked in.")]
+    [SerializeField] private GameSFX.Slot letterLock;
+    [Tooltip("The three-letter name is submitted. Plays together with Letter Lock.")]
+    [SerializeField] private GameSFX.Slot nameSubmitted;
     [Tooltip("Each score row counts into the total.")]
     [SerializeField] private GameSFX.Slot scoreRow;
     [Tooltip("The score breakdown finishes.")]
@@ -72,8 +81,11 @@ public class UISFX : MonoBehaviour
         CreditsPanel.OnOpened += HandleCreditsOpened;
         CreditsPanel.OnClosed += HandleCreditsClosed;
         EndScreen.OnShown += HandleEndScreenShown;
-        EndScreen.OnStatsOpened += HandleStatsOpened;
-        EndScreen.OnStatsClosed += HandleStatsClosed;
+        EndScreen.OnLeaderboardOpened += HandleLeaderboardOpened;
+        EndScreen.OnLeaderboardClosed += HandleLeaderboardClosed;
+        NameEntry.OnLetterChanged += HandleLetterChanged;
+        NameEntry.OnLetterLocked += HandleLetterLocked;
+        NameEntry.OnNameSubmitted += HandleNameSubmitted;
         ScoreBreakdown.OnRowCounted += HandleRowCounted;
         ScoreBreakdown.OnFinished += HandleFinished;
         Bind();
@@ -92,8 +104,11 @@ public class UISFX : MonoBehaviour
         CreditsPanel.OnOpened -= HandleCreditsOpened;
         CreditsPanel.OnClosed -= HandleCreditsClosed;
         EndScreen.OnShown -= HandleEndScreenShown;
-        EndScreen.OnStatsOpened -= HandleStatsOpened;
-        EndScreen.OnStatsClosed -= HandleStatsClosed;
+        EndScreen.OnLeaderboardOpened -= HandleLeaderboardOpened;
+        EndScreen.OnLeaderboardClosed -= HandleLeaderboardClosed;
+        NameEntry.OnLetterChanged -= HandleLetterChanged;
+        NameEntry.OnLetterLocked -= HandleLetterLocked;
+        NameEntry.OnNameSubmitted -= HandleNameSubmitted;
         ScoreBreakdown.OnRowCounted -= HandleRowCounted;
         ScoreBreakdown.OnFinished -= HandleFinished;
         Unbind();
@@ -107,8 +122,11 @@ public class UISFX : MonoBehaviour
     private void HandleCreditsOpened() => GameSFX.Play(creditsOpen);
     private void HandleCreditsClosed() => GameSFX.Play(creditsClose);
     private void HandleEndScreenShown() => GameSFX.Play(endScreenShown);
-    private void HandleStatsOpened() => GameSFX.Play(statsOpen);
-    private void HandleStatsClosed() => GameSFX.Play(statsClose);
+    private void HandleLeaderboardOpened() => GameSFX.Play(leaderboardOpen);
+    private void HandleLeaderboardClosed() => GameSFX.Play(leaderboardClose);
+    private void HandleLetterChanged() => GameSFX.Play(letterChange);
+    private void HandleLetterLocked() => GameSFX.Play(letterLock);
+    private void HandleNameSubmitted() => GameSFX.Play(nameSubmitted);
     private void HandleRowCounted() => GameSFX.Play(scoreRow);
     private void HandleFinished() => GameSFX.Play(scoreTotal);
 

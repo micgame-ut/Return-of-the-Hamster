@@ -27,7 +27,10 @@ random pitch range. An empty slot plays nothing.
 | `startPressed` | Start is pressed (`MainMenu.OnStartClicked`). Plays together with `menuSelect` |
 | `creditsOpen` / `creditsClose` | The credits panel opens / hides (`CreditsPanel.OnOpened` / `OnClosed`) |
 | `endScreenShown` | The Game Over or Win screen appears (`EndScreen.OnShown`) |
-| `statsOpen` / `statsClose` | The stats overlay opens / closes (`EndScreen.OnStatsOpened` / `OnStatsClosed`) |
+| `leaderboardOpen` / `leaderboardClose` | The leaderboard window opens / closes (`EndScreen.OnLeaderboardOpened` / `OnLeaderboardClosed`). They were `statsOpen` / `statsClose`; `[FormerlySerializedAs]` keeps the assigned clips |
+| `letterChange` | A name letter changes, or steps back a slot (`NameEntry.OnLetterChanged`) |
+| `letterLock` | A name letter is locked in (`NameEntry.OnLetterLocked`) |
+| `nameSubmitted` | The three-letter name is submitted (`NameEntry.OnNameSubmitted`). Plays together with `letterLock` |
 | `scoreRow` | Each score row counts into the total (`ScoreBreakdown.OnRowCounted`) |
 | `scoreTotal` | The score breakdown finishes (`ScoreBreakdown.OnFinished`) |
 | `scorePopup` | A score popup appears (`Score.OnPointsAdded`). Happens often, so keep it quiet or empty |
@@ -61,7 +64,8 @@ fact that a popup appeared matters.
 - **MenuNavigator**: `OnMoved`, `OnHighlighted`, `OnPressed`, `OnBlocked`.
 - **MainMenu**: `OnStartClicked`.
 - **CreditsPanel**: `OnOpened`, `OnClosed`.
-- **EndScreen**: `OnShown`, `OnStatsOpened`, `OnStatsClosed`.
+- **EndScreen**: `OnShown`, `OnLeaderboardOpened`, `OnLeaderboardClosed`.
+- **NameEntry**: `OnLetterChanged`, `OnLetterLocked`, `OnNameSubmitted`.
 - **ScoreBreakdown**: `OnRowCounted`, `OnFinished`.
 - **Score** (through `GameManager.Instance.Score`): `OnPointsAdded`.
 - **GameSFX**: its `Slot` class and `Play` method.
