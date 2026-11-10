@@ -37,6 +37,14 @@ public class MenuNavigator : MonoBehaviour
     // Every page that is showing, oldest first. Only the last one (the page on top) reacts to the trackball.
     private static readonly List<MenuNavigator> openPages = new List<MenuNavigator>();
 
+    // Raised when the selection lands on a different button. Not raised when a page first opens.
+    public static event System.Action OnMoved;
+    // Raised when Space presses a button that can be pressed. OnBlocked is raised when it can't be.
+    public static event System.Action OnPressed;
+    public static event System.Action OnBlocked;
+    // Raised every time a button becomes highlighted: on a move, when a page opens, and when the page below becomes top again.
+    public static event System.Action OnHighlighted;
+
     private bool IsTopPage => openPages.Count > 0 && openPages[openPages.Count - 1] == this;
 
     private void OnEnable()
@@ -86,14 +94,20 @@ public class MenuNavigator : MonoBehaviour
 
             if (Mathf.Abs(accumulated) >= stepDistance)
             {
+                int before = selectedIndex;
                 Select(FindUsable(selectedIndex, accumulated > 0f ? 1 : -1));
+                if (selectedIndex != before) OnMoved?.Invoke();
                 accumulated = 0f;
             }
         }
 
         // Space presses the selected button the way Enter would, so it also plays the button's press look.
         if (selectAction != null && selectAction.action.WasPressedThisFrame() && buttons[selectedIndex] != null)
+        {
+            if (buttons[selectedIndex].interactable) OnPressed?.Invoke();
+            else OnBlocked?.Invoke();
             ExecuteEvents.Execute(buttons[selectedIndex].gameObject, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+        }
     }
 
     // Makes the button at this index the selected one: the EventSystem highlights it with the Button's Selected look.
@@ -102,6 +116,8 @@ public class MenuNavigator : MonoBehaviour
         selectedIndex = index;
         if (EventSystem.current != null && buttons[index] != null)
             EventSystem.current.SetSelectedGameObject(buttons[index].gameObject);
+
+        OnHighlighted?.Invoke();
 
         // A page that was just switched on hasn't been laid out yet, so do that first.
         Canvas.ForceUpdateCanvases();
@@ -122,6 +138,7 @@ public class MenuNavigator : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (marker != null) marker.gameObject.SetActive(IsTopPage);
         if (IsTopPage) PlaceMarker();
     }
 

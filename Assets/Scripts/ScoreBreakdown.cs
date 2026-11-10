@@ -26,6 +26,9 @@ public class ScoreBreakdown : MonoBehaviour
     [Tooltip("Pressing this (the boost button) finishes the breakdown instantly.")]
     [SerializeField] private InputActionReference skipAction;
 
+    public static event System.Action OnRowCounted;
+    public static event System.Action OnFinished;
+
     private Score score;
     private bool skipping;
 
@@ -114,7 +117,9 @@ public class ScoreBreakdown : MonoBehaviour
             yield return ShowRow(rowContainer, labels[i], points);
             int from = Mathf.FloorToInt(total);
             total += points;
+            OnRowCounted?.Invoke();
             yield return CountUp(totalText, from, Mathf.FloorToInt(total));
         }
+        OnFinished?.Invoke();
     }
 }

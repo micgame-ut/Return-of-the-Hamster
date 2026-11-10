@@ -167,7 +167,7 @@ public class GameSFX : MonoBehaviour
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Bind();
 
     // Plays one slot: picks a clip at random (never the one just played), then a random pitch. An empty slot does nothing.
-    private static void Play(Slot slot)
+    public static void Play(Slot slot)
     {
         SFXManager sfx = SFXManager.Instance;
         if (slot == null || sfx == null || slot.clips == null || slot.clips.Length == 0) return;
