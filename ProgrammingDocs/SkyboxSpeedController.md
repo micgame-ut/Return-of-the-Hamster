@@ -92,7 +92,7 @@ begins.
 
 At the top of `Update`:
 
-`drift = (no GameManager, or HasStarted) ? Time.deltaTime : 0`
+`drift = (no GameManager, or IsFlying) ? Time.deltaTime : 0` (`IsFlying` is true during the tutorial as well as the level)
 
 Both running totals (the clouds and the streams) add `speed × drift` instead of `speed × Time.deltaTime`.
 Before the start, `drift` is 0, so nothing is added and the sky holds perfectly still: the hamster isn't

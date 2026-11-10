@@ -128,7 +128,7 @@ public class PlayerMovement : MonoBehaviour
 
     // Before the game starts, and once it's over or won, all input is ignored.
     private bool InputLocked => GameManager.Instance != null &&
-                                (!GameManager.Instance.HasStarted || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
+                                (!GameManager.Instance.IsFlying || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
     public static float OverdriveFraction { get; private set; }

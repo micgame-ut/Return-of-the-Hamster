@@ -30,7 +30,10 @@ Needed for the finished game. All of these come before any other item.
   **Done and tested.** `GameSFX.cs` (on the `AudioManager`) has 23 slots for the player, power-up, asteroid and
   level events. New events: `PlayerMovement.OnBoostReady`, `PlayerTwins.OnBodyLost`, `AsteroidBehavior.OnSmashed` /
   `OnSplit` / `OnCloseCall`, `PlayerDeath.OnExploded`. Docs: `GameSFX.md` (**waiting for your review**).
-  Not covered yet: the shield (`PlayerShell`), and the end-screen and menu sounds beyond `ButtonSFX`.
+  Not covered yet: the shield (`PlayerShell`).
+  UI sounds are now in `UISFX.cs` (13 slots: menu move/select/blocked, start, credits, end screen, stats, score
+  breakdown, score popup). `ButtonSFX` and `SFXManager`'s ID list were removed. Docs: `UISFX.md`
+  (**waiting for your review**). **Not tested in Unity yet.**
 - [x] **Small dialogue that reacts to in-game events:** being hit, getting a power-up, reaching the end, starting
   the level and a close call.
   **Done and tested.** It's in `GameSFX.cs`: a `DialogueSlot` (clips, volume, pitch and a `chance`, default 0.3)
@@ -41,6 +44,16 @@ Needed for the finished game. All of these come before any other item.
 
 **Menu and flow**
 - [ ] **Tutorial phase before Level 1** that the player can choose to skip.
+  **Built, waiting for your test.** Decided: it runs inside `Level_1`, with live prompts, and a "Play tutorial?"
+  popup after Start (shown every time, no `PlayerPrefs`). Close calls are not taught. `GameManager` has a tutorial
+  state (`InTutorial`, `IsFlying`, `StartTutorial`, `OnTutorialStarted`) so the player can fly while the level, score
+  and HUD wait. `MainMenu` shows the `TutorialPopup`; `MenuTransition.Play(bool)` ends in the tutorial or the level.
+  `TutorialManager` (on the `Tutorial` object) runs 7 stages: orbit, speed, sideways dash, forward boost, dodge an
+  asteroid, smash one, collect a power-up, then calls `StartGame()`. Tutorial hits cost no lives, and no points or
+  stats count. Docs: `TutorialManager.md` (**waiting for your review**), plus `GameManager`, `MenuTransition`,
+  `PlayerMovement`, `PlayerHealth`, `Score`, `RunStats` and the four "world is alive" scripts updated.
+  To check in Play mode: the popup, Skip (unchanged level), each tutorial stage and its retry, and the handoff
+  into the level (spawner, HUD and score should start fresh).
 - [x] **Menu navigation with mouse input:** every menu item selectable by scrolling between the options using input
   from the mouse (not the keyboard), and pressing Space to choose, instead of clicking. Decided: the trackball movement
   (the mouse delta), no mouse pointer at all.
@@ -68,8 +81,8 @@ Needed for the finished game. All of these come before any other item.
   `ScorePopups.md` updated.
 
 **Look and feel of the player**
-- [ ] **Player shell:** adjust `PlayerShell` so only the back faces show to the player.
-  **Built, waiting for your test.** Done in the graph, not the script: `Rainbow Overlay.shadergraph`'s Render Face
+- [x] **Player shell:** adjust `PlayerShell` so only the back faces show to the player.
+  **Done and tested.** Done in the graph, not the script: `Rainbow Overlay.shadergraph`'s Render Face
   is now Back, so the shield and the rainbow both show only the far side of the bubble. Docs: `RainbowOverlay.md` and
   `PlayerShell.md` updated.
 - [x] **Ring brightness gradient:** adjust it (the Ring Glow graph) so the glow is more noticeable and the player

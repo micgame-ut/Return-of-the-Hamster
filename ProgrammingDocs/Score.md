@@ -113,7 +113,9 @@ written once:
   asteroid smashes and close calls (through `ComboKill`).
 - **`AddBonusPoints(amount, position, label)`**: calls `Award` with ×1 and a label, so speed never changes
   it. Used for waves (through `AddWaveClear`).
-- **`Award(amount, multiplier, position, label)`**: ignores calls after game over or a win. Otherwise it
+- **`Award(amount, multiplier, position, label)`**: ignores calls after game over or a win, and while the
+  tutorial is running (`InTutorial`). `ComboKill` and `AddOverdriveBonus` have the same tutorial guard as their
+  first line, so practice smashes don't build a combo or bank an overdrive bonus. Otherwise it
   adds `amount × multiplier` to `eventPoints`, raises **`OnPointsAdded`**, and starts the HUD pulse. It's
   `private`, so other scripts can't pass a made-up multiplier.
 

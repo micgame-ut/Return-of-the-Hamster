@@ -142,7 +142,8 @@ It also saves the velocity and emission modules, so `Update` doesn't have to loo
 During Level 1's menu there are no stars at all. Once the game starts they come in gently instead of
 arriving at full rush:
 
-1. **`started`** is true once GameManager's `HasStarted` is set (or if there's no GameManager).
+1. **`started`** is true once GameManager's `IsFlying` is set, meaning the level or the tutorial has begun
+   (or if there's no GameManager).
 2. **Emission follows `started`:** off on the menu, on from the start. `emitting` remembers the last value
    set, so the emission module is only touched on the frame it changes (ExhaustFlame does the same with
    `coreVisible`). The particle system builds itself in `Awake`, but `Update` runs before Unity's first

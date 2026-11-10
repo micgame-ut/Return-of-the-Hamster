@@ -63,7 +63,7 @@ public class SkyboxSpeedController : MonoBehaviour
         GameManager gm = GameManager.Instance;
 
         // The sky holds still on the menu and starts drifting once the game starts.
-        float drift = gm == null || gm.HasStarted ? Time.deltaTime : 0f;
+        float drift = gm == null || gm.IsFlying ?Time.deltaTime : 0f;
 
         // Accumulated per frame so a change in speed alters the pace without making
         // the sky jump. deltaTime is 0 while paused, so the sky freezes where it is.

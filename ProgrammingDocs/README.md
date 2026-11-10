@@ -25,6 +25,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | Audio/GameSFX.cs | [GameSFX.md](GameSFX.md) | Done |
 | Audio/UISFX.cs | [UISFX.md](UISFX.md) | Done |
+| TutorialManager.cs | [TutorialManager.md](TutorialManager.md) | Done |
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | HamsterAnimationDriver.cs | [HamsterAnimationDriver.md](HamsterAnimationDriver.md) | Done |
 | HamsterMenuFloat.cs | [HamsterMenuFloat.md](HamsterMenuFloat.md) | Done |

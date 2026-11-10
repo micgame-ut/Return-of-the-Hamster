@@ -83,7 +83,8 @@ It stops counting in two ways:
 
 ### `AddAsteroidDestroyed` and `AddPowerUpPickedUp`
 
-Each adds one to its count (`++`). AsteroidBehavior calls the first when an asteroid is smashed, and
+Each adds one to its count (`++`), unless the tutorial is running (`GameManager.InTutorial`), so practice
+smashes and pickups don't count. AsteroidBehavior calls the first when an asteroid is smashed, and
 PowerUp calls the second on every pickup.
 
 They're methods instead of public setters so that the counts can only ever go **up by one**. Any script can

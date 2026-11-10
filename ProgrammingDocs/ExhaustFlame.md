@@ -100,7 +100,7 @@ shortens and thins out while still trailing behind the ship. With `deathFadeTime
 | 1.25 | 0 | gone, lines off | |
 
 0. **Grow in at the start:** `grow = SmoothStep(0, 1, GameManager.TimeSinceStart / growTime)`. During
-   Level 1's menu `TimeSinceStart` is 0, so `grow` is 0: the flame is hidden. When play begins it eases to 1
+   Level 1's menu `TimeSinceStart` is 0, so `grow` is 0: the flame is hidden. When flying begins (the tutorial or the level, whichever comes first) it eases to 1
    over `growTime`, and the length and width below are multiplied by it, so the flame grows from a point. The
    inner core is sized from the outer flame, so it grows too. A twin copy reads the same game clock, so a
    copy made mid-level is already at full size. On levels without a menu it grows in from the load.
