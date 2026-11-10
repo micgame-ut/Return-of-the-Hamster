@@ -100,10 +100,24 @@ Level 1 has the menu inside it (see MenuTransition), so a level can be loaded bu
 - **`StartGame()`** sets `HasStarted`, records `Time.time` as the start time, shows `hud` and raises
   `OnGameStarted`. If it has already run, it returns straight away, like `GameOver` and `Win`. MenuTransition
   calls it at the end of the transition. On every other load, `Awake` calls it.
-- **`TimeSinceStart`** is `Time.time` minus the start time, or 0 before the start. It's calculated fresh each
+- **`TimeSinceStart`** is `Time.time` minus the start time, or 0 before flying begins (`IsFlying`). It's calculated fresh each
   time it's read. ExhaustFlame, StarfieldStreamer and SkyboxSpeedController use it to ease the flame, the
   stars and the core glow in. It's one shared clock so that a twin copy's flame, made mid-level, is already
   at full size. `Time.time` stops while `timeScale` is 0, so pausing pauses it too.
+- **The tutorial state.** `HasStarted` used to mean two things: "the world is alive" (input, starfield, flame, orbit
+  ring, hamster pose) and "the run has begun" (LevelTimer, ObjectSpawner, RunStats, HUD, level start sound). The
+  optional tutorial (see TutorialManager) needs the first without the second, so there are three more members:
+  - **`InTutorial`** (`bool`, `private set`): `true` from `StartTutorial()` until `StartGame()`.
+  - **`IsFlying`** (`bool`, property): `HasStarted || InTutorial`. The scripts that make the world come alive read
+    this instead of `HasStarted`: PlayerMovement (`InputLocked`), StarfieldStreamer, SkyboxSpeedController,
+    OrbitRing and HamsterAnimationDriver. Scripts that mean "the run has begun" still read `HasStarted`.
+  - **`StartTutorial()`**: does nothing if the game has started or the tutorial is already on. Otherwise it
+    sets `InTutorial`, records `Time.time` as the start time and raises **`OnTutorialStarted`** (`Action`).
+    It doesn't show the HUD or raise `OnGameStarted`. MenuTransition calls it, at the end of the glide, when
+    the player chose the tutorial.
+  - `StartGame()` clears `InTutorial`, and only records a new start time if no tutorial ran, so `TimeSinceStart`
+    keeps counting from when flying began and the eased-in effects don't restart.
+  - While `InTutorial` is on, `PlayerHealth.LoseLife` does nothing, and Score and RunStats ignore points and counts.
 - **`OnGameStarted`** (`Action`) fires once, inside `StartGame`. PlayerMovement uses it to lock the cursor.
   On levels without a menu, `StartGame` runs in this `Awake`, **before** any other script can subscribe. So a
   subscriber must check `HasStarted` first and only subscribe if it's still `false` (see PlayerMovement's

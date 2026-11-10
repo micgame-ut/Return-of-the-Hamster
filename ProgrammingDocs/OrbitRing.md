@@ -71,7 +71,7 @@ them. A circle is really a lot of short straight lines, so with enough points it
 
 It runs in `LateUpdate` so the player and asteroids have already moved this frame.
 
-**Before the start: hidden.** During Level 1's menu (GameManager's `HasStarted` is false) the ring line is
+**Before the start: hidden.** During Level 1's menu (GameManager's `IsFlying` is false: neither the level nor the tutorial has begun) the ring line is
 switched off and the rest of `LateUpdate` is skipped. There are no asteroids yet, so there are no arcs to draw.
 When play begins the ring switches on at once. `ringShown` remembers the last value given to `ring.enabled`,
 so the line is only touched on the frame it changes. While it's skipped, the player is floating on the menu

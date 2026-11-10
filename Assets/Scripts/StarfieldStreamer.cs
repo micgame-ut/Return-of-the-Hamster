@@ -86,7 +86,7 @@ public class StarfieldStreamer : MonoBehaviour
     {
         // No stars spawn on the menu. Once the game starts they spawn again and speed up from still over rampTime.
         GameManager gm = GameManager.Instance;
-        bool started = gm == null || gm.HasStarted;
+        bool started = gm == null || gm.IsFlying;
         if (started != emitting)
         {
             emission.enabled = started;

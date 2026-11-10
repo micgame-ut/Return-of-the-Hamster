@@ -33,6 +33,7 @@ public class MenuTransition : MonoBehaviour
     private Camera cam;
     private HamsterMenuFloat hamsterFloat;
     private PlanetMovement nearSpin;
+    private bool tutorialNext;   // true = the glide ends in the tutorial, false = in the level
 
     public float Duration => duration;
 
@@ -58,8 +59,11 @@ public class MenuTransition : MonoBehaviour
         foreach (Transform ui in uiElements) ui.gameObject.SetActive(false);
     }
 
-    public void Play()
+    public void Play() => Play(false);
+
+    public void Play(bool withTutorial)
     {
+        tutorialNext = withTutorial;
         hamsterFloat.enabled = false;
         nearSpin.enabled = false;
         StartCoroutine(Animate());
@@ -111,6 +115,7 @@ public class MenuTransition : MonoBehaviour
 
         HideMenu();
         yield return new WaitForSeconds(startDelay);
-        GameManager.Instance.StartGame();
+        if (tutorialNext) GameManager.Instance.StartTutorial();
+        else GameManager.Instance.StartGame();
     }
 }

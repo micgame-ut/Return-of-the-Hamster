@@ -66,7 +66,10 @@ public class GameManager : MonoBehaviour
     public static bool SkipMenuOnce;
 
     public bool HasStarted { get; private set; }
-    public float TimeSinceStart => HasStarted ? Time.time - startTime : 0f; // 0 until StartGame
+    public bool InTutorial { get; private set; }
+    public bool IsFlying => HasStarted || InTutorial;   // the world is alive: input, starfield, flame, pose
+    public event Action OnTutorialStarted;
+    public float TimeSinceStart => IsFlying ?Time.time - startTime : 0f; // 0 until StartGame
     public event Action OnGameStarted;
     private float startTime;
 
@@ -114,12 +117,22 @@ public class GameManager : MonoBehaviour
         if (!HasWon && !IsGameOver && LevelCleared) Win();
     }
 
+    public void StartTutorial()
+    {
+        if (HasStarted || InTutorial) return;
+
+        InTutorial = true;
+        startTime = Time.time;
+        OnTutorialStarted?.Invoke();
+    }
+
     public void StartGame()
     {
         if (HasStarted) return;
 
+        if (!InTutorial) startTime = Time.time;
+        InTutorial = false;
         HasStarted = true;
-        startTime = Time.time;
         if (hud != null) hud.SetActive(true);
         OnGameStarted?.Invoke();
     }

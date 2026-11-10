@@ -73,3 +73,8 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Unity MCP plugin (local tooling, not part of the game)
+/[Aa]ssets/AB/
+/[Aa]ssets/AB.meta
+.mcp.json

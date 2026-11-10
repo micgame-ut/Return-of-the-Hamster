@@ -22,7 +22,7 @@ public class PlayerHealth : MonoBehaviour
     public void LoseLife()
     {
         GameManager gm = GameManager.Instance;
-        if (gm == null || gm.IsGameOver || gm.HasWon) return;
+        if (gm == null || gm.IsGameOver || gm.HasWon || gm.InTutorial) return;
 
         CurrentLives--;
         OnLivesChanged?.Invoke(CurrentLives);

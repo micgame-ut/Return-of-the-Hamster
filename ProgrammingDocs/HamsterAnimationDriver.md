@@ -52,20 +52,21 @@ above it (`GetComponentInParent`) and the `GameManager` (`GameManager.Instance`)
 `PlayerHealth`, so that one stays `null`, and the script copes with that.
 
 It also sets `InMenu` to true if there is a `GameManager` and the game hasn't started yet. `GameManager`'s
-`Awake` runs first (`[DefaultExecutionOrder(-100)]`), so `HasStarted` is already decided. On a restart or a level
+`Awake` runs first (`[DefaultExecutionOrder(-100)]`), so `IsFlying` (`HasStarted` or the tutorial) is already decided. On a restart or a level
 without a menu it is already true, so `InMenu` is false from the first frame and Float never shows.
 
 ### `OnEnable` and `OnDisable`
 
 `OnEnable` subscribes `HandleLifeLost` to `PlayerHealth`'s `OnLifeLost` event, but only if a `PlayerHealth` was
-found, and `HandleGameStarted` to `GameManager`'s `OnGameStarted`, but only if a `GameManager` was found.
+found, and `HandleGameStarted` to both of `GameManager`'s `OnGameStarted` and `OnTutorialStarted`, but only if a
+`GameManager` was found.
 `OnDisable` unsubscribes both again, so an event never ends up with the same method twice, or with a method
 on a destroyed object. `Awake` runs before `OnEnable`, so both references are already filled in by then.
 
 ### `HandleGameStarted`
 
-Sets `InMenu` to false. `OnGameStarted` fires from `GameManager.StartGame()`, which `MenuTransition` calls at the
-end of its transition (3 seconds after Start is pressed, with the scene's values). The hamster floats while he
+Sets `InMenu` to false. `OnGameStarted` fires from `GameManager.StartGame()`, and `OnTutorialStarted` from
+`StartTutorial()`. `MenuTransition` calls one of them at the end of its transition (3 seconds after Start is pressed, with the scene's values). The hamster floats while he
 glides into position, then blends into the run as control begins.
 
 ### `HandleLifeLost`

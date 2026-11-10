@@ -68,7 +68,7 @@ public class OrbitRing : MonoBehaviour
         if (player == null) return;
 
         // Hidden on the menu; the ring appears when the game starts.
-        bool started = GameManager.Instance == null || GameManager.Instance.HasStarted;
+        bool started = GameManager.Instance == null || GameManager.Instance.IsFlying;
         if (started != ringShown)
         {
             ring.enabled = started;

@@ -98,7 +98,9 @@ A coroutine, so it runs across many frames.
      and scale, and `Slerp` for rotations.
 4. `HideMenu()`.
 5. Waits `startDelay`.
-6. `GameManager.StartGame()`.
+6. `GameManager.StartGame()`, or `StartTutorial()` if the glide was started with `Play(true)` (the player chose
+   the tutorial in the popup). `Play()` with no argument is `Play(false)`. The choice is remembered in the private
+   `tutorialNext` field. The tutorial itself ends by calling `StartGame()` (see TutorialManager).
 
 **The easing.** `SmoothStep` starts slow, is fastest in the middle and ends slow. It clamps to 0–1, so on the
 last frame everything lands exactly on its target, with no separate snap. With `duration` 2:

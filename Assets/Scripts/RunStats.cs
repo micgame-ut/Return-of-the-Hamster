@@ -45,11 +45,13 @@ public class RunStats : MonoBehaviour
 
     public void AddAsteroidDestroyed()
     {
+        if (GameManager.Instance != null && GameManager.Instance.InTutorial) return;
         AsteroidsDestroyed++;
     }
 
     public void AddPowerUpPickedUp()
     {
+        if (GameManager.Instance != null && GameManager.Instance.InTutorial) return;
         PowerUpsPickedUp++;
     }
 
