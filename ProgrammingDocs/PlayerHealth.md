@@ -66,7 +66,8 @@ Called by `AsteroidBehavior` when an asteroid hits the player and the hit counts
 broken at speed, never call it.
 
 1. Assigns `GameManager.Instance` to a local variable, `gm`.
-2. If `gm` is null, the game is over, or the player has won, it exits the method immediately. The null
+2. If `gm` is null, the game is over, the player has won, or the tutorial is running (`InTutorial`), it exits
+   the method immediately, so a tutorial hit costs no life. The null
    check comes first so `||` stops before reading anything from a null reference.
 3. Otherwise it takes one life away from `CurrentLives`, raises `OnLivesChanged` with the new count, then
    raises `OnLifeLost`.

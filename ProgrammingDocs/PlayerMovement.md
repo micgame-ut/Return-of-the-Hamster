@@ -76,9 +76,10 @@ multiplies them), so the Inspector shows friendly numbers like 5 instead of 0.00
 
 ### Before the start, game over and win (`InputLocked`)
 
-`InputLocked` is a private property that's true **before the game starts** (GameManager's `HasStarted` is
-`false`), and once GameManager's `IsGameOver` **or** `HasWon` is set. The brackets around
-`!HasStarted || IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes first.
+`InputLocked` is a private property that's true **before flying begins** (GameManager's `IsFlying` is
+`false`: neither the level nor the tutorial has started), and once GameManager's `IsGameOver` **or** `HasWon` is set.
+The brackets around
+`!IsFlying || IsGameOver || HasWon` make sure the null check on `GameManager.Instance` comes first.
 
 - **Before the start** (Level 1's menu), HamsterMenuFloat and then MenuTransition's glide move the player.
 - **On a death,** GameManager freezes time (`Time.timeScale = 0`) and PlayerDeath takes over the ship.

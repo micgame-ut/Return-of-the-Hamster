@@ -20,6 +20,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private float creditsBlinkDuration = 1f;
     [Tooltip("The CreditsPanel opened after the Credits blink.")]
     [SerializeField] private CreditsPanel creditsPanel;
+    [Tooltip("The popup that asks whether to play the tutorial. Shown when Start is pressed. Needs a MenuNavigator with a Tutorial button and a Skip button. Empty = no popup, Start goes straight to the level.")]
+    [SerializeField] private GameObject tutorialPopup;
 
     public static event System.Action OnStartClicked;
 
@@ -27,9 +29,19 @@ public class MainMenu : MonoBehaviour
     {
         startButton.interactable = false;
         OnStartClicked?.Invoke();
+        if (tutorialPopup == null) BeginGame(false);
+        else tutorialPopup.SetActive(true);
+    }
+
+    public void OnTutorialChosen() => BeginGame(true);
+    public void OnTutorialSkipped() => BeginGame(false);
+
+    private void BeginGame(bool withTutorial)
+    {
+        if (tutorialPopup != null) tutorialPopup.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-        menuTransition.Play();
+        menuTransition.Play(withTutorial);
         StartCoroutine(BlinkText(startButtonText, menuTransition.Duration));
     }
 

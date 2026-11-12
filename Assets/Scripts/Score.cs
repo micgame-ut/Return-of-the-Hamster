@@ -138,7 +138,7 @@ public class Score : MonoBehaviour
     private void Award(float amount, float multiplier, Vector3 position, string label, ScoreSource source)
     {
         GameManager gm = GameManager.Instance;
-        if (gm.IsGameOver || gm.HasWon) return;
+        if (gm.IsGameOver || gm.HasWon || gm.InTutorial) return;
 
         eventPoints += amount * multiplier;
         sourceTotals[(int)source] += amount * multiplier;
@@ -165,6 +165,8 @@ public class Score : MonoBehaviour
     // including right as the level ends.
     public void AddOverdriveBonus(float amount)
     {
+        if (GameManager.Instance.InTutorial) return;
+
         eventPoints += amount;
         sourceTotals[(int)ScoreSource.Overdrive] += amount;
         pulseTimer = pulseDuration;
@@ -175,6 +177,8 @@ public class Score : MonoBehaviour
 
     private void ComboKill(float points, Vector3 position, string label, ScoreSource source)
     {
+        if (GameManager.Instance.InTutorial) return;
+
         AddPoints(points + comboBonus, position, source, label);
         comboBonus += comboStepBonus * (1f + comboStepGrowth * comboCount);
         comboCount++;
