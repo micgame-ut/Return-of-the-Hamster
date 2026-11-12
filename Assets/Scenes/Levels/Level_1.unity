@@ -3391,10 +3391,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 889f02592117c76469109087338db1ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonSFX
-  clickSounds:
-  - button squeaks
-  hoverSound: 
-  button: {fileID: 0}
 --- !u!1 &724802478
 GameObject:
   m_ObjectHideFlags: 0
@@ -9641,7 +9637,7 @@ MonoBehaviour:
     pitchRange: {x: 1, y: 1}
   win:
     clips:
-    - {fileID: 0}
+    - {fileID: 8300000, guid: 9732ca9426d821c4696d74cc6ad6edcd, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   gameOver:
@@ -9746,7 +9742,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   startPressed:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   creditsOpen:
@@ -9762,15 +9759,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   statsOpen:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fecaaf491efefae4ba02ab10921a7be9, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   statsClose:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fecaaf491efefae4ba02ab10921a7be9, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   scoreRow:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 957faeb349224254abc3cedf454a7db5, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   scoreTotal:
