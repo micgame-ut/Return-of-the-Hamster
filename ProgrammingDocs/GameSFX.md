@@ -105,8 +105,15 @@ as `null`, so the previous level's objects are skipped. If you add an event to `
 
 Called by every handler, and by `UISFX` (it's `public static`). It does nothing for a missing slot, no `SFXManager`, or no clips. Otherwise it picks a
 random clip. If that's the same one as last time (`lastIndex`), it steps to a different one: ahead by 1 plus a
-random 0 to (count − 2), wrapping round. Then it picks a random pitch from the slot's pitch range and calls
-`SFXManager.PlayClip(clip, volume, pitch)`. `PlayClip` ignores an empty clip entry.
+random 0 to (count − 2), wrapping round. Then it calls `SFXManager.PlayClip(clip, volume, pitch)`. `PlayClip`
+ignores an empty clip entry.
+
+There are two overloads (the same name with different parameters):
+
+- **`Play(slot)`** rolls a random pitch from the slot's pitch range (1 for a missing slot) and calls the other one.
+  Every handler uses this.
+- **`Play(slot, pitch)`** does the work above with the pitch it is given, ignoring the slot's pitch range.
+  `UISFX` uses it for the count sounds, whose pitch comes from how far the count has got.
 
 ### `Say`: dialogue with a chance
 

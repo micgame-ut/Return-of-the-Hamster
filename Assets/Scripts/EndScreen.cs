@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -37,9 +38,11 @@ public class EndScreen : MonoBehaviour
     public static event System.Action OnShown;
     public static event System.Action OnLeaderboardOpened;
     public static event System.Action OnLeaderboardClosed;
+    public static event System.Action OnQuitClicked;
 
     private ScoreBreakdown scoreBreakdown;
     private int finalScore;   // this run's score, kept from the end of the score breakdown until the name is submitted
+    private bool quitting;
 
     private void Awake()
     {
@@ -144,6 +147,15 @@ public class EndScreen : MonoBehaviour
 
     public void Quit()
     {
+        if (quitting) return;
+        quitting = true;
+        OnQuitClicked?.Invoke();
+        StartCoroutine(QuitAfterSound());
+    }
+
+    private IEnumerator QuitAfterSound()
+    {
+        yield return new WaitForSecondsRealtime(UISFX.QuitSoundLength);
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

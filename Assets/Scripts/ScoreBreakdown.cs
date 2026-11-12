@@ -25,9 +25,12 @@ public class ScoreBreakdown : MonoBehaviour
     [SerializeField] private float rowDelay = 0.4f;
     [Tooltip("Pressing this (the boost button) finishes the breakdown instantly.")]
     [SerializeField] private InputActionReference skipAction;
+    [Tooltip("Seconds between count sounds while the total ticks up for a row.")]
+    [SerializeField] private float tickInterval = 0.04f;
 
     public static event System.Action OnRowCounted;
     public static event System.Action OnFinished;
+    public static event System.Action<float> OnTick;
 
     private Score score;
     private bool skipping;
@@ -82,12 +85,18 @@ public class ScoreBreakdown : MonoBehaviour
     }
 
     // Ticks the total from one value to another over countUpTime.
-    private IEnumerator CountUp(TMP_Text totalText, int from, int to)
+    private IEnumerator CountUp(TMP_Text totalText, int from, int to, float finalTotal)
     {
+        float nextTick = 0f;
         for (float t = 0f; t < countUpTime && !skipping; t += Time.unscaledDeltaTime)
         {
             int shown = Mathf.RoundToInt(Mathf.Lerp(from, to, t / countUpTime));
             totalText.text = totalPrefix + shown.ToString("D6");
+            if (t >= nextTick)
+            {
+                OnTick?.Invoke(Mathf.Clamp01(shown / finalTotal));
+                nextTick = t + tickInterval;
+            }
             yield return null;
         }
         totalText.text = totalPrefix + to.ToString("D6");
@@ -118,7 +127,7 @@ public class ScoreBreakdown : MonoBehaviour
             int from = Mathf.FloorToInt(total);
             total += points;
             OnRowCounted?.Invoke();
-            yield return CountUp(totalText, from, Mathf.FloorToInt(total));
+            yield return CountUp(totalText, from, Mathf.FloorToInt(total), score.Total);
         }
         OnFinished?.Invoke();
     }

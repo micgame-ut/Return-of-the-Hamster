@@ -18,6 +18,8 @@ public class UISFX : MonoBehaviour
     [SerializeField] private GameSFX.Slot buttonBlocked;
     [Tooltip("Start is pressed, before the transition. Plays together with Menu Select.")]
     [SerializeField] private GameSFX.Slot startPressed;
+    [Tooltip("Quit is pressed, in the menu or on an end screen. The game waits for the longest clip to finish before it closes.")]
+    [SerializeField] private GameSFX.Slot quitPressed;
 
     [Header("Credits")]
     [Tooltip("The credits panel opens.")]
@@ -49,8 +51,31 @@ public class UISFX : MonoBehaviour
     [Tooltip("A score popup appears. This happens often, so leave it empty or keep it quiet.")]
     [SerializeField] private GameSFX.Slot scorePopup;
 
+    [Header("Counting")]
+    [Tooltip("Plays on each overdrive tally tick, pitched from Min Pitch up to Max Pitch as the tally grows. The slot's own Pitch Range is ignored.")]
+    [SerializeField] private GameSFX.Slot overdriveCount;
+    [Tooltip("Plays on each tick as the score total counts up, pitched from Min Pitch up to Max Pitch across the whole breakdown. The slot's own Pitch Range is ignored.")]
+    [SerializeField] private GameSFX.Slot scoreCount;
+    [Tooltip("The pitch of a count sound at the start of the count. 1 is normal, below 1 is lower.")]
+    [SerializeField] private float minPitch = 1f;
+    [Tooltip("The pitch of a count sound at the end of the count. 2 is an octave above normal.")]
+    [SerializeField] private float maxPitch = 2f;
+
     private static UISFX instance;
     private Score score;   // this level's Score; Bind finds it again each time a level loads
+
+    public static float QuitSoundLength
+    {
+        get
+        {
+            if (instance == null || instance.quitPressed == null || instance.quitPressed.clips == null) return 0f;
+
+            float longest = 0f;
+            foreach (AudioClip clip in instance.quitPressed.clips)
+                if (clip != null && clip.length > longest) longest = clip.length;
+            return longest;
+        }
+    }
 
     private void Awake()
     {
@@ -88,6 +113,10 @@ public class UISFX : MonoBehaviour
         NameEntry.OnNameSubmitted += HandleNameSubmitted;
         ScoreBreakdown.OnRowCounted += HandleRowCounted;
         ScoreBreakdown.OnFinished += HandleFinished;
+        MainMenu.OnQuitClicked += HandleQuitClicked;
+        EndScreen.OnQuitClicked += HandleQuitClicked;
+        OverdriveTally.OnTick += HandleOverdriveTick;
+        ScoreBreakdown.OnTick += HandleScoreTick;
         Bind();
     }
 
@@ -111,6 +140,10 @@ public class UISFX : MonoBehaviour
         NameEntry.OnNameSubmitted -= HandleNameSubmitted;
         ScoreBreakdown.OnRowCounted -= HandleRowCounted;
         ScoreBreakdown.OnFinished -= HandleFinished;
+        MainMenu.OnQuitClicked -= HandleQuitClicked;
+        EndScreen.OnQuitClicked -= HandleQuitClicked;
+        OverdriveTally.OnTick -= HandleOverdriveTick;
+        ScoreBreakdown.OnTick -= HandleScoreTick;
         Unbind();
     }
 
@@ -129,6 +162,9 @@ public class UISFX : MonoBehaviour
     private void HandleNameSubmitted() => GameSFX.Play(nameSubmitted);
     private void HandleRowCounted() => GameSFX.Play(scoreRow);
     private void HandleFinished() => GameSFX.Play(scoreTotal);
+    private void HandleQuitClicked() => GameSFX.Play(quitPressed);
+    private void HandleOverdriveTick(float progress) => GameSFX.Play(overdriveCount, Mathf.Lerp(minPitch, maxPitch, progress));
+    private void HandleScoreTick(float progress) => GameSFX.Play(scoreCount, Mathf.Lerp(minPitch, maxPitch, progress));
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Bind();
 

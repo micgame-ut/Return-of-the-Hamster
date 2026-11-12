@@ -24,6 +24,9 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private GameObject tutorialPopup;
 
     public static event System.Action OnStartClicked;
+    public static event System.Action OnQuitClicked;
+
+    private bool quitting;
 
     public void OnStartPressed()
     {
@@ -59,6 +62,15 @@ public class MainMenu : MonoBehaviour
 
     public void OnQuitPressed()
     {
+        if (quitting) return;
+        quitting = true;
+        OnQuitClicked?.Invoke();
+        StartCoroutine(QuitAfterSound());
+    }
+
+    private IEnumerator QuitAfterSound()
+    {
+        yield return new WaitForSecondsRealtime(UISFX.QuitSoundLength);
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
         #else
