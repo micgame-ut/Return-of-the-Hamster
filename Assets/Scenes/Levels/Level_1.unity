@@ -9553,7 +9553,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
   lifeGained:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 83448293e7de3ee4f9674342e5497cae, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   sideBoost:
@@ -9574,15 +9575,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   invinciblePickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4d7bcce8934c00d45b6b3b9a246ab87e, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinPickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8a9ab8572f9b7c64dbe89f9ff11db37b, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   scorePickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleStart:
@@ -9590,7 +9594,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleEnd:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 3b4cb9925b7a11945a57178e1dceaab8, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinStart:
@@ -9646,15 +9651,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   playerExplosion:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   overdriveStart:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   overdriveEnd:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fb103c9a41bb0f0408205cac04e11a3d, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   minLineGap: 2
@@ -9704,7 +9712,8 @@ MonoBehaviour:
     pitchRange: {x: 1, y: 1}
     chance: 0.3
   scoreLine:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
     chance: 0.3
@@ -9734,7 +9743,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   menuSelect:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   buttonBlocked:
@@ -9778,7 +9788,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   scorePopup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
 --- !u!1 &1811917838
