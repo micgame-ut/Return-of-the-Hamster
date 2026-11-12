@@ -8549,11 +8549,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameSFX
   hit:
     clips:
-    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
-    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
-    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
-    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
-    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
+    - {fileID: 8300000, guid: 8be1499f911d1484c84d45c0157a5007, type: 3}
+    - {fileID: 8300000, guid: 65a88ea964ccba54695b74e0c2c2e599, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
   lifeGained:
@@ -8573,7 +8570,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   healthPickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 5968aea4d35d325439aec04bd9fddc9b, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   invinciblePickup:
@@ -8634,15 +8632,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   levelStart:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 403ce7e4781042e45a7fbac9187939a6, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   win:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   gameOver:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: b472906b440a58443b69abf743d25b18, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   playerExplosion:
@@ -8721,7 +8722,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISFX
   menuMove:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
+    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
+    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
+    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
+    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   buttonHover:
