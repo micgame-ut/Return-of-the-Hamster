@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Plays a sound for each UI event: moving the menu selection, pressing a button, the credits, the end screens and the
-score breakdown. Like `GameSFX`, it only listens. Each event is raised by the script that owns it, and `UISFX` turns
+Plays a sound for each UI event: moving the menu selection, pressing a button, quitting, the credits, the end screens,
+the score breakdown and the rising count sounds. Like `GameSFX`, it only listens. Each event is raised by the script that owns it, and `UISFX` turns
 it into a call to `GameSFX.Play`, which plays the slot through `SFXManager`.
 
 ## Where it lives
@@ -25,6 +25,7 @@ random pitch range. An empty slot plays nothing.
 | `menuSelect` | A button is pressed (`MenuNavigator.OnPressed`) |
 | `buttonBlocked` | A press lands on a button that can't be pressed (`MenuNavigator.OnBlocked`) |
 | `startPressed` | Start is pressed (`MainMenu.OnStartClicked`). Plays together with `menuSelect` |
+| `quitPressed` | Quit is pressed, in the menu or on an end screen (`MainMenu.OnQuitClicked`, `EndScreen.OnQuitClicked`). The game waits for the longest clip in the slot before it closes |
 | `creditsOpen` / `creditsClose` | The credits panel opens / hides (`CreditsPanel.OnOpened` / `OnClosed`) |
 | `endScreenShown` | The Game Over or Win screen appears (`EndScreen.OnShown`) |
 | `leaderboardOpen` / `leaderboardClose` | The leaderboard window opens / closes (`EndScreen.OnLeaderboardOpened` / `OnLeaderboardClosed`). They were `statsOpen` / `statsClose`; `[FormerlySerializedAs]` keeps the assigned clips |
@@ -34,6 +35,15 @@ random pitch range. An empty slot plays nothing.
 | `scoreRow` | Each score row counts into the total (`ScoreBreakdown.OnRowCounted`) |
 | `scoreTotal` | The score breakdown finishes (`ScoreBreakdown.OnFinished`) |
 | `scorePopup` | A score popup appears (`Score.OnPointsAdded`). Happens often, so keep it quiet or empty |
+| `overdriveCount` | Each tick of the overdrive tally (`OverdriveTally.OnTick`). Its pitch comes from the count, so the slot's own Pitch Range is ignored |
+| `scoreCount` | Each tick while a score row counts into the total (`ScoreBreakdown.OnTick`). Its pitch comes from the count, so the slot's own Pitch Range is ignored |
+
+The count sounds also use two plain fields:
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `minPitch` | 1 | The pitch of a count sound at the start of the count. 1 is normal, below 1 is lower |
+| `maxPitch` | 2 | The pitch of a count sound at the end of the count. 2 is an octave above normal |
 
 ## How it works
 
@@ -45,8 +55,16 @@ no sound ever plays twice.
 
 ### OnEnable / OnDisable
 
-Subscribes to the static events of `MenuNavigator`, `MainMenu`, `CreditsPanel`, `EndScreen` and `ScoreBreakdown`
-(they are `static`, so one subscription covers every scene), then calls `Bind`. `OnDisable` undoes all of it.
+Subscribes to the static events of `MenuNavigator`, `MainMenu`, `CreditsPanel`, `EndScreen`, `ScoreBreakdown` and
+`OverdriveTally` (they are `static`, so one subscription covers every scene), then calls `Bind`. `OnDisable` undoes
+all of it.
+
+### `QuitSoundLength`
+
+A `public static` property that returns the length in seconds of the longest clip in `quitPressed` (0 if there is no
+`UISFX`, no slot or no clips). `MainMenu` and `EndScreen` wait that long before closing the game, so the sound isn't
+cut off. It reads through `instance`, so callers don't need a reference to the `UISFX` object. The slot picks a clip
+at random, so the longest one is the safe wait. The clip's pitch isn't factored in, so leave the slot's pitch at 1.
 
 ### Bind / Unbind
 
@@ -57,18 +75,24 @@ and on every `sceneLoaded`. It unbinds first, so calling it twice can't subscrib
 ### Handlers
 
 Each handler is one line: `GameSFX.Play(slot)`. `HandlePointsAdded` ignores the event's four values, because only the
-fact that a popup appeared matters.
+fact that a popup appeared matters. `HandleQuitClicked` serves both quit events.
+
+The two tick handlers (`HandleOverdriveTick`, `HandleScoreTick`) get a progress value from 0 to 1 and play their slot
+with `GameSFX.Play(slot, pitch)`, where `pitch = Mathf.Lerp(minPitch, maxPitch, progress)`. With 1 and 2, a progress of
+0.5 plays at pitch 1.5. For the overdrive tally, progress is the tally divided by its `pitchFullAt`; for the score, it's
+the running total divided by the final total, so the pitch keeps rising across all the rows.
 
 ## Talks to
 
 - **MenuNavigator**: `OnMoved`, `OnHighlighted`, `OnPressed`, `OnBlocked`.
-- **MainMenu**: `OnStartClicked`.
+- **MainMenu**: `OnStartClicked`, `OnQuitClicked`. `MainMenu` reads `QuitSoundLength`.
 - **CreditsPanel**: `OnOpened`, `OnClosed`.
-- **EndScreen**: `OnShown`, `OnLeaderboardOpened`, `OnLeaderboardClosed`.
+- **EndScreen**: `OnShown`, `OnLeaderboardOpened`, `OnLeaderboardClosed`, `OnQuitClicked`. `EndScreen` reads `QuitSoundLength`.
 - **NameEntry**: `OnLetterChanged`, `OnLetterLocked`, `OnNameSubmitted`.
-- **ScoreBreakdown**: `OnRowCounted`, `OnFinished`.
+- **ScoreBreakdown**: `OnRowCounted`, `OnFinished`, `OnTick(float)`.
+- **OverdriveTally**: `OnTick(float)`.
 - **Score** (through `GameManager.Instance.Score`): `OnPointsAdded`.
-- **GameSFX**: its `Slot` class and `Play` method.
+- **GameSFX**: its `Slot` class and both `Play` methods (`Play(slot)` and `Play(slot, pitch)`).
 
 ## Gotchas
 
@@ -81,4 +105,9 @@ fact that a popup appeared matters.
   no `Score` (the breakdown exits early).
 - **Only the first `UISFX` stays.** A second one on the scene is removed, so fill the slots on the `AudioManager`
   that comes first.
+- **Quit also plays `menuSelect`** (the generic button press) in the menu, as Start does. Leave one empty if you only
+  want the quit sound. The game stays open for the length of the longest `quitPressed` clip, so a long clip is a long wait.
+- **Keep the count clips short.** The overdrive ticks arrive about 20 times a second, and each one takes a voice from
+  `SFXManager`'s small pool. A clip of about 0.1 s or less is safe; a longer one can cut other sounds off.
+- **The score ticks stop when the player skips the breakdown** (Boost), because the count-up loop ends.
 - **`ButtonSFX` and `SFXManager`'s ID list are gone.** All UI sounds come from `UISFX`.

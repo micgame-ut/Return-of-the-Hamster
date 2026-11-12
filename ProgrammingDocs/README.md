@@ -26,6 +26,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Audio/GameSFX.cs | [GameSFX.md](GameSFX.md) | Done |
 | Audio/UISFX.cs | [UISFX.md](UISFX.md) | Done |
 | TutorialManager.cs | [TutorialManager.md](TutorialManager.md) | Done |
+| IntroPlayer.cs | [IntroPlayer.md](IntroPlayer.md) | Done |
 | LeaderboardStore.cs | [LeaderboardStore.md](LeaderboardStore.md) | Done |
 | NameEntry.cs | [NameEntry.md](NameEntry.md) | Done |
 | LeaderboardPanel.cs | [LeaderboardPanel.md](LeaderboardPanel.md) | Done |

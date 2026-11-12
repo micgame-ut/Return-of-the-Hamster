@@ -33,7 +33,7 @@ time, progress) was replaced by the leaderboard window.
     RunStats, the name texts are left as they are. Without Score, no name page opens.
   - Every button's **On Click ()** pointing at this component on the EndScreen canvas, calling `Restart`,
     `NextLevel`, `Menu`, `Quit`, `ShowLeaderboardPlain` (the Scores buttons) or `CloseLeaderboard` (the window's Close).
-  - Build Settings with **Menu at index 0** and the levels after it (`Game` at 1).
+  - Build Settings with `Intro` at index 0, then the levels in play order (`Level_1` at 1, where the menu lives).
 
 ### Layout (set up in the Unity Editor)
 
@@ -132,8 +132,8 @@ straight away anyway).
 
 Sets `Time.timeScale` back to 1, then loads the scene **after** the current one in Build Settings
 (build index + 1). If there isn't one (`next < SceneManager.sceneCountInBuildSettings` is false), it loads
-the menu instead. The build order is Level_1 = 0, Level_2 = 1, Level_3 = 2, so Level 3's Next Level goes back
-to the menu (Level 1). A new level added after Level_3 is picked up with no code change.
+the menu instead. The build order is Intro = 0, Level_1 = 1, Level_2 = 2, Level_3 = 3, so Level 3's Next Level
+goes back to the menu (Level 1). A new level added after Level_3 is picked up with no code change.
 
 ### `Menu`
 
@@ -143,8 +143,14 @@ here as well keeps Menu working if `menuSceneName` ever points at a scene withou
 
 ### `Quit`
 
-Closes the game. In the Unity Editor, `Application.Quit()` does nothing, so inside `#if UNITY_EDITOR` it
-stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` part is what a built game uses.
+Raises `OnQuitClicked` (which `UISFX` turns into the quit sound), then starts the `QuitAfterSound` coroutine, which
+waits `UISFX.QuitSoundLength` seconds and closes the game. The wait uses `WaitForSecondsRealtime`, because time is
+frozen (`Time.timeScale = 0`) on the end screens and a normal wait would never finish. The `quitting` flag makes a
+second press during the wait do nothing, so the sound plays once. With no quit sound the length is 0, so it quits
+after one frame.
+
+In the Unity Editor, `Application.Quit()` does nothing, so inside `#if UNITY_EDITOR` it stops Play mode instead
+(`EditorApplication.isPlaying = false`). The `#else` part is what a built game uses.
 
 ## Talks to
 
@@ -159,7 +165,7 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
 - **MenuNavigator**: one per panel (Game Over, Win, the leaderboard window and the name page) selects and presses
   these buttons, and keeps the cursor hidden. No direct link: it just presses whichever `Button` is selected.
 - **UISFX**: subscribes to the static events `OnShown` (raised in `Show`, after the panel is switched on),
-  `OnLeaderboardOpened` and `OnLeaderboardClosed`.
+  `OnLeaderboardOpened`, `OnLeaderboardClosed` and `OnQuitClicked`. `Quit` reads its static `QuitSoundLength`.
 - **SceneManager** (Unity): loads scenes for Restart, Next Level and Menu.
 
 ## Gotchas
@@ -172,8 +178,8 @@ stops Play mode instead (`EditorApplication.isPlaying = false`). The `#else` par
   after the stats overlay became the leaderboard, the Scores and Close buttons had to be rewired by hand.
 - **Leaving before the name page skips it.** A player who presses Menu or Restart before the score count
   finishes is never asked for a name, and the score isn't saved.
-- **Build order matters.** Levels must be in play order, starting with Level_1. Next Level just loads the
-  next index.
+- **Build order matters.** `Intro` comes first, then the levels in play order, starting with Level_1. Next Level
+  just loads the next index.
 - **Every level's `menuSceneName` must be `Level_1`,** including `LevelTemplate`. A new `EndScreen` defaults to
   it, but a scene keeps whatever value it saved.
 - **Keep the EndScreen object switched on.** The panels are its children, so if the `EndScreen` object is
