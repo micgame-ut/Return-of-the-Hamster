@@ -10281,15 +10281,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameSFX
   hit:
     clips:
-    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
-    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
-    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
-    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
-    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
+    - {fileID: 8300000, guid: 8be1499f911d1484c84d45c0157a5007, type: 3}
+    - {fileID: 8300000, guid: 65a88ea964ccba54695b74e0c2c2e599, type: 3}
     volume: 1
     pitchRange: {x: 0.95, y: 1.05}
   lifeGained:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 83448293e7de3ee4f9674342e5497cae, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   sideBoost:
@@ -10305,19 +10303,23 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   healthPickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 5968aea4d35d325439aec04bd9fddc9b, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   invinciblePickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4d7bcce8934c00d45b6b3b9a246ab87e, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinPickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8a9ab8572f9b7c64dbe89f9ff11db37b, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   scorePickup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleStart:
@@ -10325,7 +10327,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleEnd:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 3b4cb9925b7a11945a57178e1dceaab8, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinStart:
@@ -10366,27 +10369,33 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   levelStart:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 403ce7e4781042e45a7fbac9187939a6, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   win:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 9732ca9426d821c4696d74cc6ad6edcd, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   gameOver:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: b472906b440a58443b69abf743d25b18, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   playerExplosion:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   overdriveStart:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   overdriveEnd:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fb103c9a41bb0f0408205cac04e11a3d, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   minLineGap: 2
@@ -10436,7 +10445,8 @@ MonoBehaviour:
     pitchRange: {x: 1, y: 1}
     chance: 0.3
   scoreLine:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
     chance: 0.3
@@ -10453,7 +10463,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISFX
   menuMove:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
+    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
+    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
+    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
+    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   buttonHover:
@@ -10461,7 +10476,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   menuSelect:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   buttonBlocked:
@@ -10469,7 +10485,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   startPressed:
-    clips: []
+    clips:
+    - {fileID: 0}
     volume: 1
     pitchRange: {x: 1, y: 1}
   creditsOpen:
@@ -10505,7 +10522,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   scoreRow:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 957faeb349224254abc3cedf454a7db5, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   scoreTotal:
@@ -10513,7 +10531,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   scorePopup:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
 --- !u!1 &1811917838
