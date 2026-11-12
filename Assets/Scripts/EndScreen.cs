@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,10 +16,6 @@ public class EndScreen : MonoBehaviour
         public GameObject panel;
         [Tooltip("Text that gets the Apollo name.")]
         public TMP_Text hamsterNameText;
-        [Tooltip("Text that gets the stats.")]
-        public TMP_Text statsText;
-        [Tooltip("Whether to add the Progress line.")]
-        public bool showProgress;
         [Tooltip("The text that shows this screen's score total.")]
         public TMP_Text scoreTotalText;
         [Tooltip("The parent the score breakdown rows are created under.")]
@@ -29,25 +26,59 @@ public class EndScreen : MonoBehaviour
     [SerializeField] private ScreenParts gameOver;
     [Tooltip("The Win screen's parts.")]
     [SerializeField] private ScreenParts win;
-    [Tooltip("The shared stats overlay opened by the Stats buttons and closed by its Close button. Optional.")]
-    [SerializeField] private GameObject statsOverlay;
+    [Tooltip("The name page shown after a run that made the leaderboard.")]
+    [SerializeField] private NameEntry nameEntry;
+    [Tooltip("The leaderboard window opened by the Scores buttons, and after a name is submitted.")]
+    [SerializeField] private LeaderboardPanel leaderboard;
     [Tooltip("The score HUD object, hidden when an end screen is shown. Optional.")]
     [SerializeField] private GameObject scoreHud;
     [Tooltip("The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings.")]
     [SerializeField] private string menuSceneName = "Level_1";
 
     public static event System.Action OnShown;
-    public static event System.Action OnStatsOpened;
-    public static event System.Action OnStatsClosed;
+    public static event System.Action OnLeaderboardOpened;
+    public static event System.Action OnLeaderboardClosed;
+    public static event System.Action OnQuitClicked;
 
     private ScoreBreakdown scoreBreakdown;
+    private int finalScore;   // this run's score, kept from the end of the score breakdown until the name is submitted
+    private bool quitting;
 
     private void Awake()
     {
         gameOver.panel.SetActive(false);
         win.panel.SetActive(false);
-        if (statsOverlay != null) statsOverlay.SetActive(false);
+        if (nameEntry != null) nameEntry.gameObject.SetActive(false);
+        if (leaderboard != null) leaderboard.gameObject.SetActive(false);
         scoreBreakdown = GetComponent<ScoreBreakdown>();
+    }
+
+    private void OnEnable()
+    {
+        ScoreBreakdown.OnFinished += HandleBreakdownFinished;
+        if (nameEntry != null) nameEntry.OnSubmitted += HandleNameSubmitted;
+    }
+
+    private void OnDisable()
+    {
+        ScoreBreakdown.OnFinished -= HandleBreakdownFinished;
+        if (nameEntry != null) nameEntry.OnSubmitted -= HandleNameSubmitted;
+    }
+
+    private void HandleBreakdownFinished()
+    {
+        GameManager gm = GameManager.Instance;
+        Score score = gm != null ? gm.Score : null;
+        if (score == null || nameEntry == null) return;
+
+        finalScore = Mathf.FloorToInt(score.Total);
+        if (LeaderboardStore.Qualifies(finalScore)) nameEntry.gameObject.SetActive(true);
+    }
+
+    private void HandleNameSubmitted(string name)
+    {
+        int rank = LeaderboardStore.Submit(name, finalScore);
+        ShowLeaderboard(rank);
     }
 
     public void ShowGameOver() => Show(gameOver);
@@ -55,48 +86,36 @@ public class EndScreen : MonoBehaviour
 
     private void Show(ScreenParts parts)
     {
-        FillStats(parts);
+        FillName(parts);
         parts.panel.SetActive(true);
         OnShown?.Invoke();
         if (scoreHud != null) scoreHud.SetActive(false);
         if (scoreBreakdown != null) scoreBreakdown.Play(parts.scoreTotalText, parts.scoreRowContainer);
     }
 
-    private void FillStats(ScreenParts parts)
+    private void FillName(ScreenParts parts)
     {
         GameManager gm = GameManager.Instance;
         RunStats stats = gm != null ? gm.RunStats : null;
         if (stats == null) return;
 
         parts.hamsterNameText.text = stats.ApolloName;
-
-        int minutes = (int)(stats.TimeSurvived / 60f);
-        int seconds = (int)(stats.TimeSurvived % 60f);
-        int progress = gm.LevelTimer != null ? Mathf.FloorToInt(gm.LevelTimer.Progress * 100f) : 0;
-
-        // Values start at the same point on every line, so they form a column.
-        string col = "<pos=70%>";
-        string text =
-            $"Asteroids destroyed{col}{stats.AsteroidsDestroyed}\n" +
-            $"Power-ups{col}{stats.PowerUpsPickedUp}\n" +
-            $"Time in overdrive{col}{stats.OverdriveTime:0.0} s\n" +
-            $"Time survived{col}{minutes}:{seconds:00}";
-        if (parts.showProgress)
-            text += $"\nProgress{col}{progress}%";
-        parts.statsText.text = text;
     }
 
-    // Stats button on either panel, and the overlay's Close button.
-    public void ShowStats()
+    // Scores button on either panel, and the leaderboard opened after a name is submitted.
+    public void ShowLeaderboard(int highlightRank = -1)
     {
-        statsOverlay.SetActive(true);
-        OnStatsOpened?.Invoke();
+        leaderboard.Show(highlightRank);
+        OnLeaderboardOpened?.Invoke();
     }
 
-    public void CloseStats()
+    // Opens the leaderboard with no highlight. The Scores buttons call this one, because a button's click can't pass the rank.
+    public void ShowLeaderboardPlain() => ShowLeaderboard();
+
+    public void CloseLeaderboard()
     {
-        statsOverlay.SetActive(false);
-        OnStatsClosed?.Invoke();
+        leaderboard.Close();
+        OnLeaderboardClosed?.Invoke();
     }
 
     public void Restart()
@@ -128,6 +147,15 @@ public class EndScreen : MonoBehaviour
 
     public void Quit()
     {
+        if (quitting) return;
+        quitting = true;
+        OnQuitClicked?.Invoke();
+        StartCoroutine(QuitAfterSound());
+    }
+
+    private IEnumerator QuitAfterSound()
+    {
+        yield return new WaitForSecondsRealtime(UISFX.QuitSoundLength);
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else

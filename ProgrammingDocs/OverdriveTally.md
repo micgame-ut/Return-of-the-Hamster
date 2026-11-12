@@ -29,6 +29,8 @@ The tally is standalone: no speed or power-up multiplier, not part of the combo,
 | `emphasisTime` | 0.3 | Seconds for the pop to ease back to normal |
 | `riseDistance` | 60 | Canvas units it rises while fading |
 | `fadeTime` | 0.8 | Seconds to rise and fade out |
+| `tickInterval` | 0.05 | Seconds between count sounds while the tally is shown |
+| `pitchFullAt` | 200 | The tally at which the count sound reaches its highest pitch. It stays there as the tally grows past it |
 
 ## How it works
 
@@ -62,16 +64,16 @@ level hasn't ended) and the current state:
 
 - **Entering** (in overdrive, not Counting): `StartCounting`. This covers Idle and Ending, so a new tally
   makes a fading one vanish.
-- **Staying in:** `tally += overdrivePointsPerSecond × Time.deltaTime`, then `ShowTally`. Scaled time, so
-  nothing is earned while the game is frozen.
+- **Staying in:** `tally += overdrivePointsPerSecond × Time.deltaTime`, then `ShowTally`, then `Tick`. Scaled
+  time, so nothing is earned while the game is frozen.
 - **Leaving** (not in overdrive, still Counting): `Bank`. Being hit out of overdrive takes this same path,
   so the tally is kept.
 - **Ending:** `Animate`.
 
 ### `StartCounting`
 
-Starts a fresh counter: the state becomes Counting, the tally goes to 0, `shownTally` goes to −1, and the
-text is hidden and reset to its resting position, scale 1 and resting color.
+Starts a fresh counter: the state becomes Counting, the tally goes to 0, `shownTally` goes to −1, `tickTimer`
+goes to 0 (so the first tick plays as soon as the number appears), and the text is hidden and reset to its resting position, scale 1 and resting color.
 
 ### `ShowTally`
 
@@ -79,6 +81,21 @@ Visually displays the text object once the tally is big enough. It rounds the ta
 clause) if the whole number hasn't changed, if it's below `minShownTally`, or if there's no text. Otherwise it
 writes `label +N` and makes sure the text is visible. So the text rebuilds once per whole point (about 20
 times a second), not every frame.
+
+### `Tick`
+
+Raises the static event `OnTick(float)` at a fixed interval while the tally is counting, for the count sound.
+It does nothing until the tally reaches `minShownTally`, so the sound starts when the number first appears.
+`tickTimer` counts down with `Time.deltaTime`; at 0 it resets to `tickInterval` and raises the event with
+`Mathf.Clamp01(tally ÷ pitchFullAt)`.
+
+| Tally (`pitchFullAt` 200) | Value sent |
+| --- | --- |
+| 10 | 0.05 |
+| 100 | 0.5 |
+| 250 | 1 (held at the top) |
+
+`UISFX` turns that 0 to 1 value into a pitch.
 
 ### `Bank`
 
@@ -116,6 +133,7 @@ end-of-level freeze too.
 - **PlayerMovement**: reads `InOverdrive` every frame (through GameManager's `Player`).
 - **Score**: calls `AddOverdriveBonus` to bank the tally.
 - **GameManager**: gets `Player` and `Score` in `Awake`; subscribes to `OnGameOver` and `OnWin`.
+- **UISFX**: subscribes to the static event `OnTick`, raised in `Tick`.
 
 ## Gotchas
 

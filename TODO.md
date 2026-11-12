@@ -54,6 +54,18 @@ Needed for the finished game. All of these come before any other item.
   `PlayerMovement`, `PlayerHealth`, `Score`, `RunStats` and the four "world is alive" scripts updated.
   To check in Play mode: the popup, Skip (unchanged level), each tutorial stage and its retry, and the handoff
   into the level (spawner, HUD and score should start fresh).
+- [ ] **Leaderboard replacing the stats overlay:** the highest scores, submitted with a three-letter arcade name on
+  game end (win or loss).
+  **Built, waiting for your test.** Decided: local scores (saved with `PlayerPrefs`, per machine), top 10, the name
+  page only opens for a score that makes the list, and the stats (asteroids, power-ups, time, progress) are dropped.
+  Name input: roll down/up to change the letter, the button locks it and moves on, roll left to step back.
+  `LeaderboardStore` (static: `Qualifies`, `Submit`, `Clear`), `NameEntry` (the name page), `LeaderboardPanel` (the
+  window, with the new row highlighted). `EndScreen` opens the name page when `ScoreBreakdown.OnFinished` fires, then
+  the leaderboard; the STATS buttons became SCORES. `UISFX` has new `leaderboardOpen/Close`, `letterChange`,
+  `letterLock` and `nameSubmitted` slots. Docs: `LeaderboardStore.md`, `NameEntry.md`, `LeaderboardPanel.md`
+  (**waiting for your review**), `EndScreen.md`, `UISFX.md` and `MenuNavigator.md` updated.
+  To check in Play mode: finish a run with a score above 0, enter a name, see the board; the SCORES buttons; a
+  run that doesn't qualify; sounds in the new `UISFX` slots.
 - [x] **Menu navigation with mouse input:** every menu item selectable by scrolling between the options using input
   from the mouse (not the keyboard), and pressing Space to choose, instead of clicking. Decided: the trackball movement
   (the mouse delta), no mouse pointer at all.

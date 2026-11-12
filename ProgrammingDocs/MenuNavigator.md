@@ -4,7 +4,7 @@
 
 Lets a page of UI buttons be used with only a trackball and one button, with no mouse pointer: rolling the ball moves
 the selection, and the button (Space) presses the selected item. There is one `MenuNavigator` per page (main menu,
-credits, Game Over, Win, stats overlay). Only the page on top reacts, so a page opened over another doesn't also
+credits, Game Over, Win, leaderboard window, and the name page, which has no buttons and only takes the top spot). Only the page on top reacts, so a page opened over another doesn't also
 move the page under it.
 
 ## Where it lives

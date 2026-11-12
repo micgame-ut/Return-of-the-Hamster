@@ -32,6 +32,7 @@ stream and the player's exhaust flame ease in afterwards. There's no scene chang
 | `nearPlanet` / `nearPlanetTarget` | — | `Earth` / `Near Planet Target` | The near planet and the off-screen spot it slides to |
 | `uiElements` | — | the title and the four buttons | Everything that flies back past the camera |
 | `uiEndBehindCamera` | 2 | 2 | How far behind the camera the UI finishes, in world units |
+| `menuCanvas` | — | `Menu Canvas` | The whole menu canvas. Switched off when the menu is put away, so its page and selection arrow stop too |
 
 The targets are empty marker GameObjects, so they can be lined up by eye in the Scene view, with no numbers
 in code.
@@ -61,8 +62,11 @@ the Earth would approach diagonally from there all level.
 
 ### `HideMenu`
 
-Switches off the near planet and every UI element (`SetActive(false)`), instantly. It doesn't move anything;
-the movement happens in `Animate`. It's called in two places:
+Switches off the near planet, every UI element and the whole `menuCanvas` (`SetActive(false)`), instantly. It
+doesn't move anything; the movement happens in `Animate`. Switching the canvas off matters: it holds the main
+menu's `MenuNavigator` and its arrow, which otherwise stay alive as the top page. On a restart (no glide) the
+arrow would reappear beside the hidden Start button, and every boost press would raise the menu's press events
+and play its sounds. It's called in two places:
 
 - **at the end of `Animate`**, when they're already out of view, so Unity stops drawing them;
 - **in `Awake` on a restart**, to make the menu vanish straight away.

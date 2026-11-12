@@ -25,7 +25,14 @@ public class OverdriveTally : MonoBehaviour
     [SerializeField] private float riseDistance = 60f;
     [Tooltip("Seconds to rise and fade out.")]
     [SerializeField] private float fadeTime = 0.8f;
+    [Tooltip("Seconds between count sounds while the tally is shown.")]
+    [SerializeField] private float tickInterval = 0.05f;
+    [Tooltip("The tally at which the count sound reaches its highest pitch. It stays there as the tally grows past it.")]
+    [SerializeField] private float pitchFullAt = 200f;
 
+    public static event System.Action<float> OnTick;
+
+    private float tickTimer;
     private State state = State.Idle;
     private float tally;
     private int shownTally = -1;
@@ -59,6 +66,7 @@ public class OverdriveTally : MonoBehaviour
             if (state != State.Counting) StartCounting();
             tally += overdrivePointsPerSecond * Time.deltaTime;
             ShowTally();
+            Tick();
         }
         else if (state == State.Counting)
         {
@@ -126,6 +134,7 @@ public class OverdriveTally : MonoBehaviour
         state = State.Counting;
         tally = 0f;
         shownTally = -1;
+        tickTimer = 0f;
         if (tallyText == null) return;
 
         tallyText.gameObject.SetActive(false);
@@ -142,6 +151,17 @@ public class OverdriveTally : MonoBehaviour
         shownTally = whole;
         tallyText.text = $"{label} +{whole}";
         tallyText.gameObject.SetActive(true);
+    }
+
+    private void Tick()
+    {
+        if (tally < minShownTally) return;
+
+        tickTimer -= Time.deltaTime;
+        if (tickTimer > 0f) return;
+
+        tickTimer = tickInterval;
+        OnTick?.Invoke(Mathf.Clamp01(tally / pitchFullAt));
     }
 
     // Hands the tally to Score, then pops it if it was big enough to show.
