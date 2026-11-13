@@ -1806,6 +1806,16 @@ MonoBehaviour:
     rotationStep: 45
     mirrorChance: 0
     playOnce: 1
+  - pattern: {fileID: 3549135696725525193, guid: 113923deb138a624692ab4bc933dbebf, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0.6
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 1
   - pattern: {fileID: 8648436651722075515, guid: 276d0c22c94bff84c8b1c4964f033bbf, type: 3}
     delayAfter: 0.5
     clearPoints: 10
@@ -1830,7 +1840,7 @@ MonoBehaviour:
     delayAfter: 1
     clearPoints: 10
     perfectBonus: 0
-    fromProgress: 0.75
+    fromProgress: 0.8
     untilProgress: 1
     randomRotation: 1
     rotationStep: 45
@@ -10568,7 +10578,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   quitPressed:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 75fcea55ea36e5840ace3b945815b031, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   creditsOpen:

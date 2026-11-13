@@ -43,7 +43,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 | --- | --- | --- |
 | `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin or Score Multiplier on pickup, never Health |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
-| `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` here |
+| `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` (tiny green plus signs) and the `Mystery PowerUp` uses `vfx_mystery_pop` (golden stars) here |
 
 ## How it works
 

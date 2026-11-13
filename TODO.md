@@ -232,9 +232,15 @@ its own pickup effect: a burst of tiny plus signs.
 - New assets: `Health_Green.mat` (URP Lit, glowing green, on both cubes of `Health PowerUp.prefab`),
   `Plus_Particle.png` (16×16 pixel plus, Point filter), `Health_Plus_Particle.mat` and `vfx_health_pop.prefab`
   (28 particles, size 0.12 to 0.25, about 1 s).
-- To check in Play mode: the pickup glows green; collecting it bursts plus signs that slow down and fade; other
-  power-ups still use the old explosion; collecting several in a row leaves nothing stuck. Then tune the burst
-  (size, speed, distance) by eye.
+- The `Mystery PowerUp` gets the same treatment: a gold material (`Mystery_Gold.mat`, a placeholder until the
+  shining-shader model arrives) and `vfx_mystery_pop`, a burst of 24 golden stars (`Star_Particle.png`, 24×24,
+  `Mystery_Star_Particle.mat`) that spin slightly as they fade. It plays for any Mystery pickup, whatever it rolled.
+- Material glow: URP Lit needs the `_EMISSION` keyword on in the file for the emission color to show. `Health_Green`
+  was missing it until now, so its glow hadn't been showing. Check the file's `m_ValidKeywords` if a glow ever
+  seems missing.
+- To check in Play mode: the pickups glow (green, gold); collecting one bursts plus signs or stars that slow down and
+  fade; the other power-ups still use the old explosion; collecting several in a row leaves nothing stuck. Then tune
+  the bursts (size, speed, distance) by eye.
 
 ## Phase asteroid
 
