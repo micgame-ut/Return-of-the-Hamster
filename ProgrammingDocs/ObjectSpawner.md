@@ -35,6 +35,7 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | `waves[].randomRotation` | false | Each time the wave spawns, turn the whole pattern round the orbit by a random angle |
 | `waves[].rotationStep` | 0 | If above 0, the random angle is a multiple of this many degrees (90 = 4 orientations, 45 = 8). 0 = any angle. Only used when `randomRotation` is on |
 | `waves[].mirrorChance` | 0 (slider 0–1) | The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip |
+| `waves[].playOnce` | off | The wave plays exactly once per level, the first time its turn comes at or after `fromProgress`. `untilProgress` is ignored for it. Use it for waves that must not repeat, such as a Health pickup |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
 | `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
@@ -106,7 +107,9 @@ to normal when Play stops. See [PatternGizmosEditor.md](PatternGizmosEditor.md).
 3. For each wave, in the order `GetWaveOrder` gives:
    - If `StopSpawning` is true, stop for good.
    - If the wave isn't **available** (`IsAvailable`: it has no pattern, or the level's progress is outside its
-     `fromProgress`–`untilProgress` range), skip it. Progress is read fresh at each wave's turn.
+     `fromProgress`–`untilProgress` range, or it is a Play Once wave that has already played), skip it. Progress
+     is read fresh at each wave's turn.
+   - If it is a Play Once wave, set its `played` flag now, before it spawns.
    - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
      coroutine inside this one and continues only when that one is done.
    - In a test only (`#if UNITY_EDITOR`, `PatternTest.Active`): also wait until `AsteroidBehavior.Active` and
@@ -146,6 +149,24 @@ one that isn't available at its turn is skipped.
 
 A **gap** in the ranges (say Ring 0–0.3 and Zigzag 0.5–1) leaves an empty sky from 0.3 to 0.5, where the spawner
 waits and rechecks every 0.5 s. That's allowed, but easy to do by accident.
+
+### Play Once (`playOnce` and `played`)
+
+Progress is only read at each wave's **turn**, and a pass through the list takes about 5 s per wave. A very thin
+window (say 0.03 of a 120 s level, about 3.6 s) can fall between two turns, so the wave never plays. A Play Once wave
+avoids that. `IsAvailable` checks `Progress >= fromProgress` first, then for a Play Once wave only asks whether it
+has already played (`!wave.played`); `untilProgress` is not looked at. `RunWaves` sets `played` when the wave's turn
+comes, before it spawns, so it can never play twice, even if the game ends mid-pattern.
+
+| Wave | `fromProgress` | Plays |
+| --- | --- | --- |
+| Normal | 0.4, until 0.5 | on every pass while progress is 0.4 to 0.5 (may be missed if no turn lands there) |
+| Play Once | 0.4 | once, at its first turn at or after 0.4, then never again |
+
+It plays up to about one wave later than the number says (the next turn). `played` is a `[NonSerialized]` field on
+`Wave` (runtime state that isn't saved, like `lastIndex` in GameSFX's `Slot`). A restart or new level reloads the
+scene, which makes fresh `Wave` objects, so it starts false each time. Test This Pattern builds its own wave with
+`playOnce` off, so tests still loop.
 
 ### Rotating and mirroring at spawn (`randomRotation`, `rotationStep`, `mirrorChance`)
 
@@ -287,6 +308,9 @@ compares against its own starting count, so a life lost with two waves on screen
 - **A new wave added to the list starts at 0–1.** The two numbers are per wave, so each new wave needs its own
   range. If Unity ever showed `Until Progress` as 0 on an old wave, it would only play at the very start.
 - **The Test This Pattern override ignores phases** (its single wave is 0–1).
+- **A Play Once wave ignores `untilProgress`.** If its turn comes late (the level is nearly over), it still plays
+  once, unless the earth arrives first.
+- **A thin window on a normal wave can be skipped.** Use Play Once for anything that must appear.
 - **Spacing is only exact at a steady speed.** The wait is calculated from the approach speed when it
   starts. If the player speeds up or slows down during the wait, the gap between asteroids in flight
   ends up smaller or bigger than laid out.
