@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
     public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
+    public LevelConfig LevelConfig => levelConfig;
     public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }

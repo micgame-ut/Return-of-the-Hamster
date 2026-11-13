@@ -401,8 +401,19 @@ Built one feature at a time, each with a test point.
   Level 1's scene. Level 1's own settings (menu on, hamster menu spot, start button) are overrides.
 - [x] **`LevelConfig` asset per level** (`Assets/Levels/`): `levelTime` and the finish planet's material, position,
   rotation and scale. See `LevelConfig.md`. Level 1 Mars, Level 2 Moon, Level 3 Earth.
-- [ ] **Move the wave list into `LevelConfig`.** Touches `ObjectSpawner` and the builder's Add to Spawner and Test
-  This Pattern buttons.
-- [ ] **Play Once waves jump the queue** in `ObjectSpawner`, so finale waves (From 0.85 to 0.95) don't start late.
+- [x] **Wave list moved into `LevelConfig`** (`waves`, `order`, `loop`, `startDelay`). `ObjectSpawner` copies it in
+  `Start`; Add to Spawner writes to the open scene's config. **Waiting for your test** of Add to Spawner and Test
+  This Pattern.
+- [x] **Play Once waves jump the queue** in `ObjectSpawner`, so finale waves (From 0.85 to 0.95) don't start late.
+  Done and checked in Play mode on Level 1 (all four Play Once waves played within one turn of coming due). Waiting
+  for your own playtest.
 - [ ] **Remove the missing script** on Level 1's `Menu Canvas` (console warning on Play).
-- [ ] **Level 2 patterns** (Stage 2 onward) and Level 3's patterns and wave lists.
+- [x] **Level 2 patterns built** (all 18, in `Assets/Prefabs/Patterns/Level_2/`). Still yours: add them to `Level2Config`'s
+  Waves with the From/Until/Delay/Points/Rotation/Mirror/Play Once values in the plan, then playtest.
+- [ ] **Level 3** (next session): a wave plan like Levels 1 and 2 (the new mechanics, how difficulty rises, points by
+  difficulty rating), then its patterns in `Assets/Prefabs/Patterns/Level_3/` and its wave list in `Level3Config`. It is the
+  final level and the return home (`Earth_Mat`, 240 s).
+- [ ] **Continue for playtesters** (next session): after a game over, a Continue option so playtesters can keep working
+  through the levels if one is too hard. Variables first, before any code. Questions to settle: where it picks up (same
+  progress, or the start of the wave), what lives it gives back, whether continues are unlimited, whether it counts for
+  the score and the leaderboard, and whether it is only for playtest builds (a flag, so it can be switched off for release).
