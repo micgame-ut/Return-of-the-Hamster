@@ -43,6 +43,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject hud;
     [Tooltip("Tick on Level 1 only: the level waits at the menu until MenuTransition calls StartGame. Off = starts straight away.")]
     [SerializeField] private bool startWithMenu;
+    [Tooltip("This level's timing and finish planet. Empty = the level keeps the values already set in the scene.")]
+    [SerializeField] private LevelConfig levelConfig;
 
     public PlayerMovement Player => player;
     public Camera GameplayCamera => gameplayCamera;
@@ -103,6 +105,8 @@ public class GameManager : MonoBehaviour
         if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
 
+        ApplyLevelConfig();
+
         // No menu on this level, or a restart: start straight away.
 #if UNITY_EDITOR
         if (PatternTest.Active) SkipMenuOnce = true; // Test This Pattern skips the menu
@@ -110,6 +114,18 @@ public class GameManager : MonoBehaviour
         if (!startWithMenu || SkipMenuOnce) StartGame();
         else if (hud != null) hud.SetActive(false);
         SkipMenuOnce = false;
+    }
+
+    private void ApplyLevelConfig()
+    {
+        if (levelConfig == null) return;
+
+        if (levelTimer != null) levelTimer.SetLevelTime(levelConfig.levelTime);
+
+        if (earth == null) return;
+        if (levelConfig.planetMaterial != null) earth.sharedMaterial = levelConfig.planetMaterial;
+        earth.transform.SetLocalPositionAndRotation(levelConfig.planetPosition, Quaternion.Euler(levelConfig.planetRotation));
+        earth.transform.localScale = levelConfig.planetScale;
     }
 
     private void Update()

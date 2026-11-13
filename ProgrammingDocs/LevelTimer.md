@@ -34,6 +34,9 @@ only LevelTimer can change it, but any script can read it.
 `LevelTime` is a read-only property that hands back `levelTime`, so other scripts can read the setting
 without being able to change it. Score uses it to work out the time score.
 
+`SetLevelTime(seconds)` is the one way to change `levelTime` from another script. `GameManager` calls it in
+`Awake` when the level has a `LevelConfig`, so the config's time replaces the Inspector value.
+
 ### `RecordOrigin`: working out the earth's path
 
 The earth moves in a straight line from where it starts to a **stop point** just in front of the earth
@@ -100,7 +103,8 @@ LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is o
 ## Talks to
 
 - **GameManager**: gets the earth and earth camera in `RecordOrigin`, and reads `HasStarted` and
-  `IsGameOver` every frame. GameManager reads `IsComplete` as part of deciding the win.
+  `IsGameOver` every frame. GameManager reads `IsComplete` as part of deciding the win, and calls
+  `SetLevelTime` once in `Awake` when the level has a `LevelConfig`.
 - **MenuTransition**: no direct link, but it moves the earth into place before the first frame of play, which
   is why the origin is recorded then.
 - **PlayerMovement**: LevelTimer reads the static `Speed` every frame. PlayerMovement reads `IsComplete`

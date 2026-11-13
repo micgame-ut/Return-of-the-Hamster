@@ -33,6 +33,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | GraphicsQuality.cs | [GraphicsQuality.md](GraphicsQuality.md) | Done |
 | HamsterAnimationDriver.cs | [HamsterAnimationDriver.md](HamsterAnimationDriver.md) | Done |
 | HamsterMenuFloat.cs | [HamsterMenuFloat.md](HamsterMenuFloat.md) | Done |
+| LevelConfig.cs | [LevelConfig.md](LevelConfig.md) | Done |
 | LevelTimer.cs | [LevelTimer.md](LevelTimer.md) | Done |
 | MagnetMirror.cs | [MagnetMirror.md](MagnetMirror.md) | Done |
 | MenuNavigator.cs | [MenuNavigator.md](MenuNavigator.md) | Done |

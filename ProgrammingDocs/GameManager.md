@@ -44,6 +44,7 @@ the matching end screen. It doesn't stop other scripts itself. It announces the 
 | `showOrbitRing` | bool (default on) | Accessibility setting: whether OrbitRing draws the orbit ring and its danger arcs. Read once when the level starts. Meant to be set from a menu setting later |
 | `hud` | GameObject | The HUD. Hidden while the menu shows, shown by `StartGame`. Optional. Keep the menu buttons out of it |
 | `startWithMenu` | bool (default off) | Ticked on Level 1 only: the level waits at the menu until MenuTransition calls `StartGame`. Off = starts straight away |
+| `levelConfig` | LevelConfig | This level's timing and finish planet. Empty = the level keeps the values already set in the scene. See [LevelConfig.md](LevelConfig.md) |
 
 Each field has a matching read-only property (`Player`, `GameplayCamera`, `Earth`, `EarthCamera`,
 `LevelTimer`, `PlayerHealth`, `PlayerInvincibility`, `RunStats`, `Score`, `ShowOrbitRing`). Other scripts can read the values but can't change them.
@@ -83,7 +84,10 @@ or `Start` runs, `Instance` is ready.
    assigned, it looks for it on the player object with `player.GetComponent`. Calling `GetComponent` on
    another component searches that component's GameObject. The `&& player != null` check stops before
    `player.GetComponent` could throw.
-6. **Start now, or wait for the menu.** If `startWithMenu` is off, or `SkipMenuOnce` is set (a restart), it
+6. **Apply the level config.** `ApplyLevelConfig` does nothing if `levelConfig` is empty. Otherwise it gives
+   `LevelTimer` the `levelTime` and sets the planet's material, position, rotation and scale. It runs here, before
+   the menu or the timer touch the planet.
+7. **Start now, or wait for the menu.** If `startWithMenu` is off, or `SkipMenuOnce` is set (a restart), it
    calls `StartGame()` straight away. Otherwise it hides `hud` and waits. Either way, it clears
    `SkipMenuOnce`. See "Starting: `HasStarted` and `StartGame`".
 
