@@ -12,6 +12,8 @@ public class PowerUp : MonoBehaviour
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
+    [Tooltip("This power-up's own pickup effect. Empty uses the SpawnableTemplate's pickup effect.")]
+    [SerializeField] private ParticleSystem pickupEffect;
 
     private Vector3 origin;
     private float distance;
@@ -226,7 +228,7 @@ public class PowerUp : MonoBehaviour
 
         if (template != null)
         {
-            EffectPool.Play(template.pickupEffectPrefab, transform.position);
+            EffectPool.Play(pickupEffect != null ? pickupEffect : template.pickupEffectPrefab, transform.position);
 
             if (template.pickupShakeDuration > 0f)
                 CameraShake.Shake(template.pickupShakeDuration, template.pickupShakeMagnitude);

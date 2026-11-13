@@ -23,8 +23,11 @@ creates copies, tells them where to go, and removes them.
 | --- | --- |
 | `meshTransform` | The copy's ship mesh, which copies the player mesh's roll |
 | `shellMesh` | The copy's shell, shown and hidden like the player's |
-| `shellCollider` | The copy's bigger hitbox, on while the player's shell hitbox is on |
-| `bodyCollider` | The copy's body hitbox, on otherwise |
+| `shellCollider` | The copy's bigger hitbox (`roll_mesh/Shell`), on while the player's shell hitbox is on |
+| `bodyCollider` | The copy's body hitbox (`roll_mesh/Sphere`), on otherwise |
+
+The root `Twin Copy` object has **no collider of its own**, like the player. Its Rigidbody uses the colliders of
+its children.
 
 ## How it works
 
@@ -110,3 +113,7 @@ without this the copy would be dragged along by the jump. It adds the same amoun
 - **The hit blink isn't copied.** Copies only exist during the twin, where there's no hit-invulnerability.
 - **No Rigidbody, no hits.** Without a kinematic Rigidbody on the prefab, asteroids and pickups pass through
   copies.
+- **Every collider on the copy must be assigned.** Both fields must be filled in, and there must be no other collider.
+  The copy used to have an empty `shellCollider` and an extra root collider, so its shell and `Sphere` colliders were
+  always on beside the body one. One asteroid hit on a copy then fired up to three times: the first removed the copy,
+  and the others ran the "hit the player" branch, which cost the player a life as well.

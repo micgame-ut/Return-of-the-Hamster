@@ -43,6 +43,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 | --- | --- | --- |
 | `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin or Score Multiplier on pickup, never Health |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
+| `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` here |
 
 ## How it works
 
@@ -172,7 +173,8 @@ When something touches it:
    its own `type` otherwise. `ApplyEffect(picked)` runs that effect, then `OnCollected` is raised with
    `picked` and the power-up's position. A Random power-up with no template passes through as Random, which
    has no effect and no label.
-5. **Feedback** from the template's Power-Up section: play `pickupEffectPrefab` through `EffectPool.Play`,
+5. **Feedback** from the template's Power-Up section: play the pickup effect through `EffectPool.Play` (the
+   power-up's own `pickupEffect` if it has one, otherwise the template's `pickupEffectPrefab`),
    and shake the camera only if `pickupShakeDuration` is above 0. (Skipping a 0 shake matters: calling
    `Shake` would restart the timer of a shake already running.)
 6. **Despawn** the power-up with `PatternCopy.Despawn`.
@@ -252,8 +254,10 @@ as it's picked up.
   non-mesh renderer is skipped.
 - **It's reused.** Any new state must be reset in `OnEnable`, which runs on every reveal. Never `Destroy`
   it in code; call `PatternCopy.Despawn`.
-- **The pickup effect must be assigned in the template** (`pickupEffectPrefab`), or there's no visual
-  feedback.
+- **A pickup effect must be assigned,** either on the power-up (`pickupEffect`) or in the template
+  (`pickupEffectPrefab`), or there's no visual feedback.
+- **An effect set on the power-up isn't prewarmed.** EffectPool only prewarms the template's effects, so the first
+  pickup of a power-up with its own `pickupEffect` makes one copy then (a small particle system, so it's unnoticeable).
 - **A new type needs its `case`.** A type with no case in `ApplyEffect` is counted as picked up but does
   nothing.
 - **It doesn't appear on the orbit ring.** OrbitRing only draws danger arcs for asteroids
