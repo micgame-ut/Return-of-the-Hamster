@@ -32,7 +32,7 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `maxScale` | 2 | Size at `pointsForMaxScale` and above |
 | `pointsForMaxScale` | 1000 | The final gain (points × multiplier) that reaches `maxScale` |
 | `showMultiplierAbove` | 1.5 | The multiplier is added to the text (`+325x2.0`) only when it's above this |
-| `healthLabel` | +1 LIFE | Shown when a Health power-up (or a Random one that rolled Health) is picked up. Empty = no popup |
+| `healthLabel` | +1 LIFE | Shown when a Health power-up (a fixed one, since a Random pickup never gives Health) is picked up. Empty = no popup |
 | `invincibleLabel` | INVINCIBLE | Shown for Invincible |
 | `twinLabel` | TWIN | Shown for Twin |
 | `scoreLabel` | SCORE x2 | Shown for Score Multiplier |

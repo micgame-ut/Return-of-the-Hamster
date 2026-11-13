@@ -26,6 +26,11 @@ goal and sections 2, 3, 6 and 7. Delete the block to turn the checks back on.
   (section 3), comment approval (section 4), warnings before renames, testing steps (section 8).
 - **Docs (section 7):** write `ProgrammingDocs/<ScriptName>.md` from the code yourself, as for existing
   scripts, and ask the user to review it. Don't ask them to explain the feature first.
+- **Pattern prefabs (section 9):** at the user's request, the agent may create new pattern prefabs in
+  `Assets/Prefabs/Patterns/Level_1`, `Level_2` and `Level_3`, through the Unity Editor (asteroid and power-up
+  prefabs placed as children of an empty object, saved as a prefab). Before creating one, it lists the layout
+  (shape, count, angles, depth) for approval. Existing prefabs, scenes and `.meta` files stay off limits, so
+  the user adds each pattern to the spawner's wave list and tests it with Test This Pattern.
 
 ---
 

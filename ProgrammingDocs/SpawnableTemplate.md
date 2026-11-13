@@ -126,15 +126,15 @@ These three are new, so the asset uses the defaults until they're changed.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `healthChance` | 40 | How often a Random power-up gives Health |
-| `invincibleChance` | 20 | How often it gives Invincible |
+| `invincibleChance` | 20 | How often a Random power-up gives Invincible |
 | `twinChance` | 20 | How often it gives Twin |
 | `scoreChance` | 20 | How often it gives Score Multiplier |
 
-These are **shares of the total**, not strict percentages: 40/20/20/20 is 40%, 20%, 20%, 20%, and 2/1/1/1
-would mean the same. 0 means that type never comes up. Types that would be wasted at pickup (Health at full
-lives, Twin at the cap) are left out of that roll, and the rest share their chance. Only Random power-ups use
-these; the fixed prefabs ignore them. See PowerUp's `RollType`.
+These are **shares of the total**, not strict percentages: 20/20/20 is a third each, and 2/2/2 would mean the
+same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
+that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There
+is no Health chance: a Random power-up never gives Health, which is placed by hand with the fixed `Health
+PowerUp` prefab. See PowerUp's `RollType`.
 
 `despawnBehindCamera` (Despawn) is shared by asteroids and power-ups.
 

@@ -211,12 +211,13 @@ for the full walkthrough, and `GameManager.md` ("Starting: `HasStarted` and `Sta
 ## Random power-up
 
 **Done and tested** (branch `feature/random-powerup`). The patterns use one `Mystery PowerUp` prefab
-(`PowerUp` type **Random**) that rolls Health, Invincible, Twin or Score Multiplier on pickup.
+(`PowerUp` type **Random**) that rolls Invincible, Twin or Score Multiplier on pickup. Health was taken out of
+the roll: it is placed by hand with the fixed `Health PowerUp` prefab, in chosen waves.
 
-- Chances: `healthChance` / `invincibleChance` / `twinChance` / `scoreChance` on the SpawnableTemplate
-  (40/20/20/20), as shares of the total.
-- Wasted picks are skipped (Health at full lives or while twinned, Twin at the cap via the new
-  `PlayerTwins.CanAddBody`). If everything is wasted, the roll falls back to the plain chances.
+- Chances: `invincibleChance` / `twinChance` / `scoreChance` on the SpawnableTemplate (20/20/20 by default; the
+  asset uses 10/25/25), as shares of the total. The old `healthChance` was removed.
+- Wasted picks are skipped (Twin at the cap via the new `PlayerTwins.CanAddBody`). If everything is wasted, the
+  roll falls back to the plain chances.
 - Every pickup raises the static `PowerUp.OnCollected`; ScorePopups shows a label for it (`healthLabel` etc.).
 - `Mystery PowerUp` is the old `Twin PowerUp` prefab renamed (same GUID). The Health, Invincibility and Score
   prefabs still work as fixed types. See `PowerUp.md` (`RollType`).

@@ -8,7 +8,7 @@ public class PowerUp : MonoBehaviour
 {
     public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random }
 
-    [Tooltip("Which effect this power-up has. Random rolls one on pickup.")]
+    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin or Score Multiplier on pickup, never Health.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
@@ -46,8 +46,8 @@ public class PowerUp : MonoBehaviour
 
     // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
     private static readonly PowerUpType[] RollTypes =
-        { PowerUpType.Health, PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier };
-    private readonly float[] rollWeights = new float[4];
+        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier };
+    private readonly float[] rollWeights = new float[RollTypes.Length];
 
     private void Awake()
     {
@@ -174,7 +174,6 @@ public class PowerUp : MonoBehaviour
 
     private float ChanceOf(PowerUpType t) => t switch
     {
-        PowerUpType.Health => template.healthChance,
         PowerUpType.Invincible => template.invincibleChance,
         PowerUpType.Twin => template.twinChance,
         _ => template.scoreChance,
@@ -183,7 +182,6 @@ public class PowerUp : MonoBehaviour
     // True when picking this type up right now would do nothing.
     private bool IsWasted(PowerUpType t) => t switch
     {
-        PowerUpType.Health => health == null || health.CurrentLives >= health.MaxLives || (twins != null && twins.IsTwinned),
         PowerUpType.Twin => twins == null || !twins.CanAddBody,
         _ => false,
     };

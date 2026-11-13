@@ -32,6 +32,9 @@ public class ObjectSpawner : MonoBehaviour
         public float rotationStep = 0f;
         [Tooltip("The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip.")]
         [Range(0f, 1f)] public float mirrorChance = 0f;
+        [Tooltip("Plays exactly once per level, the first time its turn comes at or after From Progress. Until Progress is ignored for it.")]
+        public bool playOnce = false;
+        [NonSerialized] public bool played;
     }
 
     [Tooltip("The list of waves. Each has a pattern (the prefab to spawn) and a delayAfter.")]
@@ -77,7 +80,11 @@ public class ObjectSpawner : MonoBehaviour
     private float Progress => levelTimer != null ? levelTimer.Progress : 0f;
 
     // A wave plays only if it has a pattern and the level is currently inside its progress range.
-    private bool IsAvailable(Wave wave) => wave.pattern != null && Progress >= wave.fromProgress && Progress <= wave.untilProgress;
+    private bool IsAvailable(Wave wave)
+    {
+        if (wave.pattern == null || Progress < wave.fromProgress) return false;
+        return wave.playOnce ? !wave.played : Progress <= wave.untilProgress;
+    }
 
     private void Awake()
     {
@@ -128,6 +135,7 @@ public class ObjectSpawner : MonoBehaviour
                 if (!IsAvailable(wave)) continue;
 
                 spawnedAny = true;
+                if (wave.playOnce) wave.played = true;
 
                 // Wait for the whole pattern to finish revealing, then pause.
                 yield return SpawnPattern(wave);

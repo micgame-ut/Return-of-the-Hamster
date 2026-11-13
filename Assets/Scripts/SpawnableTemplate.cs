@@ -74,10 +74,8 @@ public class SpawnableTemplate : ScriptableObject
     [Tooltip("Seconds of invincibility from an Invincible power-up.")]
     public float invincibleDuration = 5f;
 
-    [Header("Random Power-Up Chances")]          // shares of the total, so 40/20/20/20 = 40%, 20%, 20%, 20%
-    [Tooltip("How often a Random power-up gives Health. The four chances are shares of their total.")]
-    public float healthChance = 40f;
-    [Tooltip("How often a Random power-up gives Invincible.")]
+    [Header("Random Power-Up Chances")]          // shares of the total, so 10/25/25 = 17%, 42%, 42%
+    [Tooltip("How often a Random power-up gives Invincible. The three chances are shares of their total.")]
     public float invincibleChance = 20f;
     [Tooltip("How often a Random power-up gives Twin.")]
     public float twinChance = 20f;
