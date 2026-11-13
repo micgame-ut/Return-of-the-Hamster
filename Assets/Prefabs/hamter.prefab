@@ -1047,9 +1047,6 @@ PrefabInstance:
       addedObject: {fileID: 4829106511776579349}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -3615315775372873831}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 7991713111195198616}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 12d20079a6274824a88ed43a634a499f, type: 3}
       insertIndex: -1
@@ -1108,27 +1105,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!135 &-3615315775372873831
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3493068378728214698}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.2
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &7991713111195198616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1257,7 +1233,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerShell
   shellMesh: {fileID: 4029020857195545039}
   shellCollider: {fileID: 8713779155764948520}
-  bodyCollider: {fileID: -3615315775372873831}
+  bodyCollider: {fileID: 9060547678956176841}
   shieldMaterial: {fileID: 2100000, guid: db65f8e2e3082414bbf4b2410562b126, type: 2}
   rainbowMaterial: {fileID: 2100000, guid: d37e1d5e0db73454f83964708bcdfdf7, type: 2}
 --- !u!114 &612313549108183201

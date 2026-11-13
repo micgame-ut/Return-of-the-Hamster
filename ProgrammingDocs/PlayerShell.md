@@ -17,6 +17,10 @@ life. It responds to both changes in player lives and the invincibility pickup.
   - `Shell`: a child of the player's **Mesh Transform**, so it rolls and pitches with the ship. It has a
     Sphere Collider, sized slightly bigger than the ship (the hitbox).
   - `ShellMesh`: a child of `Shell`. It has a sphere mesh with **no collider** and the overlay material.
+  - `Sphere`: the hamster ball, also under the Mesh Transform. Its Sphere Collider (radius 0.5, scaled to about
+    0.26) is the **body hitbox**, assigned to `bodyCollider`.
+  - The root `hamter` object has **no collider of its own**. Its kinematic Rigidbody uses the colliders of its
+    children, so `Shell` and `Sphere` are the only two hitboxes on the player.
 - **Requires:**
   - `PlayerHealth` on the same object. Without it, `Refresh` does nothing.
   - `PlayerInvincibility` on the same object (optional). Without it, the shell only follows health.
@@ -27,7 +31,7 @@ life. It responds to both changes in player lives and the invincibility pickup.
 | --- | --- | --- |
 | `shellMesh` | none | The visible shell, switched on and off as a whole GameObject |
 | `shellCollider` | none | The shell's hitbox, enabled and disabled on its own |
-| `bodyCollider` | none | The hamster's own hitbox. Switched off whenever the shell's hitbox is on |
+| `bodyCollider` | none | The hamster's own hitbox (`roll_mesh/Sphere`). Switched off whenever the shell's hitbox is on |
 | `shieldMaterial` | none | `ShieldOverlayMat` |
 | `rainbowMaterial` | none | `RainbowOverlayMat` |
 
@@ -39,7 +43,7 @@ life. It responds to both changes in player lives and the invincibility pickup.
 | 2 | Full health | shield material | on | off |
 | 3 | Otherwise | nothing | off | on |
 
-**Only one hitbox is on at a time.** The shell (radius 0.3) fully contains the body (radius 0.2), so while the
+**Only one hitbox is on at a time.** The shell (radius 0.3) fully contains the body (about 0.26), so while the
 shell is on, the body can't touch anything the shell isn't already touching. With both on, anything the hamster
 touched got `OnTriggerEnter` twice in the same physics step: a pickup healed twice, a smashed asteroid counted
 twice, and (with pooling) the second explosion played at the object's home spot.
@@ -159,6 +163,12 @@ over him (see RainbowOverlay.md, "Why back faces only").
 
 - **Remove the default Sphere Collider from `ShellMesh`.** Unity adds one to new spheres, and it would be
   a second hitbox that's always on.
+- **Every collider on the player must be `shellCollider` or `bodyCollider`.** Any other collider, such as a default
+  one on a new mesh or a leftover on the root, is never switched off, so it's always on beside the managed one and
+  every contact fires twice. The player once had a root collider (the old `bodyCollider`) plus an unmanaged
+  `roll_mesh/Sphere` collider, so a pickup could heal twice and a smash could explode twice. The root collider was
+  removed and `Sphere` became the body hitbox. To check: in Play mode, exactly one of the player's colliders should be
+  enabled at any time.
 - **The shell must be under Mesh Transform** to roll with the ship. It's switched on and off as a
   GameObject so the hit blink and death sequence (which loop over renderers there) can't make it show.
 - **Material values override the graph's defaults.** Changing a default in the Shader Graph doesn't update

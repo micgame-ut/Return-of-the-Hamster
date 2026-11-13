@@ -222,6 +222,20 @@ the roll: it is placed by hand with the fixed `Health PowerUp` prefab, in chosen
 - `Mystery PowerUp` is the old `Twin PowerUp` prefab renamed (same GUID). The Health, Invincibility and Score
   prefabs still work as fixed types. See `PowerUp.md` (`RollType`).
 
+## Health pickup look and effect
+
+**Built, waiting for your test** (branch `feature/health-pickup-vfx`). The `Health PowerUp` is bright green and has
+its own pickup effect: a burst of tiny plus signs.
+
+- `PowerUp` has a new `pickupEffect` field (a `ParticleSystem` prefab). Empty uses the template's
+  `pickupEffectPrefab`, so every other power-up keeps the shared explosion. See `PowerUp.md`.
+- New assets: `Health_Green.mat` (URP Lit, glowing green, on both cubes of `Health PowerUp.prefab`),
+  `Plus_Particle.png` (16×16 pixel plus, Point filter), `Health_Plus_Particle.mat` and `vfx_health_pop.prefab`
+  (28 particles, size 0.12 to 0.25, about 1 s).
+- To check in Play mode: the pickup glows green; collecting it bursts plus signs that slow down and fade; other
+  power-ups still use the old explosion; collecting several in a row leaves nothing stuck. Then tune the burst
+  (size, speed, distance) by eye.
+
 ## Phase asteroid
 
 **Done and tested** (branch `feature/phase-asteroid`). An asteroid that phases in and out: while phased, its

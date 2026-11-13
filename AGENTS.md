@@ -31,6 +31,16 @@ goal and sections 2, 3, 6 and 7. Delete the block to turn the checks back on.
   prefabs placed as children of an empty object, saved as a prefab). Before creating one, it lists the layout
   (shape, count, angles, depth) for approval. Existing prefabs, scenes and `.meta` files stay off limits, so
   the user adds each pattern to the spawner's wave list and tests it with Test This Pattern.
+- **Pickup visuals (section 9):** at the user's request, the agent may create new materials, textures and effect
+  prefabs for power-ups (in `Assets/Materials`, `Assets/Materials/Textures` and `Assets/Prefabs`), and change the
+  material slots and the pickup-effect field on a power-up prefab in `Assets/Prefabs`, through the Unity Editor.
+  Nothing else on an existing prefab changes, and scenes and `.meta` files stay off limits. Before creating
+  anything, it lists the settings (values, sizes, colours) for approval, and the user checks the result in Play mode.
+- **Prefab setup (section 9):** at the user's request, the agent may add or remove components and re-point serialized
+  fields on a prefab in `Assets/Prefabs` that the user names (for example the player and twin prefabs), through the
+  Unity Editor. Before changing anything, it lists each change as before and after, and checks what else references
+  what it removes (scripts, other prefabs, scenes). Scenes and `.meta` files stay off limits, and the user checks
+  the result in Play mode.
 
 ---
 
