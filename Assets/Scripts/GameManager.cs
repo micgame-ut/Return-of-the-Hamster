@@ -122,6 +122,7 @@ public class GameManager : MonoBehaviour
         if (levelConfig == null) return;
 
         if (levelTimer != null) levelTimer.SetLevelTime(levelConfig.levelTime);
+        if (player != null) player.SetMinSpeed(levelConfig.minSpeed);
 
         if (earth == null) return;
         if (levelConfig.planetMaterial != null) earth.sharedMaterial = levelConfig.planetMaterial;

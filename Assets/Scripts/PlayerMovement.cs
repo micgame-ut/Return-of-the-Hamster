@@ -126,6 +126,12 @@ public class PlayerMovement : MonoBehaviour
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
 
+    // Slowest speed the level allows, set from the level's config. Lifted once the earth has arrived, so the player can slow down.
+    private float minSpeed;
+    private float SpeedFloor => CanAccelerate ? minSpeed : 0f;
+
+    public void SetMinSpeed(float value) => minSpeed = Mathf.Clamp(value, 0f, maxSpeed);
+
     // Before the game starts, and once it's over or won, all input is ignored.
     private bool InputLocked => GameManager.Instance != null &&
                                 (!GameManager.Instance.IsFlying || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
@@ -139,7 +145,7 @@ public class PlayerMovement : MonoBehaviour
     void Awake()
     {
         // Statics survive scene reloads, so reset them for a fresh run.
-        Speed = 0f;
+        Speed = minSpeed;
         MaxSpeed = maxSpeed;
         OverdriveFraction = overdriveFraction;
 
@@ -292,7 +298,7 @@ public class PlayerMovement : MonoBehaviour
         // Frost: drags Speed down by a fraction of itself each second.
         Speed -= Speed * frostSpeedSlow * Time.deltaTime;
 
-        Speed = Mathf.Clamp(Speed, 0f, maxSpeed);
+        Speed = Mathf.Clamp(Speed, SpeedFloor, maxSpeed);
 
         // Invincibility holds the player at max speed, unless the level has ended.
         if (CanAccelerate && invincibility != null && invincibility.LocksMaxSpeed)
@@ -323,7 +329,7 @@ public class PlayerMovement : MonoBehaviour
         // Reuses the boost velocity so the push travels along the circle and
         // decays the same way a boost does.
         boostVelocity = knockbackVelocity;
-        Speed = Mathf.Clamp(Speed - speedLoss, 0f, maxSpeed);
+        Speed = Mathf.Clamp(Speed - speedLoss, SpeedFloor, maxSpeed);
 
         invulnerableTimer = invulnerableTime;
         return true;
@@ -358,7 +364,7 @@ public class PlayerMovement : MonoBehaviour
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
-            Speed = Mathf.Clamp(Speed + speedBoost, 0f, maxSpeed);
+            Speed = Mathf.Clamp(Speed + speedBoost, SpeedFloor, maxSpeed);
             cooldownTimer = boostCooldown;
             OnSpeedBoost?.Invoke();
         }

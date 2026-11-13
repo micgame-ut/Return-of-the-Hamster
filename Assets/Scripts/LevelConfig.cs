@@ -8,6 +8,10 @@ public class LevelConfig : ScriptableObject
     [Tooltip("Seconds the level takes if the player's Speed stays at 0.")]
     public float levelTime = 180f;
 
+    [Header("Player")]
+    [Tooltip("The slowest the player can fly in this level, out of 100. The player starts at this speed and can't slow below it. 0 = no minimum.")]
+    [Range(0f, 100f)] public float minSpeed = 0f;
+
     [Header("Finish Planet")]
     [Tooltip("The material on the planet that arrives at the end of the level.")]
     public Material planetMaterial;

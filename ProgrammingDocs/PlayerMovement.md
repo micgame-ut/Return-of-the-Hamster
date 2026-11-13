@@ -261,7 +261,7 @@ Every frame:
   reads it to time overdrive. SkyboxSpeedController reads `OverdriveFraction` directly (it's static, so
   no reference to the player is needed) to know where to start fading in the streams.
 - **Frost drag:** after the overdrive drain, `Speed -= Speed × frostSpeedSlow × Time.deltaTime` (see "Frost slow"
-  above). It is before the clamp, so the usual 0–`maxSpeed` limits still apply, and before the invincibility lock,
+  above). It is before the clamp, so the usual `SpeedFloor`–`maxSpeed` limits still apply, and before the invincibility lock,
   so an invincible player isn't slowed.
 - Once the level is complete (earth has arrived), forward input stops counting. The player can only
   slow down.
@@ -272,7 +272,15 @@ Every frame:
   is found once in `Awake` (`invincibility`). Side effects: the player is in overdrive while invincible, so
   the skybox streams fade in and RunStats counts it as overdrive time.
 
-`Speed` is reset in `Awake` because static values survive scene reloads.
+`Speed` is reset in `Awake` because static values survive scene reloads. It is reset to **`minSpeed`**, not 0.
+
+**Minimum speed (`minSpeed`, `SetMinSpeed`, `SpeedFloor`).** Each level can set a floor for the player's speed
+(`LevelConfig.minSpeed`, 0 to 100). `GameManager.ApplyLevelConfig` calls `SetMinSpeed` in its `Awake`, which runs
+before this script's `Awake`, so the player starts at the floor. The three places that used to clamp `Speed` to 0
+(`UpdateSpeed`, `TakeHit` and the forward boost in `OnButton`) clamp to **`SpeedFloor`** instead, so decay, braking,
+Frost and hits can't take the player below it. `SpeedFloor` is a property: it is `minSpeed` while the level can still
+be accelerated, and 0 once the Earth has arrived (`CanAccelerate` is false), so the player can slow down for the finish.
+With `minSpeed` at 0 nothing changes. Levels are set to 0, 20 and 40.
 
 #### What `Speed` drives
 

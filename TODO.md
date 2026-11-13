@@ -413,6 +413,12 @@ Built one feature at a time, each with a test point.
 - [ ] **Level 3** (next session): a wave plan like Levels 1 and 2 (the new mechanics, how difficulty rises, points by
   difficulty rating), then its patterns in `Assets/Prefabs/Patterns/Level_3/` and its wave list in `Level3Config`. It is the
   final level and the return home (`Earth_Mat`, 240 s).
+- [x] **Minimum speed per level** (`LevelConfig.minSpeed`: Level 1 = 0, Level 2 = 20, Level 3 = 40): the player starts at the
+  floor and can't slow below it, so later levels force a faster pace. Lifted when the Earth arrives. Checked in Play mode.
+- [ ] **Speed audit follow-ups** (Levels 1 and 2 were tuned as if top speed were 10; it is 100). Pickups with no safe window
+  at speed: **L2 Stop Weave** (0° at speed 50+), **L1 Health Slalom** (0° at 100), **L2 Health Spiral** (8° to 11° at 50+).
+  The ring-rhythm patterns need 2.5x the sideways movement at top speed (L1 Slalom 74 → 186°/s). Decision pending: move the
+  three pickups, and whether to lower `speedMultiplier` in the template (0.3 → 0.15).
 - [ ] **Continue for playtesters** (next session): after a game over, a Continue option so playtesters can keep working
   through the levels if one is too hard. Variables first, before any code. Questions to settle: where it picks up (same
   progress, or the start of the wave), what lives it gives back, whether continues are unlimited, whether it counts for

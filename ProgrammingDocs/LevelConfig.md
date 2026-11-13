@@ -31,6 +31,16 @@ It's only data. It has no methods. `GameManager` reads it once, in `Awake`.
 | --- | --- | --- |
 | `levelTime` | 180 | Seconds the level takes if the player's `Speed` stays at 0. Passed to `LevelTimer.SetLevelTime` |
 
+### Player
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `minSpeed` | 0 (slider 0–100) | The slowest the player can fly in this level, out of 100. The player starts at this speed and can't slow below it. Passed to `PlayerMovement.SetMinSpeed`. 0 = no minimum |
+
+A higher minimum forces the player to keep moving as the levels go on: rocks always arrive at least that fast
+(approach speed is 20 + 0.3 × `Speed`), and the level timer runs faster too, because speed shortens it. The floor is
+lifted once the Earth has arrived, so the player can slow down for the finish.
+
 ### Finish Planet
 
 | Field | Default | What it changes |
@@ -54,12 +64,12 @@ The pattern builder's **Add to Spawner** button adds to the open scene's config.
 
 ### The four assets
 
-| Asset | `levelTime` | Planet | Position | Rotation |
-| --- | --- | --- | --- | --- |
-| `Level1Config` | 120 | `Mars_Mat` | (333, -1, 990) | (0, 180, 0) |
-| `Level2Config` | 180 | `Moon_Mat` | (0, -1, 990) | (0, 180, 0) |
-| `Level3Config` | 240 | `Earth_Mat` | (0, -1, 990) | (0, 180, 0) |
-| `TemplateConfig` | 180 | default Lit | (0, -1, 990) | (0, 180, 0) |
+| Asset | `levelTime` | `minSpeed` | Planet | Position | Rotation |
+| --- | --- | --- | --- | --- | --- |
+| `Level1Config` | 120 | 0 | `Mars_Mat` | (333, -1, 990) | (0, 180, 0) |
+| `Level2Config` | 180 | 20 | `Moon_Mat` | (0, -1, 990) | (0, 180, 0) |
+| `Level3Config` | 240 | 40 | `Earth_Mat` | (0, -1, 990) | (0, 180, 0) |
+| `TemplateConfig` | 180 | 0 | default Lit | (0, -1, 990) | (0, 180, 0) |
 
 Level 1's planet starts off to the side (x = 333) because the menu moves it into place when you press Start.
 
@@ -68,7 +78,7 @@ Level 1's planet starts off to the side (x = 333) because the menu moves it into
 Nothing runs in this script. `GameManager.ApplyLevelConfig` (called from `Awake`) reads the timing and planet:
 
 1. If `levelConfig` is empty, it does nothing and the level keeps what the scene or prefab already has.
-2. It passes `levelTime` to the `LevelTimer`.
+2. It passes `levelTime` to the `LevelTimer`, and `minSpeed` to the player (`SetMinSpeed`).
 3. It sets the planet's `sharedMaterial`, local position, local rotation and local scale.
 
 `GameManager` runs first (`-100`), so `MenuTransition` and `LevelTimer` see the final planet values. The wave
@@ -78,6 +88,7 @@ fields are read later, by `ObjectSpawner.Start`, through `GameManager.Instance.L
 
 - **GameManager**: reads the timing and planet fields in `Awake`, and exposes the config as `LevelConfig`.
 - **LevelTimer**: receives `levelTime` through `SetLevelTime`.
+- **PlayerMovement**: receives `minSpeed` through `SetMinSpeed`.
 - **ObjectSpawner**: copies `waves` and reads `order`, `loop` and `startDelay` in `Start`.
 - **PatternGizmosEditor**: Add to Spawner adds to `waves`.
 
