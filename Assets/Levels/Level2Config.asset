@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f298a9ba571661e46b90acbc320136ec, type: 3}
+  m_Name: Level2Config
+  m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
+  levelTime: 180
+  planetMaterial: {fileID: 2100000, guid: 5c16bc8d12f854c75916d334b5497ec9, type: 2}
+  planetPosition: {x: 0, y: -1, z: 990}
+  planetRotation: {x: 0, y: 180, z: 0}
+  planetScale: {x: 100, y: 100, z: 100}

@@ -393,3 +393,16 @@ Built one feature at a time, each with a test point.
 
 - `Rainbow Overlay` shader graph has unused leftover nodes (a Length of Position, a Split into an Add, a
   Vector1 × 2 into an Add). Harmless; can be deleted. See `ProgrammingDocs/RainbowOverlay.md`.
+
+## Shared level setup (LevelCore)
+
+- [x] **`LevelCore` and `AudioManager` prefabs:** all four level scenes (Level 1, 2, 3 and `LevelTemplate`) are
+  instances of them, so a change made in the prefab applies to every level. The menu, tutorial and Jupiter stay in
+  Level 1's scene. Level 1's own settings (menu on, hamster menu spot, start button) are overrides.
+- [x] **`LevelConfig` asset per level** (`Assets/Levels/`): `levelTime` and the finish planet's material, position,
+  rotation and scale. See `LevelConfig.md`. Level 1 Mars, Level 2 Moon, Level 3 Earth.
+- [ ] **Move the wave list into `LevelConfig`.** Touches `ObjectSpawner` and the builder's Add to Spawner and Test
+  This Pattern buttons.
+- [ ] **Play Once waves jump the queue** in `ObjectSpawner`, so finale waves (From 0.85 to 0.95) don't start late.
+- [ ] **Remove the missing script** on Level 1's `Menu Canvas` (console warning on Play).
+- [ ] **Level 2 patterns** (Stage 2 onward) and Level 3's patterns and wave lists.

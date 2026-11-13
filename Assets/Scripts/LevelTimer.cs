@@ -19,6 +19,8 @@ public class LevelTimer : MonoBehaviour
     public bool IsComplete => Progress >= 1f;
     public float LevelTime => levelTime;
 
+    public void SetLevelTime(float seconds) => levelTime = seconds;
+
     private Transform earth;
     private Vector3 origin;
     private Vector3 stopPoint;

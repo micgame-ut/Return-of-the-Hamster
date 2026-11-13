@@ -1,0 +1,428 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5804518920811606817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4387340541273175760}
+  - component: {fileID: 1849657178442214920}
+  - component: {fileID: 5670825219479914765}
+  - component: {fileID: 2733369219190236809}
+  - component: {fileID: 9057638764152236525}
+  - component: {fileID: 2531233463708820463}
+  - component: {fileID: 8338023199434576182}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4387340541273175760
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1849657178442214920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7e0dc9b7b585274cb8691134b2a3c54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  titleMusic: {fileID: 8300000, guid: 72f546b6b247ad94ebdbfdfe7c8c1978, type: 3}
+  levelMusic: {fileID: 8300000, guid: d8e9960ec6dca67459ff885f3d732484, type: 3}
+  creditsMusic: {fileID: 8300000, guid: 99adb6fcf26e1184ea3f909496b0805e, type: 3}
+  titleVolume: 0.8
+  levelVolume: 0.7
+  creditsVolume: 1
+  playTitleOnStart: 1
+  titleFadeOutTime: 1.5
+  levelFadeInTime: 1.5
+  levelFadeOutTime: 1
+  creditsFadeInTime: 2.5
+  creditsFadeOutTime: 1
+  creditsStartDelay: 0.5
+  startButtons: []
+  creditButtons: []
+  minSpeed: 0.25
+  maxSpeed: 3
+  minPitch: 0.5
+  maxPitch: 2
+  levelMixer: {fileID: 0}
+  levelMixerGroup: {fileID: 0}
+  pitchShifterParam: LevelPitchShift
+--- !u!114 &5670825219479914765
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e1731ab123ab894abb3c814037f0239, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicSpeedDriver
+  overdriveSpeed: 30
+  response:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  idleSpeed: 1
+  overdriveMusicSpeed: 8
+  idlePitch: 1
+  overdriveMusicPitch: 1
+  riseRate: 0.5
+  fallRate: 0.25
+  reverseFallRate: 1
+  overdriveThreshold: 0.95
+--- !u!114 &2733369219190236809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71917dbad5321854196f290b85c71eb3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelMusicStarter
+--- !u!114 &9057638764152236525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19209231eb4681343ae6eb31611b1521, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SFXManager
+  masterVolume: 1
+  voices: 8
+  sfxMixerGroup: {fileID: 0}
+--- !u!114 &2531233463708820463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adf8da6f1ae92834aa6742bf821a6069, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameSFX
+  hit:
+    clips:
+    - {fileID: 8300000, guid: 8be1499f911d1484c84d45c0157a5007, type: 3}
+    - {fileID: 8300000, guid: 65a88ea964ccba54695b74e0c2c2e599, type: 3}
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  lifeGained:
+    clips:
+    - {fileID: 8300000, guid: 83448293e7de3ee4f9674342e5497cae, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  sideBoost:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  forwardBoost:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  boostReady:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  healthPickup:
+    clips:
+    - {fileID: 8300000, guid: 5968aea4d35d325439aec04bd9fddc9b, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  invinciblePickup:
+    clips:
+    - {fileID: 8300000, guid: 4d7bcce8934c00d45b6b3b9a246ab87e, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  twinPickup:
+    clips:
+    - {fileID: 8300000, guid: 8a9ab8572f9b7c64dbe89f9ff11db37b, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scorePickup:
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  invincibleStart:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  invincibleEnd:
+    clips:
+    - {fileID: 8300000, guid: 3b4cb9925b7a11945a57178e1dceaab8, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  twinStart:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  twinEnd:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  twinBodyLost:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  asteroidSmashed:
+    clips:
+    - {fileID: 8300000, guid: 8171ae790521c3d49ad1c18b1f2caeed, type: 3}
+    - {fileID: 8300000, guid: 451eff3231f9b0144a70b7b807cb5e9e, type: 3}
+    - {fileID: 8300000, guid: a2aa1c903c56ec64b9faf3735d0c566e, type: 3}
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  bonusSmashed:
+    clips:
+    - {fileID: 8300000, guid: 8171ae790521c3d49ad1c18b1f2caeed, type: 3}
+    - {fileID: 8300000, guid: 451eff3231f9b0144a70b7b807cb5e9e, type: 3}
+    - {fileID: 8300000, guid: a2aa1c903c56ec64b9faf3735d0c566e, type: 3}
+    volume: 1
+    pitchRange: {x: 0.95, y: 1.05}
+  splitterBurst:
+    clips:
+    - {fileID: 8300000, guid: 8171ae790521c3d49ad1c18b1f2caeed, type: 3}
+    - {fileID: 8300000, guid: 451eff3231f9b0144a70b7b807cb5e9e, type: 3}
+    - {fileID: 8300000, guid: a2aa1c903c56ec64b9faf3735d0c566e, type: 3}
+    volume: 1
+    pitchRange: {x: 1.1, y: 1.2}
+  closeCall:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  levelStart:
+    clips:
+    - {fileID: 8300000, guid: 403ce7e4781042e45a7fbac9187939a6, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  win:
+    clips:
+    - {fileID: 8300000, guid: 9732ca9426d821c4696d74cc6ad6edcd, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  gameOver:
+    clips:
+    - {fileID: 8300000, guid: b472906b440a58443b69abf743d25b18, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  playerExplosion:
+    clips:
+    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  overdriveStart:
+    clips:
+    - {fileID: 0}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  overdriveEnd:
+    clips:
+    - {fileID: 8300000, guid: fb103c9a41bb0f0408205cac04e11a3d, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  minLineGap: 2
+  hitLine:
+    clips:
+    - {fileID: 8300000, guid: 65a88ea964ccba54695b74e0c2c2e599, type: 3}
+    - {fileID: 8300000, guid: aa808d4cd1d259e4fb212dcaf6511028, type: 3}
+    volume: 0.5
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  startLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  closeCallLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  winLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  gameOverLine:
+    clips:
+    - {fileID: 8300000, guid: c26d36e55ed93d048b0d5f314360646e, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 1
+  healthLine:
+    clips:
+    - {fileID: 8300000, guid: de6d919fdaa214d489491b513b3c7bbc, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  invincibleLine:
+    clips:
+    - {fileID: 8300000, guid: 60e6a78fcb976b443a9edf5c0d8c0621, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  twinLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  scoreLine:
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+--- !u!114 &8338023199434576182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5804518920811606817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74eaa399b94ac8a4389bb3ac99c15230, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UISFX
+  menuMove:
+    clips:
+    - {fileID: 8300000, guid: 142acd821ebafe7448a30ec26f5035ef, type: 3}
+    - {fileID: 8300000, guid: 3082e062e35ae2547b48093be147bae7, type: 3}
+    - {fileID: 8300000, guid: ec4c0344f842a3140be2492fe22874e4, type: 3}
+    - {fileID: 8300000, guid: b136f64d01a7bd34d82f0892225a1226, type: 3}
+    - {fileID: 8300000, guid: 4dbff8c86c728144d8fd26198a7784f1, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  buttonHover:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  menuSelect:
+    clips:
+    - {fileID: 0}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  buttonBlocked:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  startPressed:
+    clips:
+    - {fileID: 0}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  quitPressed:
+    clips:
+    - {fileID: 8300000, guid: 75fcea55ea36e5840ace3b945815b031, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  creditsOpen:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  creditsClose:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  endScreenShown:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  leaderboardOpen:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  leaderboardClose:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  letterChange:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  letterLock:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  nameSubmitted:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scoreRow:
+    clips:
+    - {fileID: 8300000, guid: 957faeb349224254abc3cedf454a7db5, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scoreTotal:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scorePopup:
+    clips:
+    - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  overdriveCount:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  scoreCount:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  minPitch: 1
+  maxPitch: 2

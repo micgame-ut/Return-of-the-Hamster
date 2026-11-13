@@ -41,6 +41,13 @@ goal and sections 2, 3, 6 and 7. Delete the block to turn the checks back on.
   Unity Editor. Before changing anything, it lists each change as before and after, and checks what else references
   what it removes (scripts, other prefabs, scenes). Scenes and `.meta` files stay off limits, and the user checks
   the result in Play mode.
+- **Scene setup (section 9):** at the user's request, the agent may edit a scene in `Assets/Scenes` that the user
+  names, through the Unity Editor: add, copy, delete or re-parent objects, add or remove components, set serialized
+  fields and references, and change materials. It never edits `.unity` files by hand. Before changing anything, it
+  lists each change as before and after and checks what else references what it changes (scripts, prefabs, other
+  scenes). If the scene has unsaved changes, the user saves or discards them first. The agent backs up the scene
+  file to the scratchpad before saving, reads the saved scene back to check it, and the user checks the result in
+  Play mode.
 
 ---
 
