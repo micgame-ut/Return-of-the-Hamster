@@ -21,6 +21,15 @@ public class LevelTimer : MonoBehaviour
 
     public void SetLevelTime(float seconds) => levelTime = seconds;
 
+    // Set by EndScreen's Continue so the reloaded level starts part-way through. Read once in Awake, then cleared.
+    public static float StartProgress;
+
+    private void Awake()
+    {
+        Progress = StartProgress;
+        StartProgress = 0f;
+    }
+
     private Transform earth;
     private Vector3 origin;
     private Vector3 stopPoint;

@@ -973,7 +973,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TwinCopy
   meshTransform: {fileID: 0}
-  shellMesh: {fileID: 0}
+  shellMesh: {fileID: 4157821349891526762}
   shellCollider: {fileID: 1041794398783367284}
   bodyCollider: {fileID: 4045873906930685283}
 --- !u!4 &4265488849847642640 stripped

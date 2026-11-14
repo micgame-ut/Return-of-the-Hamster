@@ -34,11 +34,18 @@ public class EndScreen : MonoBehaviour
     [SerializeField] private GameObject scoreHud;
     [Tooltip("The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings.")]
     [SerializeField] private string menuSceneName = "Level_1";
+    [Tooltip("Show the Continue button on the Game Over screen. Turn off for the real release.")]
+    [SerializeField] private bool allowContinue = true;
+    [Tooltip("The Continue button on the Game Over panel. Hidden when Allow Continue is off. Optional.")]
+    [SerializeField] private GameObject continueButton;
 
     public static event System.Action OnShown;
     public static event System.Action OnLeaderboardOpened;
     public static event System.Action OnLeaderboardClosed;
     public static event System.Action OnQuitClicked;
+
+    // Set by Credits so the menu scene opens the credits when it loads. Static, so it survives the scene load.
+    public static bool OpenCreditsOnMenu;
 
     private ScoreBreakdown scoreBreakdown;
     private int finalScore;   // this run's score, kept from the end of the score breakdown until the name is submitted
@@ -71,6 +78,9 @@ public class EndScreen : MonoBehaviour
         Score score = gm != null ? gm.Score : null;
         if (score == null || nameEntry == null) return;
 
+        bool lastLevel = SceneManager.GetActiveScene().buildIndex + 1 >= SceneManager.sceneCountInBuildSettings;
+        if (!gm.IsGameOver && !lastLevel) return;
+
         finalScore = Mathf.FloorToInt(score.Total);
         if (LeaderboardStore.Qualifies(finalScore)) nameEntry.gameObject.SetActive(true);
     }
@@ -81,7 +91,11 @@ public class EndScreen : MonoBehaviour
         ShowLeaderboard(rank);
     }
 
-    public void ShowGameOver() => Show(gameOver);
+    public void ShowGameOver()
+    {
+        if (continueButton != null) continueButton.SetActive(allowContinue);
+        Show(gameOver);
+    }
     public void ShowWin() => Show(win);
 
     private void Show(ScreenParts parts)
@@ -120,14 +134,23 @@ public class EndScreen : MonoBehaviour
 
     public void Restart()
     {
+        Score.CarriedScore = 0f;
         GameManager.SkipMenuOnce = true;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void Continue()
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm != null && gm.LevelTimer != null) LevelTimer.StartProgress = gm.LevelTimer.Progress;
+        Restart();
     }
 
     public void NextLevel()
     {
         // The menu has no GameManager to unfreeze time, so do it here.
         Time.timeScale = 1f;
+        if (GameManager.Instance != null && GameManager.Instance.Score != null) GameManager.Instance.Score.Bank();
 
         int next = SceneManager.GetActiveScene().buildIndex + 1;
         if (next < SceneManager.sceneCountInBuildSettings)
@@ -140,6 +163,18 @@ public class EndScreen : MonoBehaviour
     {
         // The menu scene has no GameManager to unfreeze time, so do it here.
         Time.timeScale = 1f;
+        Score.CarriedScore = 0f;
+        SceneManager.LoadScene(menuSceneName);
+
+        MusicManager.Instance.GoToTitle();
+    }
+
+    public void Credits()
+    {
+        // The menu scene has no GameManager to unfreeze time, so do it here.
+        Time.timeScale = 1f;
+        Score.CarriedScore = 0f;
+        OpenCreditsOnMenu = true;
         SceneManager.LoadScene(menuSceneName);
 
         MusicManager.Instance.GoToTitle();

@@ -7,8 +7,7 @@ looks like and where it starts. Each level has its own asset, so changing a leve
 editing one file in the Project window, not opening the scene.
 
 The level's shared setup (player, camera, HUD, end screen, spawner) lives in the `LevelCore` prefab. The
-config is the small part that isn't shared. Waves are not in it yet; they are still on each scene's
-`ObjectSpawner`.
+config is the part that isn't shared: timing, the finish planet and the wave plan.
 
 It's only data. It has no methods. `GameManager` reads it once, in `Awake`.
 
@@ -32,6 +31,16 @@ It's only data. It has no methods. `GameManager` reads it once, in `Awake`.
 | --- | --- | --- |
 | `levelTime` | 180 | Seconds the level takes if the player's `Speed` stays at 0. Passed to `LevelTimer.SetLevelTime` |
 
+### Player
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `minSpeed` | 0 (slider 0–100) | The slowest the player can fly in this level, out of 100. The player starts at this speed and can't slow below it. Passed to `PlayerMovement.SetMinSpeed`. 0 = no minimum |
+
+A higher minimum forces the player to keep moving as the levels go on: rocks always arrive at least that fast
+(approach speed is 20 + 0.3 × `Speed`), and the level timer runs faster too, because speed shortens it. The floor is
+lifted once the Earth has arrived, so the player can slow down for the finish.
+
 ### Finish Planet
 
 | Field | Default | What it changes |
@@ -41,31 +50,47 @@ It's only data. It has no methods. `GameManager` reads it once, in `Awake`.
 | `planetRotation` | (0, 300, 0) | The planet's rotation in degrees. Changes which side faces the player |
 | `planetScale` | (100, 100, 100) | The planet's size on each axis |
 
+### Waves
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `waves` | empty | The waves this level plays. Each has a pattern, delay, points and progress range. All the per-wave fields are in [ObjectSpawner.md](ObjectSpawner.md) |
+| `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
+| `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
+| `startDelay` | 1 | Seconds before the first wave |
+
+Level 1 has 13 waves, Random order, loop on and a start delay of 2. Levels 2 and 3 and the template have no waves yet.
+The pattern builder's **Add to Spawner** button adds to the open scene's config.
+
 ### The four assets
 
-| Asset | `levelTime` | Planet | Position | Rotation |
-| --- | --- | --- | --- | --- |
-| `Level1Config` | 120 | `Mars_Mat` | (333, -1, 990) | (0, 180, 0) |
-| `Level2Config` | 180 | `Moon_Mat` | (0, -1, 990) | (0, 180, 0) |
-| `Level3Config` | 240 | `Earth_Mat` | (0, -1, 990) | (0, 180, 0) |
-| `TemplateConfig` | 180 | default Lit | (0, -1, 990) | (0, 180, 0) |
+| Asset | `levelTime` | `minSpeed` | Planet | Position | Rotation |
+| --- | --- | --- | --- | --- | --- |
+| `Level1Config` | 120 | 0 | `Mars_Mat` | (333, -1, 990) | (0, 180, 0) |
+| `Level2Config` | 180 | 20 | `Moon_Mat` | (0, -1, 990) | (0, 180, 0) |
+| `Level3Config` | 240 | 40 | `Earth_Mat` | (0, -1, 990) | (0, 180, 0) |
+| `TemplateConfig` | 180 | 0 | default Lit | (0, -1, 990) | (0, 180, 0) |
 
 Level 1's planet starts off to the side (x = 333) because the menu moves it into place when you press Start.
 
 ## How it works
 
-Nothing runs in this script. `GameManager.ApplyLevelConfig` (called from `Awake`) reads it:
+Nothing runs in this script. `GameManager.ApplyLevelConfig` (called from `Awake`) reads the timing and planet:
 
 1. If `levelConfig` is empty, it does nothing and the level keeps what the scene or prefab already has.
-2. It passes `levelTime` to the `LevelTimer`.
+2. It passes `levelTime` to the `LevelTimer`, and `minSpeed` to the player (`SetMinSpeed`).
 3. It sets the planet's `sharedMaterial`, local position, local rotation and local scale.
 
-`GameManager` runs first (`-100`), so `MenuTransition` and `LevelTimer` see the final planet values.
+`GameManager` runs first (`-100`), so `MenuTransition` and `LevelTimer` see the final planet values. The wave
+fields are read later, by `ObjectSpawner.Start`, through `GameManager.Instance.LevelConfig`.
 
 ## Talks to
 
-- **GameManager**: reads every field in `Awake`.
+- **GameManager**: reads the timing and planet fields in `Awake`, and exposes the config as `LevelConfig`.
 - **LevelTimer**: receives `levelTime` through `SetLevelTime`.
+- **PlayerMovement**: receives `minSpeed` through `SetMinSpeed`.
+- **ObjectSpawner**: copies `waves` and reads `order`, `loop` and `startDelay` in `Start`.
+- **PatternGizmosEditor**: Add to Spawner adds to `waves`.
 
 ## Gotchas
 
@@ -76,4 +101,7 @@ Nothing runs in this script. `GameManager.ApplyLevelConfig` (called from `Awake`
 - **Changes made in Play mode are kept.** It's an asset, so edits to it are saved for real.
 - **`sharedMaterial` swaps the reference.** It doesn't copy the material, so nothing needs cleaning up.
 - **Position is local.** The planet is a child of the Planet Camera, so the numbers are relative to it.
-- **Waves aren't here yet.** Each level's wave list is still on its own `ObjectSpawner`.
+- **The spawner plays a copy of the waves.** Editing the config while the level runs doesn't change the running
+  level. Stop and press Play again.
+- **No config means no waves.** The spawner has no wave list of its own, so a scene without a config spawns nothing
+  (and logs a warning).

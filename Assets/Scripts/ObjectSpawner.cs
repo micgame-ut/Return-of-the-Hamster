@@ -35,18 +35,18 @@ public class ObjectSpawner : MonoBehaviour
         [Tooltip("Plays exactly once per level, the first time its turn comes at or after From Progress. Until Progress is ignored for it.")]
         public bool playOnce = false;
         [NonSerialized] public bool played;
+
+        public Wave Copy() => (Wave)MemberwiseClone();
     }
 
-    [Tooltip("The list of waves. Each has a pattern (the prefab to spawn) and a delayAfter.")]
-    [SerializeField] private List<Wave> waves = new List<Wave>();
-    [Tooltip("Sequential plays the list top to bottom. Random shuffles it each time through.")]
-    [SerializeField] private WaveOrder order = WaveOrder.Sequential;
-    [Tooltip("Start the list over after the last wave. If off, it plays through once and stops.")]
-    [SerializeField] private bool loop = true;
-    [Tooltip("Seconds before the first wave.")]
-    [SerializeField] private float startDelay = 1f;
     [Tooltip("Copies of each pattern made at level start, so the first waves don't stutter.")]
     [SerializeField] private int prewarmPerPattern = 1;
+
+    // This level's wave plan, copied from its LevelConfig in Start.
+    private List<Wave> waves = new List<Wave>();
+    private WaveOrder order = WaveOrder.Sequential;
+    private bool loop = true;
+    private float startDelay = 1f;
 
     // Pooling: free copies per pattern prefab, and each copy's children in reveal order.
     private readonly Dictionary<GameObject, Stack<PatternCopy>> freeCopies = new Dictionary<GameObject, Stack<PatternCopy>>();
@@ -97,6 +97,18 @@ public class ObjectSpawner : MonoBehaviour
         levelTimer = GameManager.Instance != null ? GameManager.Instance.LevelTimer : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
+        LevelConfig config = GameManager.Instance != null ? GameManager.Instance.LevelConfig : null;
+        if (config != null)
+        {
+            waves = config.waves.ConvertAll(w => w.Copy());
+            order = config.order;
+            loop = config.loop;
+            startDelay = config.startDelay;
+
+            foreach (Wave wave in waves)
+                if (wave.playOnce && wave.fromProgress < Progress) wave.played = true;
+        }
+
 #if UNITY_EDITOR
         // Test This Pattern: play only that pattern, on a loop. Only changes the list in memory, not the scene.
         if (PatternTest.Active && PatternTest.Pattern != null)
@@ -104,6 +116,7 @@ public class ObjectSpawner : MonoBehaviour
             waves = new List<Wave> { new Wave { pattern = PatternTest.Pattern, delayAfter = PatternTest.LoopDelay, clearPoints = 0f, perfectBonus = 0f } };
             order = WaveOrder.Sequential;
             loop = true;
+            startDelay = 2f;
         }
 #endif
 
@@ -132,19 +145,20 @@ public class ObjectSpawner : MonoBehaviour
             foreach (Wave wave in GetWaveOrder())
             {
                 if (StopSpawning) yield break;
+
+                // A Play Once wave that has come due plays now, ahead of this turn's wave.
+                Wave due;
+                while ((due = waves.Find(w => w.playOnce && IsAvailable(w))) != null)
+                {
+                    spawnedAny = true;
+                    yield return PlayWave(due);
+                    if (StopSpawning) yield break;
+                }
+
                 if (!IsAvailable(wave)) continue;
 
                 spawnedAny = true;
-                if (wave.playOnce) wave.played = true;
-
-                // Wait for the whole pattern to finish revealing, then pause.
-                yield return SpawnPattern(wave);
-#if UNITY_EDITOR
-                // Test This Pattern: let the whole run fly past before the next one.
-                if (PatternTest.Active)
-                    yield return new WaitUntil(() => AsteroidBehavior.Active.Count == 0 && PowerUp.Active.Count == 0);
-#endif
-                yield return new WaitForSeconds(wave.delayAfter);
+                yield return PlayWave(wave);
             }
 
             if (!spawnedAny)
@@ -161,6 +175,20 @@ public class ObjectSpawner : MonoBehaviour
             }
         }
         while (loop && !StopSpawning);
+    }
+
+    private IEnumerator PlayWave(Wave wave)
+    {
+        if (wave.playOnce) wave.played = true;
+
+        // Wait for the whole pattern to finish revealing, then pause.
+        yield return SpawnPattern(wave);
+#if UNITY_EDITOR
+        // Test This Pattern: let the whole run fly past before the next one.
+        if (PatternTest.Active)
+            yield return new WaitUntil(() => AsteroidBehavior.Active.Count == 0 && PowerUp.Active.Count == 0);
+#endif
+        yield return new WaitForSeconds(wave.delayAfter);
     }
 
     private List<Wave> GetWaveOrder()

@@ -147,7 +147,8 @@ with `SetActive(true)`. That fires `OnEnable`, which:
   (`WouldCrowd` reads the other asteroids from the static `Active` list, so it needs no setup.)
 - Resets the Frost state: clears the `patches` list, sets `hasDropped` and `retired` to false, and switches the
   renderer back on (a retired comet hid it). For a Frost comet it then sets the `ribbon`'s `time` and the `trail`
-  particle system's `main.startLifetime` to `patchLifetime`, so both last as long as a patch.
+  particle system's `main.startLifetime` to `patchLifetime`, so both last as long as a patch, and calls `ribbon.Clear()`
+  so a reused comet doesn't draw a line from where it was last (a Trail Renderer remembers its old points).
 - Starts the `WarnThenMove` coroutine.
 
 ### `WarnThenMove`: the warning wait

@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
     public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
+    public LevelConfig LevelConfig => levelConfig;
     public bool ShowOrbitRing => showOrbitRing;
     public bool IsGameOver { get; private set; }
     public bool HasWon { get; private set; }
@@ -121,6 +122,7 @@ public class GameManager : MonoBehaviour
         if (levelConfig == null) return;
 
         if (levelTimer != null) levelTimer.SetLevelTime(levelConfig.levelTime);
+        if (player != null) player.SetMinSpeed(levelConfig.minSpeed);
 
         if (earth == null) return;
         if (levelConfig.planetMaterial != null) earth.sharedMaterial = levelConfig.planetMaterial;

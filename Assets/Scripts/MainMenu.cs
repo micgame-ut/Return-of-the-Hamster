@@ -28,6 +28,15 @@ public class MainMenu : MonoBehaviour
 
     private bool quitting;
 
+    private void Start()
+    {
+        if (!EndScreen.OpenCreditsOnMenu) return;
+
+        EndScreen.OpenCreditsOnMenu = false;
+        creditsPanel.OpenCredits();
+        MusicManager.Instance.StartCredits();
+    }
+
     public void OnStartPressed()
     {
         startButton.interactable = false;

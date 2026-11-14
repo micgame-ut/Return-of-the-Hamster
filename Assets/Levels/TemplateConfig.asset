@@ -17,3 +17,7 @@ MonoBehaviour:
   planetPosition: {x: 0, y: -1, z: 990}
   planetRotation: {x: 0, y: 180, z: 0}
   planetScale: {x: 100, y: 100, z: 100}
+  waves: []
+  order: 1
+  loop: 1
+  startDelay: 2

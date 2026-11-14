@@ -140,11 +140,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -210,11 +218,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -280,11 +296,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -350,11 +374,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -420,11 +452,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -490,11 +530,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -560,11 +608,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -630,11 +686,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -700,11 +764,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -770,11 +842,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -840,11 +920,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -910,11 +998,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -980,11 +1076,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1050,11 +1154,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: solidTime
-      value: 1.7
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: phasedTime
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerTime
+      value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6354562314283906079, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
+      propertyPath: flickerInterval
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 7574091509510417423, guid: 0e8bb921a74d9104f997e10c069bdf49, type: 3}
       propertyPath: m_LocalPosition.x

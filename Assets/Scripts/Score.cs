@@ -7,7 +7,7 @@ using UnityEngine;
 // from events (AddPoints), and shows it on the HUD.
 public class Score : MonoBehaviour
 {
-    public enum ScoreSource { Progress, Asteroids, CloseCalls, Waves, Overdrive }
+    public enum ScoreSource { Progress, Asteroids, CloseCalls, Waves, Overdrive, Previous }
 
     [Tooltip("Time points per second of levelTime. A full level gives levelTime times pointsPerSecond time points, however fast the player flies.")]
     [SerializeField] private float pointsPerSecond = 1f;
@@ -43,10 +43,14 @@ public class Score : MonoBehaviour
     public int ActivePowerUps => powerUpTimers.Count;
     public float NextPowerUpFraction => powerUpTimers.Count > 0 ? powerUpTimers[0] / powerUpDuration : 0f;
     public float PowerUpMultiplier => powerUpBonus * ActivePowerUps;
-    private float TimePoints => timer.Progress * timer.LevelTime * pointsPerSecond;
+    private float TimePoints => timer.Progress * timer.LevelTime * pointsPerSecond - timePointsBase;
     public event Action<float, float, Vector3, string> OnPointsAdded; // base points, total multiplier, world position, label (null for none)
 
     private float eventPoints;
+    // Points banked from the levels already won this run. Static, so it survives the scene load. Zeroed on Restart, Menu, Credits and Continue.
+    public static float CarriedScore;
+    // The time points the level started with, taken off so a level that resumes part-way starts from 0.
+    private float timePointsBase;
     private int shownPoints = -1;
     private LevelTimer timer;
     private int comboCount;
@@ -63,6 +67,11 @@ public class Score : MonoBehaviour
         timer = GameManager.Instance.LevelTimer;
         player = GameManager.Instance.Player;
         health = GameManager.Instance.PlayerHealth;
+    }
+
+    private void Start()
+    {
+        timePointsBase = TimePoints;
     }
 
     private void OnEnable()
@@ -96,7 +105,7 @@ public class Score : MonoBehaviour
             if (powerUpTimers[i] <= 0f) powerUpTimers.RemoveAt(i);
         }
 
-        Total = TimePoints + eventPoints;
+        Total = CarriedScore + TimePoints + eventPoints;
 
         int whole = Mathf.FloorToInt(Total);
         if (whole == shownPoints || scoreText == null) return;
@@ -173,7 +182,15 @@ public class Score : MonoBehaviour
     }
 
     public float GetSourceTotal(ScoreSource source) =>
-        source == ScoreSource.Progress ? TimePoints : sourceTotals[(int)source];
+        source == ScoreSource.Progress ? TimePoints :
+        source == ScoreSource.Previous ? CarriedScore :
+        sourceTotals[(int)source];
+
+    // Called on a win: this level's total becomes the carried score for the next one.
+    public void Bank()
+    {
+        CarriedScore = Total;
+    }
 
     private void ComboKill(float points, Vector3 position, string label, ScoreSource source)
     {

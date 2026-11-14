@@ -13,7 +13,192 @@ MonoBehaviour:
   m_Name: Level2Config
   m_EditorClassIdentifier: Assembly-CSharp::LevelConfig
   levelTime: 180
+  minSpeed: 20
   planetMaterial: {fileID: 2100000, guid: 5c16bc8d12f854c75916d334b5497ec9, type: 2}
   planetPosition: {x: 0, y: -1, z: 990}
   planetRotation: {x: 0, y: 180, z: 0}
   planetScale: {x: 100, y: 100, z: 100}
+  waves:
+  - pattern: {fileID: 5283653878960000736, guid: 92139dce9f55e0645aedb83efb37ae79, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0
+    untilProgress: 0.3
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 2303309557492285207, guid: 3fcc1069063506140a3ff2fd2bb757fc, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0
+    untilProgress: 0.15
+    randomRotation: 1
+    rotationStep: 90
+    mirrorChance: 0.5
+    playOnce: 0
+  - pattern: {fileID: 752653552785744397, guid: 6117a964c62305c428414cbc1c6abab8, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0.1
+    untilProgress: 0.3
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 4064705116661597663, guid: e369163e5563da0428a9fa63ae359a0b, type: 3}
+    delayAfter: 2
+    clearPoints: 25
+    perfectBonus: 0
+    fromProgress: 0.15
+    untilProgress: 0.45
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 3476949804026732502, guid: 05b5f47fc5866164ea08a83d0ab4903a, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0.25
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 1
+  - pattern: {fileID: 5859185682864577250, guid: 20f538158f279a5419c504ade030ce1e, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 25
+    fromProgress: 0.25
+    untilProgress: 0.5
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0.5
+    playOnce: 0
+  - pattern: {fileID: 8448365795340531710, guid: 0bfabc61d0b327a43961594cc1c7fda7, type: 3}
+    delayAfter: 1
+    clearPoints: 25
+    perfectBonus: 0
+    fromProgress: 0.25
+    untilProgress: 0.55
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0.5
+    playOnce: 0
+  - pattern: {fileID: 4940903534311773266, guid: acd3de857899da545ab7f37d4f5d86f9, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0.55
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0.5
+    playOnce: 1
+  - pattern: {fileID: 7643270057056047556, guid: a66b42a286cf10349870c638eb9c3cfe, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 25
+    fromProgress: 0.35
+    untilProgress: 0.65
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0.5
+    playOnce: 0
+  - pattern: {fileID: 910931674921076317, guid: fb6003dd189024f4fac809bd0c3c8f4e, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 0
+    fromProgress: 0.4
+    untilProgress: 0.7
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 1364056228449082123, guid: b79bc72ae25787a4caea45aa662419ea, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 50
+    fromProgress: 0.5
+    untilProgress: 0.8
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0.5
+    playOnce: 0
+  - pattern: {fileID: 8622703876674897303, guid: 63591e63b76f6d847b1156e6dae962dc, type: 3}
+    delayAfter: 1
+    clearPoints: 50
+    perfectBonus: 25
+    fromProgress: 0.55
+    untilProgress: 0.85
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 1344229818951882264, guid: e2fe6d109f11e5b48a923952cfa4d344, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 50
+    fromProgress: 0.7
+    untilProgress: 0.95
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 1049259639981702877, guid: 16962fecb5ab0244db52175e6aa52db9, type: 3}
+    delayAfter: 1
+    clearPoints: 10
+    perfectBonus: 0
+    fromProgress: 0.7
+    untilProgress: 0.95
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 1
+  - pattern: {fileID: 2082928306047893587, guid: cefab10c3bbf3da4aaedf6712e8afab7, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 0
+    fromProgress: 0.7
+    untilProgress: 0.95
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 6485033629702191459, guid: 2d830d9f6e8e7424f82bf38bf2f64c51, type: 3}
+    delayAfter: 2
+    clearPoints: 50
+    perfectBonus: 25
+    fromProgress: 0.8
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 0
+  - pattern: {fileID: 5948543050046495301, guid: 76db415fa7456de499edfa3550822b85, type: 3}
+    delayAfter: 3
+    clearPoints: 200
+    perfectBonus: 150
+    fromProgress: 0.85
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 1
+  - pattern: {fileID: 673925682077300498, guid: 593fe20e943fd384d98f97da39c8f742, type: 3}
+    delayAfter: 2
+    clearPoints: 150
+    perfectBonus: 100
+    fromProgress: 0.93
+    untilProgress: 1
+    randomRotation: 1
+    rotationStep: 45
+    mirrorChance: 0
+    playOnce: 1
+  order: 1
+  loop: 1
+  startDelay: 2

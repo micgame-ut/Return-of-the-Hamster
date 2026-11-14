@@ -516,7 +516,7 @@ public class PatternGizmosEditor : Editor
         if (GUILayout.Button(new GUIContent("Save Pattern As...", "Saves a copy of the open pattern as a new prefab."))) SavePatternAs();
         testLoopDelay = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("Test Loop Delay", "Seconds to wait between test runs, after everything has flown past."), testLoopDelay));
         if (GUILayout.Button(new GUIContent("Test This Pattern", "Opens the test scene and plays only this pattern on a loop, with full control of the player. Returns you here when you stop."))) TestPattern();
-        if (GUILayout.Button(new GUIContent("Add to Spawner", "Adds the open pattern as a new wave on the ObjectSpawner in the open scene."))) AddToSpawner();
+        if (GUILayout.Button(new GUIContent("Add to Spawner", "Adds the open pattern as a new wave on the open scene's Level Config."))) AddToSpawner();
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Existing Children", EditorStyles.miniBoldLabel);
@@ -1184,8 +1184,8 @@ public class PatternGizmosEditor : Editor
         EditorApplication.EnterPlaymode();
     }
 
-    // The ObjectSpawner in any open scene. Prefab Mode hides the scene it came from but leaves it loaded.
-    private static ObjectSpawner FindSpawner()
+    // The LevelConfig of the GameManager in any open scene. Prefab Mode hides the scene it came from but leaves it loaded.
+    private static LevelConfig FindLevelConfig()
     {
         for (int i = 0; i < EditorSceneManager.sceneCount; i++)
         {
@@ -1194,45 +1194,46 @@ public class PatternGizmosEditor : Editor
 
             foreach (GameObject root in scene.GetRootGameObjects())
             {
-                ObjectSpawner spawner = root.GetComponentInChildren<ObjectSpawner>(true);
-                if (spawner != null) return spawner;
+                GameManager manager = root.GetComponentInChildren<GameManager>(true);
+                if (manager != null && manager.LevelConfig != null) return manager.LevelConfig;
             }
         }
         return null;
     }
 
-    // Adds the open pattern as a new wave on the ObjectSpawner in the open scene (once).
+    // Adds the open pattern as a new wave on the open scene's Level Config (once).
     [MenuItem("Tools/Pattern Builder/Add to Spawner")]
     private static void AddToSpawner()
     {
         PrefabStage stage = OpenPatternStage();
         if (stage == null) return;
 
-        ObjectSpawner spawner = FindSpawner();
-        if (spawner == null)
+        LevelConfig config = FindLevelConfig();
+        if (config == null)
         {
-            EditorUtility.DisplayDialog("Pattern Builder", "No ObjectSpawner found in the open scenes.", "OK");
+            EditorUtility.DisplayDialog("Pattern Builder", "No GameManager with a Level Config found in the open scenes.", "OK");
             return;
         }
 
         PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath); // so the wave uses what's on screen
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(stage.assetPath);
 
-        var spawnerObject = new SerializedObject(spawner);
-        SerializedProperty waves = spawnerObject.FindProperty("waves");
+        var configObject = new SerializedObject(config);
+        SerializedProperty waves = configObject.FindProperty("waves");
         for (int i = 0; i < waves.arraySize; i++)
         {
             if (waves.GetArrayElementAtIndex(i).FindPropertyRelative("pattern").objectReferenceValue == prefab)
             {
-                EditorUtility.DisplayDialog("Pattern Builder", "That pattern is already in the spawner's waves.", "OK");
+                EditorUtility.DisplayDialog("Pattern Builder", "That pattern is already in this level's waves.", "OK");
                 return;
             }
         }
 
         waves.arraySize++;
         waves.GetArrayElementAtIndex(waves.arraySize - 1).FindPropertyRelative("pattern").objectReferenceValue = prefab;
-        spawnerObject.ApplyModifiedProperties();
-        EditorSceneManager.MarkSceneDirty(spawner.gameObject.scene);
+        configObject.ApplyModifiedProperties();
+        EditorUtility.SetDirty(config);
+        AssetDatabase.SaveAssets();
     }
 
     private void DeleteAll()

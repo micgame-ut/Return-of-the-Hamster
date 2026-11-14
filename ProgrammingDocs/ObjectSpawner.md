@@ -22,7 +22,12 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
     camera (to sort asteroids by distance). It still runs without one, but it never stops and sorts from
     z = 0.
 
-## Inspector settings
+## Settings
+
+The wave plan no longer lives on the spawner. Each level's **`LevelConfig`** asset holds `waves`, `order`, `loop`
+and `startDelay` (see [LevelConfig.md](LevelConfig.md)), and the spawner copies them in `Start`. The only field
+left on the spawner itself is `prewarmPerPattern`. The rows below describe the config's fields, which are what
+you edit in the Project window.
 
 | Field | Default | What it changes |
 | --- | --- | --- |
@@ -35,11 +40,11 @@ It was called `AsteroidSpawner` until power-ups were added. The GameObject in `G
 | `waves[].randomRotation` | false | Each time the wave spawns, turn the whole pattern round the orbit by a random angle |
 | `waves[].rotationStep` | 0 | If above 0, the random angle is a multiple of this many degrees (90 = 4 orientations, 45 = 8). 0 = any angle. Only used when `randomRotation` is on |
 | `waves[].mirrorChance` | 0 (slider 0–1) | The chance, each time the wave spawns, that the pattern is flipped left-right. 0 = never, 0.5 = a coin flip |
-| `waves[].playOnce` | off | The wave plays exactly once per level, the first time its turn comes at or after `fromProgress`. `untilProgress` is ignored for it. Use it for waves that must not repeat, such as a Health pickup |
+| `waves[].playOnce` | off | The wave plays exactly once per level, at the first turn at or after `fromProgress` (ahead of that turn's normal wave). `untilProgress` is ignored for it. Use it for waves that must not repeat, such as a Health pickup |
 | `order` | Sequential | Sequential plays the list top to bottom. Random shuffles it each time through |
 | `loop` | true | Start the list over after the last wave. If off, it plays through once and stops |
-| `startDelay` | 1 | Seconds before the first wave (the scene has it set to 2) |
-| `prewarmPerPattern` | 1 | Copies of each pattern made at level start, so the first waves don't stutter |
+| `startDelay` | 1 | Seconds before the first wave (Level 1's config has it at 2) |
+| `prewarmPerPattern` | 1 (on the spawner) | Copies of each pattern made at level start, so the first waves don't stutter |
 
 ## Pooling
 
@@ -75,7 +80,14 @@ patterns built in the editor always line up with where they spawn in the game.
 
 ### `Start`
 
-Gets the LevelTimer and Score from GameManager, **prewarms** (for each wave's pattern, makes copies until its free list
+Gets the LevelTimer and Score from GameManager. Then it **loads the level's plan**: if `GameManager.Instance.LevelConfig`
+is set, it copies the config's waves (`ConvertAll(w => w.Copy())`, a lambda handed to a higher-order method) and takes its
+`order`, `loop` and `startDelay`. It runs on the **copy**, because `played` is a runtime flag and a ScriptableObject
+keeps its in-memory data between Play sessions in the editor, so a flag set on the asset's own waves would stop
+Play Once waves from playing the next time. On a level resumed with Continue (the timer starts above 0), every Play Once
+wave whose `fromProgress` is below the starting progress is marked `played` straight away, so the Magnet and Health waves
+already passed don't all fire at the start. With no config the list stays empty, so the spawner logs its "no wave"
+warning and doesn't spawn. Then it **prewarms** (for each wave's pattern, makes copies until its free list
 holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), then starts `RunWaves`, as
 long as there's at least one wave. This happens on load, even while Level 1's menu shows, so the prewarm is
 done before play begins. `RunWaves` itself waits for the start.
@@ -106,15 +118,19 @@ to normal when Play stops. See [PatternGizmosEditor.md](PatternGizmosEditor.md).
 2. Wait `startDelay` seconds, counted from the start of play, not from the load.
 3. For each wave, in the order `GetWaveOrder` gives:
    - If `StopSpawning` is true, stop for good.
-   - If the wave isn't **available** (`IsAvailable`: it has no pattern, or the level's progress is outside its
+   - **Play any Play Once wave that has come due first.** `waves.Find(w => w.playOnce && IsAvailable(w))` looks through
+     the whole list (not just this turn's wave) for a Play Once wave whose `fromProgress` has been reached and that
+     hasn't played. While one is found, `PlayWave` plays it, so several due at once play back to back.
+   - If this turn's wave isn't **available** (`IsAvailable`: it has no pattern, or the level's progress is outside its
      `fromProgress`–`untilProgress` range, or it is a Play Once wave that has already played), skip it. Progress
      is read fresh at each wave's turn.
-   - If it is a Play Once wave, set its `played` flag now, before it spawns.
-   - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
-     coroutine inside this one and continues only when that one is done.
-   - In a test only (`#if UNITY_EDITOR`, `PatternTest.Active`): also wait until `AsteroidBehavior.Active` and
-     `PowerUp.Active` are both empty, so the whole run has flown past.
-   - Wait `delayAfter` seconds.
+   - Otherwise `PlayWave` plays it. `PlayWave` is one coroutine that does the rest of this list:
+     - If it is a Play Once wave, set its `played` flag now, before it spawns.
+     - Run `SpawnPattern` and **wait for it to finish**. `yield return SpawnPattern(...)` runs another
+       coroutine inside this one and continues only when that one is done.
+     - In a test only (`#if UNITY_EDITOR`, `PatternTest.Active`): also wait until `AsteroidBehavior.Active` and
+       `PowerUp.Active` are both empty, so the whole run has flown past.
+     - Wait `delayAfter` seconds.
 4. If that pass spawned nothing:
    - If no wave in the whole list has a pattern, that's a setup mistake: log a warning and stop, so an empty
      list can't spin forever.
@@ -155,15 +171,21 @@ waits and rechecks every 0.5 s. That's allowed, but easy to do by accident.
 Progress is only read at each wave's **turn**, and a pass through the list takes about 5 s per wave. A very thin
 window (say 0.03 of a 120 s level, about 3.6 s) can fall between two turns, so the wave never plays. A Play Once wave
 avoids that. `IsAvailable` checks `Progress >= fromProgress` first, then for a Play Once wave only asks whether it
-has already played (`!wave.played`); `untilProgress` is not looked at. `RunWaves` sets `played` when the wave's turn
-comes, before it spawns, so it can never play twice, even if the game ends mid-pattern.
+has already played (`!wave.played`); `untilProgress` is not looked at. `PlayWave` sets `played` before the wave
+spawns, so it can never play twice, even if the game ends mid-pattern.
+
+A Play Once wave also **jumps the queue**. The order of a pass is fixed when the pass starts, so a wave whose slot has
+already gone by would otherwise wait for the next pass (about 15 s in Level 1, enough to push a finale wave very late
+or past the end of the level). Instead, at every turn `RunWaves` first plays any Play Once wave that has come due,
+and only then this turn's wave.
 
 | Wave | `fromProgress` | Plays |
 | --- | --- | --- |
 | Normal | 0.4, until 0.5 | on every pass while progress is 0.4 to 0.5 (may be missed if no turn lands there) |
-| Play Once | 0.4 | once, at its first turn at or after 0.4, then never again |
+| Play Once | 0.4 | once, at the first turn at or after 0.4 (ahead of that turn's normal wave), then never again |
 
-It plays up to about one wave later than the number says (the next turn). `played` is a `[NonSerialized]` field on
+It plays at most about one wave later than the number says (the next turn, when the current wave's `delayAfter`
+ends). Several due at once play one after another, each with its own `delayAfter`. `played` is a `[NonSerialized]` field on
 `Wave` (runtime state that isn't saved, like `lastIndex` in GameSFX's `Slot`). A restart or new level reloads the
 scene, which makes fresh `Wave` objects, so it starts false each time. Test This Pattern builds its own wave with
 `playOnce` off, so tests still loop.
@@ -287,12 +309,18 @@ compares against its own starting count, so a life lost with two waves on screen
 - **Score**: reads `LivesLostCount` when a wave starts and clears, and calls `AddWaveClear` when a wave's copy
   is released.
 - **PatternGizmos / PatternGizmosEditor**: indirectly. The pattern builder lays out the pattern prefabs
-  this script spawns. Its **Add to Spawner** button adds a pattern to `waves` (through a `SerializedObject`),
+  this script spawns. Its **Add to Spawner** button adds a pattern to the open scene's `LevelConfig.waves`,
   and its **Test This Pattern** button sets the test that `Start` reads.
+- **GameManager / LevelConfig**: `Start` reads `GameManager.Instance.LevelConfig` for the waves, `order`, `loop`
+  and `startDelay`.
 - **PatternTest** (editor only): `Start` reads `Active`, `Pattern` and `LoopDelay`, and `RunWaves` reads `Active`.
 
 ## Gotchas
 
+- **Edit waves in the config, not in the scene.** The spawner has no wave fields any more. Old values from before
+  the move may still sit in the scene files and `LevelCore` prefab, but they're ignored.
+- **Changes to the config in Play mode don't reach the running level.** The spawner copied the list in `Start`.
+  Stop and press Play again.
 - **A wave of only power-ups still scores.** It clears once the power-ups are gone. Set its `clearPoints`
   and `perfectBonus` to 0 if it shouldn't.
 - **Moving the spawner in the scene does nothing.** It moves itself to `OrbitSettings`' `spawnerPosition`

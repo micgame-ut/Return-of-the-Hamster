@@ -401,8 +401,38 @@ Built one feature at a time, each with a test point.
   Level 1's scene. Level 1's own settings (menu on, hamster menu spot, start button) are overrides.
 - [x] **`LevelConfig` asset per level** (`Assets/Levels/`): `levelTime` and the finish planet's material, position,
   rotation and scale. See `LevelConfig.md`. Level 1 Mars, Level 2 Moon, Level 3 Earth.
-- [ ] **Move the wave list into `LevelConfig`.** Touches `ObjectSpawner` and the builder's Add to Spawner and Test
-  This Pattern buttons.
-- [ ] **Play Once waves jump the queue** in `ObjectSpawner`, so finale waves (From 0.85 to 0.95) don't start late.
+- [x] **Wave list moved into `LevelConfig`** (`waves`, `order`, `loop`, `startDelay`). `ObjectSpawner` copies it in
+  `Start`; Add to Spawner writes to the open scene's config. **Waiting for your test** of Add to Spawner and Test
+  This Pattern.
+- [x] **Play Once waves jump the queue** in `ObjectSpawner`, so finale waves (From 0.85 to 0.95) don't start late.
+  Done and checked in Play mode on Level 1 (all four Play Once waves played within one turn of coming due). Waiting
+  for your own playtest.
 - [ ] **Remove the missing script** on Level 1's `Menu Canvas` (console warning on Play).
-- [ ] **Level 2 patterns** (Stage 2 onward) and Level 3's patterns and wave lists.
+- [x] **Level 2 patterns built** (all 18, in `Assets/Prefabs/Patterns/Level_2/`). Still yours: add them to `Level2Config`'s
+  Waves with the From/Until/Delay/Points/Rotation/Mirror/Play Once values in the plan, then playtest.
+- [ ] **Level 3** (in progress): plan page done; patterns in `Assets/Prefabs/Patterns/Level_3/` and wave list in `Level3Config`.
+  It is the final level and the return home (`Earth_Mat`, 240 s, minimum speed 40). Rules learned: the closest item in a
+  pattern must be at depth 0 (the spawner puts every item at the closest item's depth, so negative depths pop in near the
+  player); the Frost `patchLifetime` is 3 s on `Frost.prefab`; Magnets are their own Play Once patterns, not part of ring
+  patterns (a Magnet-only pattern reveals at once, so the next wave starts while it flies for about 9 to 13 s).
+  - **All 22 patterns built:** Homecoming Ring, Ghost Arc, Twin Splits, Ice Patch, Frost Gate, Health Frost, Cold Slalom, Lane
+    Slalom, Health Ring, Magnet, Magnet Pair, Chaser, Pincer, Chase Gate, Health Chase, Ice Chase, Spiral Frost, Split Chase,
+    Grower Freeze, Health Home, Return Gauntlet, Last Stand: Home. Still yours: add the rest to `Level3Config` (values in the
+    chat table), then playtest the whole level. Spiral Pull, Pull Ring and Cold Pull were dropped (they needed a Magnet).
+  - **Wave settings for the built patterns** (From to Until, Delay, Spawner; you add them to `Level3Config`). Homecoming
+    Ring 0 to 0.12, 1.0, rotation step 45. Ghost Arc 0 to 0.18, 1.0, mirror 0.5. Twin Splits 0.05 to 0.25, 2.0, rotation step
+    45. Ice Patch 0.1 to 0.35, 1.0, mirror 0.5. Frost Gate 0.2 to 0.45, 2.0, mirror 0.5. Health Frost from 0.3, Play Once,
+    1.0, mirror 0.5. Cold Slalom 0.35 to 0.6, 2.0, mirror 0.5. Lane Slalom 0.4 to 0.7, 2.0, mirror 0.5. Health Ring from
+    0.5, Play Once, 1.0, mirror 0.5. **Magnet** (single): three Play Once entries from 0.30, 0.55 and 0.80, delay 2.0,
+    rotation step 45. **Magnet Pair** (0° and 180°): one Play Once entry from 0.65, delay 2.0, rotation step 45.
+- [x] **Minimum speed per level** (`LevelConfig.minSpeed`: Level 1 = 0, Level 2 = 20, Level 3 = 40): the player starts at the
+  floor and can't slow below it, so later levels force a faster pace. Lifted when the Earth arrives. Checked in Play mode.
+- [ ] **Speed audit follow-ups** (Levels 1 and 2 were tuned as if top speed were 10; it is 100). Pickups with no safe window
+  at speed: **L2 Stop Weave** (0° at speed 50+), **L1 Health Slalom** (0° at 100), **L2 Health Spiral** (8° to 11° at 50+).
+  The ring-rhythm patterns need 2.5x the sideways movement at top speed (L1 Slalom 74 → 186°/s). Decision pending: move the
+  three pickups, and whether to lower `speedMultiplier` in the template (0.3 → 0.15).
+- [x] **Continue for playtesters** (built, waiting for a Play-mode check): a CONTINUE button on the Game Over panel reloads
+  the level at the progress the player died at, with full lives and a score of 0. Unlimited; `EndScreen.allowContinue` hides
+  it for release. **Running score:** the score carries from level to level (`Score.CarriedScore`, banked when leaving a win
+  screen) and goes back to 0 on Restart, Continue, Menu and Credits. The win breakdown has an "Earlier levels" row, and the
+  leaderboard name page appears only on a game over or after the last level. See `Score.md`, `EndScreen.md`.

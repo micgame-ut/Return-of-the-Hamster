@@ -43,9 +43,9 @@ overdrive tally is banked through `AddOverdriveBonus`. The score starts at 0 in 
 | Time points | Calculated fresh every frame | `Progress × LevelTime × pointsPerSecond` |
 | `eventPoints` | Running total | Added to by `AddPoints` |
 
-`Total` (read-only from outside) is the two added together. Because the time part is calculated fresh from
-`Progress`, it always matches how far through the level the player is. Flying faster makes `Progress`, and
-so the score, grow faster, but a full level is always worth the same.
+`Total` (read-only from outside) is `CarriedScore` plus the two added together (see "Carrying the score across
+levels" below). Because the time part is calculated fresh from `Progress`, it always matches how far through the level
+the player is. Flying faster makes `Progress`, and so the score, grow faster, but a full level is always worth the same.
 
 With `levelTime` 60 and `pointsPerSecond` 0.5, dying at `Progress` 0.7 with 25 event points:
 
@@ -54,6 +54,23 @@ With `levelTime` 60 and `pointsPerSecond` 0.5, dying at `Progress` 0.7 with 25 e
 | Time | 0.7 × 60 × 0.5 | 21 |
 | Events | | 25 |
 | Total | | 46, shown as `000046` |
+
+### Carrying the score across levels
+
+The score is one running total for the whole run, not one per level.
+
+- **`CarriedScore`** is a `public static float`: the points banked from the levels already won. It is static so it
+  survives the scene load. `Total` is `CarriedScore + TimePoints + eventPoints`, so the HUD shows the running total.
+- **`Bank()`** sets `CarriedScore = Total`. `EndScreen.NextLevel` calls it when the player leaves a win screen, so the
+  win breakdown has already read what it needed. (Banking inside `GameManager.Win` would have made the breakdown's
+  "Earlier levels" row show this level's own points.)
+- **`ScoreSource.Previous`** is the "Earlier levels" row. `GetSourceTotal(Previous)` returns `CarriedScore`. The row only
+  shows once `ScoreBreakdown.labels` has an entry for it, and only when it's at least 1 point.
+- **Where it goes back to 0:** `EndScreen.Restart`, `Continue` (through `Restart`), `Menu` and `Credits`. A level lost
+  with no Continue just ends, and the next press zeroes it.
+- **`timePointsBase`** is the time points the level started with, read in `Start` (after `LevelTimer.Awake` has set the
+  starting progress). `TimePoints` subtracts it, so a level resumed with Continue at progress 0.6 starts counting from 0
+  instead of 0.6 × the full time score. A normal level starts at progress 0, so the base is 0.
 
 ### `Awake`
 
@@ -225,7 +242,9 @@ running, so the HUD always shows the real final score.
 
 - **GameManager**: gets `LevelTimer`, `Player` and `PlayerHealth` in `Awake`; reads `IsGameOver` and
   `HasWon` in `Award`. GameManager finds Score with `GetComponent` and exposes it as `Score`.
-- **LevelTimer**: reads `Progress` and `LevelTime` every frame.
+- **LevelTimer**: reads `Progress` and `LevelTime` every frame, and `Progress` once in `Start` for `timePointsBase`.
+- **EndScreen**: calls `Bank()` from `NextLevel` and sets the static `CarriedScore` to 0 on Restart, Continue, Menu and
+  Credits. `ScoreBreakdown` reads `GetSourceTotal`, including `Previous`.
 - **PlayerMovement**: reads the static `Speed01` in `AddPoints` for the speed multiplier, and the player's
   position in `AddWaveClear`.
 - **PlayerHealth**: subscribes to `OnLifeLost` to end the combo and count lives lost.

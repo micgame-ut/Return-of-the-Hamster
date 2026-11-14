@@ -527,12 +527,14 @@ This replaces the old manual loop of duplicating `Pattern_Builder` and clearing 
 `Test Loop Delay` (default 3 s) is the pause after a run has fully cleared before the next one starts.
 
 **Add to Spawner** (`AddToSpawner`)
-1. Saves the open pattern, then finds an `ObjectSpawner` in any loaded scene (`FindSpawner`). Prefab Mode
-   hides the scene it came from but leaves it loaded, so the level's spawner is found while you edit a prefab.
-2. Skips (and says so) if the pattern is already in the spawner's `waves` list.
-3. Otherwise adds a new wave with this pattern through a `SerializedObject` (Unity's editor-safe way to edit a
-   component's saved fields, private ones included), and marks the scene changed so it gets saved. A new wave
-   copies the previous wave's delay and points.
+1. Saves the open pattern, then finds the `LevelConfig` of the `GameManager` in any loaded scene
+   (`FindLevelConfig`). Prefab Mode hides the scene it came from but leaves it loaded, so the level's config is found
+   while you edit a prefab. With no `GameManager` that has a config, it shows a dialog and stops.
+2. Skips (and says so) if the pattern is already in that config's `waves` list.
+3. Otherwise adds a new wave with this pattern through a `SerializedObject` (Unity's editor-safe way to edit saved
+   fields), then marks the config asset changed (`SetDirty`) and saves assets (`SaveAssets`). A config is an asset
+   file, not part of the scene, so marking the scene wouldn't save it. A new wave copies the previous wave's delay
+   and points.
 
 **Clean-up (`[InitializeOnLoad]`).** The class has a static constructor, which Unity runs when the editor
 loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `playModeStateChanged`:
@@ -559,7 +561,9 @@ loads and whenever scripts recompile. It subscribes `OnPlayModeChanged` to `play
   `maxSpeed`.
 - **The asteroid and power-up prefabs**: places copies of the selected one, linked to the prefab.
 - **PatternTest**: `TestPattern` stores the request with `Request`, and `OnPlayModeChanged` clears it.
-- **ObjectSpawner**: Add to Spawner edits its `waves` list. In a test, it reads the request (see its doc).
+- **LevelConfig / GameManager**: Add to Spawner edits the `waves` list of the open scene's `LevelConfig`, found through
+  the `GameManager`'s `LevelConfig` property.
+- **ObjectSpawner**: in a test, it reads the request (see its doc).
 - **GameManager**: in a test, it reads the request to skip the menu.
 - **The `PatternTest` scene**: Test This Pattern opens `Assets/Scenes/PatternTest.unity`.
 
