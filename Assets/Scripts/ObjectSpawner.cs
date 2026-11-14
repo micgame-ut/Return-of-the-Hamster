@@ -104,6 +104,9 @@ public class ObjectSpawner : MonoBehaviour
             order = config.order;
             loop = config.loop;
             startDelay = config.startDelay;
+
+            foreach (Wave wave in waves)
+                if (wave.playOnce && wave.fromProgress < Progress) wave.played = true;
         }
 
 #if UNITY_EDITOR

@@ -333,7 +333,11 @@ public class AsteroidBehavior : MonoBehaviour
         if (rend != null) rend.enabled = true;
         if (effectType == EffectType.Frost)
         {
-            if (ribbon != null) ribbon.time = patchLifetime;
+            if (ribbon != null)
+            {
+                ribbon.time = patchLifetime;
+                ribbon.Clear();
+            }
             if (trail != null)
             {
                 ParticleSystem.MainModule main = trail.main;

@@ -84,7 +84,9 @@ Gets the LevelTimer and Score from GameManager. Then it **loads the level's plan
 is set, it copies the config's waves (`ConvertAll(w => w.Copy())`, a lambda handed to a higher-order method) and takes its
 `order`, `loop` and `startDelay`. It runs on the **copy**, because `played` is a runtime flag and a ScriptableObject
 keeps its in-memory data between Play sessions in the editor, so a flag set on the asset's own waves would stop
-Play Once waves from playing the next time. With no config the list stays empty, so the spawner logs its "no wave"
+Play Once waves from playing the next time. On a level resumed with Continue (the timer starts above 0), every Play Once
+wave whose `fromProgress` is below the starting progress is marked `played` straight away, so the Magnet and Health waves
+already passed don't all fire at the start. With no config the list stays empty, so the spawner logs its "no wave"
 warning and doesn't spawn. Then it **prewarms** (for each wave's pattern, makes copies until its free list
 holds `prewarmPerPattern`; a pattern listed in two waves only gets them once), then starts `RunWaves`, as
 long as there's at least one wave. This happens on load, even while Level 1's menu shows, so the prewarm is

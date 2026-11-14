@@ -224,9 +224,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1945059939616388827, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Credits
+      objectReference: {fileID: 0}
+    - target: {fileID: 1945059939616388827, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 3550664111686841643, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
       propertyPath: m_Name
       value: Earth
+      objectReference: {fileID: 0}
+    - target: {fileID: 3875575888124013669, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      propertyPath: m_text
+      value: CREDITS
       objectReference: {fileID: 0}
     - target: {fileID: 4446367316171026102, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
       propertyPath: levelConfig

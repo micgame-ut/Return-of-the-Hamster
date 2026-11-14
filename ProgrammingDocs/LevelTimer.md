@@ -34,6 +34,11 @@ only LevelTimer can change it, but any script can read it.
 `LevelTime` is a read-only property that hands back `levelTime`, so other scripts can read the setting
 without being able to change it. Score uses it to work out the time score.
 
+`StartProgress` is a `public static float` set by `EndScreen.Continue` to the progress the player died at. `Awake` copies it
+into `Progress` and sets it back to 0, so it is read once: a later Restart or Menu starts from 0. `Update` then moves the
+earth to `Lerp(origin, stopPoint, Progress)` as usual, so the earth appears at the right distance. Dying after the earth
+has arrived (`Progress` 1) and continuing makes the level complete at once.
+
 `SetLevelTime(seconds)` is the one way to change `levelTime` from another script. `GameManager` calls it in
 `Awake` when the level has a `LevelConfig`, so the config's time replaces the Inspector value.
 

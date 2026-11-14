@@ -54,6 +54,8 @@ Each panel has the same layout:
 | `nameEntry` | Name Entry | The name page shown after a run that made the leaderboard |
 | `leaderboard` | Leaderboard Overlay | The leaderboard window opened by the Scores buttons, and after a name is submitted |
 | `scoreHud` | the score HUD | The score HUD object, hidden when an end screen is shown. Optional |
+| `allowContinue` | on | Show the Continue button on the Game Over screen. Turn off for the real release |
+| `continueButton` | the CONTINUE button | The Continue button on the Game Over panel. Hidden when `allowContinue` is off. Optional |
 | `menuSceneName` | Level_1 | The scene the Menu button loads, and Next Level's fallback. The menu lives in Level 1. Must match the scene file's name and be in Build Settings |
 
 Each group (`ScreenParts`) has:
@@ -104,7 +106,9 @@ Time is frozen on both screens (`Time.timeScale = 0`). `MenuNavigator` runs on r
 Called when `ScoreBreakdown.OnFinished` fires (also when the player skips the count). It reads the run's final
 score, `Mathf.FloorToInt(Score.Total)`, into `finalScore`. If `LeaderboardStore.Qualifies(finalScore)`, it
 switches the name page on. A run that doesn't qualify just stays on the end buttons. It does nothing if there
-is no Score or no name page.
+is no Score or no name page. The score includes the points carried from earlier levels, and the name page only
+appears on a game over or on a win of the **last level** (no scene after this one in Build Settings), so the run is
+submitted once, not after every level.
 
 ### `HandleNameSubmitted`
 
@@ -128,18 +132,38 @@ and starts the game; PlayerHealth goes back to full lives, RunStats loads the ne
 to 0), and PlayerMovement locks the cursor again. On Level 2 and 3 the flag changes nothing (they start
 straight away anyway).
 
+`Restart` also sets the static `Score.CarriedScore` to 0, so a restart starts the run's score over.
+
+### `Continue` (Game Over, for playtesters)
+
+Stores the progress the player died at in the static `LevelTimer.StartProgress`, then calls `Restart`. The reloaded
+level starts clean (full lives, speed at the level's minimum, no rocks), but `LevelTimer` begins at that progress, so
+the earth is as far along as it was. The score is 0 (Restart zeroes `CarriedScore`, and `Score` subtracts the time
+points the level started with). `ObjectSpawner` marks the Play Once waves already passed as played. Nothing from the
+death is undone: the scene is reloaded instead. The button is switched on or off in `ShowGameOver` by `allowContinue`.
+
 ### `NextLevel` (Win)
 
 Sets `Time.timeScale` back to 1, then loads the scene **after** the current one in Build Settings
 (build index + 1). If there isn't one (`next < SceneManager.sceneCountInBuildSettings` is false), it loads
 the menu instead. The build order is Intro = 0, Level_1 = 1, Level_2 = 2, Level_3 = 3, so Level 3's Next Level
-goes back to the menu (Level 1). A new level added after Level_3 is picked up with no code change.
+goes back to the menu (Level 1). A new level added after Level_3 is picked up with no code change. Level 3's own
+button no longer calls this: it is relabelled CREDITS and calls `Credits` (below).
 
 ### `Menu`
 
 Sets `Time.timeScale` back to 1, then loads `menuSceneName` (`Level_1`, where the menu lives). It doesn't set
 `SkipMenuOnce`, so Level 1 opens on the menu. GameManager's `Awake` also resets the time scale; setting it
 here as well keeps Menu working if `menuSceneName` ever points at a scene without a GameManager.
+
+### `Credits` (Win, Level 3 only)
+
+The same as `Menu`, plus one line: it sets the static `OpenCreditsOnMenu` to true before loading `menuSceneName`.
+When the menu scene starts, `MainMenu.Start` sees the flag, clears it, opens the credits panel and starts the credits
+music. The credits then end the way they always do (the panel hides, the title music returns), leaving the player on
+the menu. The flag is static so it survives the scene load, like `SkipMenuOnce`. Level 3's **NEXT LEVEL** button is
+relabelled **CREDITS** and calls this method; the change is an override on Level 3's copy of the `LevelCore` prefab,
+so Levels 1 and 2 keep their Next Level button.
 
 ### `Quit`
 
@@ -166,7 +190,9 @@ In the Unity Editor, `Application.Quit()` does nothing, so inside `#if UNITY_EDI
   these buttons, and keeps the cursor hidden. No direct link: it just presses whichever `Button` is selected.
 - **UISFX**: subscribes to the static events `OnShown` (raised in `Show`, after the panel is switched on),
   `OnLeaderboardOpened`, `OnLeaderboardClosed` and `OnQuitClicked`. `Quit` reads its static `QuitSoundLength`.
-- **SceneManager** (Unity): loads scenes for Restart, Next Level and Menu.
+- **MainMenu**: `Credits` sets the static `OpenCreditsOnMenu`, which `MainMenu.Start` reads and clears.
+- **MusicManager**: `Menu` and `Credits` call `GoToTitle()` so level music doesn't start behind the menu.
+- **SceneManager** (Unity): loads scenes for Restart, Next Level, Menu and Credits.
 
 ## Gotchas
 

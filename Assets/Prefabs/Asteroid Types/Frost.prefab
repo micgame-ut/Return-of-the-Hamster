@@ -5031,7 +5031,7 @@ MonoBehaviour:
   magnetStrength: 60
   dropSpacing: 2
   paintDistance: 2
-  patchLifetime: 6
+  patchLifetime: 3
   patchRadius: 1
   speedSlow: 0.5
   orbitSlow: 0.5
@@ -5039,6 +5039,9 @@ MonoBehaviour:
   ribbon: {fileID: 5244328946082453625}
   destroySpeed: 5
   scorePoints: 150
+  bonusPoints: 200
+  bonusLabel: BONUS
+  bonusExplosion: {fileID: 0}
   meshes:
   - {fileID: 6114365656914333752, guid: 8a03360d76f735446bb8b288ed60b64d, type: 3}
   - {fileID: 8188141086545248054, guid: 939a2bc8320d5b344aaa2c7ddc5def9f, type: 3}
