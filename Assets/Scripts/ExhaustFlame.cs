@@ -66,6 +66,7 @@ public class ExhaustFlame : MonoBehaviour
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;
     private bool coreVisible; // last value given to both lines' enabled
+    private PlayerWarp warp; // the player's Warp; its Pop (1 = normal, 0 = gone) scales the flame
     private float boostTimer; // seconds left on the current stretch
     private Vector3[] dragPoints; // world position of each point, head first
     private Vector3[] innerPoints; // world position of each inner point, head first
@@ -82,6 +83,8 @@ public class ExhaustFlame : MonoBehaviour
         GameManager gm = GameManager.Instance;
         if (movement == null && gm != null) movement = gm.Player;
         if (invincibility == null && gm != null) invincibility = gm.PlayerInvincibility;
+        warp = GetComponentInParent<PlayerWarp>();
+        if (warp == null && gm != null) warp = gm.PlayerWarp;
         coreVisible = core.enabled;
 
         core.positionCount = dragSegments;
@@ -156,8 +159,9 @@ public class ExhaustFlame : MonoBehaviour
         }
 
         float t = PlayerMovement.Speed01;
-        float length = Mathf.Lerp(minLength, maxLength, t) * stretch * grow * fade;
-        float width = Mathf.Lerp(maxWidth, minWidth, t) * grow * fade;
+        float pop = warp == null ? 1f : warp.Pop;
+        float length = Mathf.Lerp(minLength, maxLength, t) * stretch * grow * fade * pop;
+        float width = Mathf.Lerp(maxWidth, minWidth, t) * grow * fade * pop;
 
         float noise = Mathf.PerlinNoise(Time.time * flickerSpeed, 0f) * 2f - 1f;
         width *= 1f + noise * Mathf.Lerp(maxFlicker, minFlicker, t);

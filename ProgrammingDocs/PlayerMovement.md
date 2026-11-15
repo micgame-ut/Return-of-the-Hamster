@@ -98,6 +98,10 @@ The name stayed `InputLocked`, although it now stops movement as well as input.
 running at `Time.timeScale` 0 and the mouse movement isn't multiplied by time, so without it the mouse would steer
 the ship behind the overlay.
 
+`InputLocked` is true during a Warp too (`warp != null && warp.IsWarping`, with `warp` found by `GetComponent<PlayerWarp>()` in `Awake`). It is true
+through all three phases (out, hold, in), so the ship doesn't move, `Speed` neither gains nor decays, the boost cooldown and the hit-invulnerability
+timer pause, and clicks can't dash or fire Lance. Magnet and Frost requests from that frame are dropped, as in the other locked cases.
+
 ### Tuning for the overlay (`Tuning`, `GetTuning`, `SetTuning`)
 
 `Tuning` is a nested `[Serializable]` class holding 14 public floats: `mouseSensitivity`, `forwardThreshold`,
@@ -441,6 +445,7 @@ Side effects of doing it this way:
 - **TuningOverlay**: reads `IsOpen` (through `InputLocked`), and calls `GetTuning`, `SetTuning` and `SetMinSpeed`
 - **PowerUp**: calls `GrantFreeBoosts` (Boost Recharge)
 - **PlayerLance**: asked first on every click (`IsActive`, `TryFire`, `ShotCooldown`); calls `ReadyBoost`
+- **PlayerWarp**: read through `InputLocked` (`IsWarping`) every frame and on the button
 - **FreeBoostPips**: reads `FreeBoosts` and subscribes to `OnFreeBoostsChanged`
 - **Anything reading `Speed`**: see the table above
 

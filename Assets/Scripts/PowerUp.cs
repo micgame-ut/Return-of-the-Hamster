@@ -6,9 +6,9 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot, Slim, Bomb, Lance }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot, Slim, Bomb, Lance, Warp }
 
-    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb or Lance on pickup, never Health.")]
+    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb, Lance or Warp on pickup, never Health.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
@@ -27,6 +27,7 @@ public class PowerUp : MonoBehaviour
     private PlayerSlim slim;
     private PlayerBomb bomb;
     private PlayerLance lance;
+    private PlayerWarp warp;
     private Score score;
 
     private struct TintSlot
@@ -52,7 +53,7 @@ public class PowerUp : MonoBehaviour
 
     // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
     private static readonly PowerUpType[] RollTypes =
-        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot, PowerUpType.Slim, PowerUpType.Bomb, PowerUpType.Lance };
+        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot, PowerUpType.Slim, PowerUpType.Bomb, PowerUpType.Lance, PowerUpType.Warp };
     private readonly float[] rollWeights = new float[RollTypes.Length];
 
     private void Awake()
@@ -67,6 +68,7 @@ public class PowerUp : MonoBehaviour
         slim = GameManager.Instance != null ? GameManager.Instance.PlayerSlim : null;
         bomb = GameManager.Instance != null ? GameManager.Instance.PlayerBomb : null;
         lance = GameManager.Instance != null ? GameManager.Instance.PlayerLance : null;
+        warp = GameManager.Instance != null ? GameManager.Instance.PlayerWarp : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
         // Every material slot under this power-up, with its own base color, kept for the depth tint.
@@ -181,6 +183,11 @@ public class PowerUp : MonoBehaviour
         if (lance != null) lance.Activate();
     }
 
+    private void StartWarp()
+    {
+        if (warp != null && template != null) warp.Activate(template.warpSeconds, template.warpOutTime, template.warpHoldTime, template.warpInTime, template.warpGraceTime, template.phasedMaterial);
+    }
+
     private PowerUpType RollType()
     {
         float total = FillWeights(true);
@@ -220,6 +227,7 @@ public class PowerUp : MonoBehaviour
         PowerUpType.Slim => template.slimChance,
         PowerUpType.Bomb => template.bombChance,
         PowerUpType.Lance => template.lanceChance,
+        PowerUpType.Warp => template.warpChance,
         _ => template.scoreChance,
     };
 
@@ -229,6 +237,7 @@ public class PowerUp : MonoBehaviour
         PowerUpType.Twin => twins == null || !twins.CanAddBody,
         PowerUpType.Bomb => AsteroidBehavior.Active.Count == 0,
         PowerUpType.Lance => lance == null || lance.IsActive,
+        PowerUpType.Warp => warp == null,
         PowerUpType.BoostRecharge => lance != null && lance.IsActive
             ? lance.ShotsLeft >= template.lanceMaxShots
             : player != null && template != null && player.FreeBoosts >= template.rechargeBoosts && player.BoostCharge01 >= 1f,
@@ -266,6 +275,9 @@ public class PowerUp : MonoBehaviour
             case PowerUpType.Lance:
                 StartLance();
                 break;
+            case PowerUpType.Warp:
+                StartWarp();
+                break;
         }
     }
 
@@ -273,7 +285,7 @@ public class PowerUp : MonoBehaviour
     {
         // Only react to the player or a twin copy. FindBody also covers the
         // collider being on a child.
-        if (player == null) return;
+        if (player == null || (warp != null && warp.IsWarping)) return;
         Transform body = twins != null ? twins.FindBody(other.transform)
                        : other.transform.IsChildOf(player.transform) ? player.transform : null;
         if (body == null) return;

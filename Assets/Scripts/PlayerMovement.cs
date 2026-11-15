@@ -137,6 +137,7 @@ public class PlayerMovement : MonoBehaviour
     private LevelTimer levelTimer;
     private PlayerInvincibility invincibility;
     private PlayerLance lance;
+    private PlayerWarp warp;
 
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
@@ -170,7 +171,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // Before the game starts, and once it's over or won, all input is ignored.
-    private bool InputLocked => TuningOverlay.IsOpen || GameManager.Instance != null &&
+    private bool InputLocked => TuningOverlay.IsOpen || (warp != null && warp.IsWarping) || GameManager.Instance != null &&
                                 (!GameManager.Instance.IsFlying || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
@@ -199,6 +200,7 @@ public class PlayerMovement : MonoBehaviour
 
         invincibility = GetComponent<PlayerInvincibility>();
         lance = GetComponent<PlayerLance>();
+        warp = GetComponent<PlayerWarp>();
     }
 
     void Start()

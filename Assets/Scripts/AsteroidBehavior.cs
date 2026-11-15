@@ -159,6 +159,7 @@ public class AsteroidBehavior : MonoBehaviour
     private PlayerMovement player;
     private PlayerHealth health;
     private PlayerTwins twins;
+    private PlayerWarp warp;
     private Score score;
     private CloseCallZone closeCalls;
     private bool passedPlayer;      // has crossed the player's depth and been measured
@@ -278,7 +279,8 @@ public class AsteroidBehavior : MonoBehaviour
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
-        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+        warp = GameManager.Instance != null ? GameManager.Instance.PlayerWarp : null;
+        score =GameManager.Instance != null ? GameManager.Instance.Score : null;
         closeCalls = GameManager.Instance != null ? GameManager.Instance.CloseCallZone : null;
 
         // Ordinary asteroids pick a random body material once and keep it when pooled. Frost, Magnet and Bonus have their own looks.
@@ -819,7 +821,7 @@ public class AsteroidBehavior : MonoBehaviour
             if (depth > 0f) return;
             passedPlayer = true;
             closeCallGap = closeCalls.NearestGap(transform.position, HitRadius, out closeCallBody);
-            closeCallThreat = !CanBreak && !IsPhased;
+            closeCallThreat = !CanBreak && !IsPhased && !(warp != null && warp.IsProtected);
         }
 
         if (depth > -(HitRadius + closeCalls.Reach)) return;
@@ -836,7 +838,7 @@ public class AsteroidBehavior : MonoBehaviour
     {
         // Only react to the player or a twin copy. FindBody also covers the
         // collider being on a child, and says which body was touched.
-        if (player == null) return;
+        if (player == null || (warp != null && warp.IsProtected)) return;
         Transform body = twins != null ? twins.FindBody(other.transform)
                        : other.transform.IsChildOf(player.transform) ? player.transform : null;
         if (body == null) return;

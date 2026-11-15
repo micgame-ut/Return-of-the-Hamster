@@ -45,8 +45,9 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `slimLabel` | SLIM | Shown for Slim |
 | `bombLabel` | BOMB | Shown for Bomb (the "N DESTROYED" points popup is separate: it comes from PlayerBomb through Score) |
 | `lanceLabel` | LANCE | Shown for Lance (the "N HIT" points popup is separate: it comes from PlayerLance through Score) |
+| `warpLabel` | WARP | Shown for Warp |
 
-The **Outline Looks** group holds ten materials (all assigned on `Score HUD` in `LevelCore.prefab`):
+The **Outline Looks** group holds eleven materials (all assigned on `Score HUD` in `LevelCore.prefab`):
 
 | Field | Material | Used for | Outline color |
 | --- | --- | --- | --- |
@@ -60,6 +61,7 @@ The **Outline Looks** group holds ten materials (all assigned on `Score HUD` in 
 | `slimLook` | `Popup Slim` | SLIM | violet (0.6, 0.3, 1.0) |
 | `bombLook` | `Popup Bomb` | BOMB | red (0.9, 0.1, 0.1) |
 | `lanceLook` | `Popup Lance` | LANCE | pink (1.0, 0.1, 0.6) |
+| `warpLook` | `Popup Warp` | WARP | lime (0.7, 1.0, 0.1) |
 
 An empty power-up slot falls back to `textLook`. The materials are in `Assets/Fonts/`; each is a copy of the font's material
 with the outline on (`OUTLINE_ON`, outline width 0.2, softness 0), so a color or thickness can be changed on the material.
@@ -227,7 +229,7 @@ slid into the removed slot.
   `<type>Look` field, a line in the look `switch`, and an outline material made from the font's material (copy `Popup Bomb.mat` and change
   the outline color), or it falls back to the black look.
 - **Never turn the outline on in `PublicPixel Atlas Material`.** It is shared by most of the game's text.
-- **The outline width is limited by the font's atlas padding** (9 for PublicPixel SDF). 0.2 shows cleanly; a much larger width can get clipped.
+- **The outline width is limited by the font's atlas padding** (9 for PublicPixel SDF). The popups use 0.2; a much larger width can get clipped.
 - **Stacking only looks at popups sideways-close and still showing.** A popup that has faded out and returned to the
   pool no longer blocks anything. A busy moment can push the older popups high up the screen, because each new one
   kicks the whole stack up. The kick is instant, so older popups jump up when a new one arrives.

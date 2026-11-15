@@ -149,6 +149,11 @@ These three are new, so the asset uses the defaults until they're changed.
 | `lanceBeamTime` | 0.2 | Seconds the beam stays on screen, thinning and fading |
 | `lanceBeamColor` | (3, 0.35, 1.6) | The glow's colour (HDR pink). The core is a lighter version |
 | `lanceBeamWidth` | 0.3 | Width of the beam's bright core. The glow is three times wider |
+| `warpSeconds` | 10 | Seconds of game time a Warp pickup skips ahead. The level, the rocks and the spawner run fast for this long while the player is gone |
+| `warpOutTime` | 0.5 | Seconds the player takes to pop out. The game runs at normal speed during it |
+| `warpHoldTime` | 1 | Real seconds the player stays gone. The game runs `warpSeconds ÷ warpHoldTime` times faster during it (10 in 1 = 10 times). Never below 0.1 in the code |
+| `warpInTime` | 0.5 | Seconds the player takes to pop back in. The game runs at normal speed during it |
+| `warpGraceTime` | 1.5 | Seconds after the pop-in during which rocks can't hurt the player, and the ship wears the phase look (`phasedMaterial`). The player has control back. 0 = no grace |
 
 ### Random Power-Up Chances
 
@@ -162,8 +167,9 @@ These three are new, so the asset uses the defaults until they're changed.
 | `slimChance` | 20 | How often it gives Slim |
 | `bombChance` | 20 | How often it gives Bomb |
 | `lanceChance` | 20 | How often it gives Lance |
+| `warpChance` | 20 | How often it gives Warp |
 
-These are **shares of the total**, not strict percentages: 20 each is a seventh each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
+These are **shares of the total**, not strict percentages: 20 each is a ninth each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
 that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There
 is no Health chance: a Random power-up never gives Health, which is placed by hand with the fixed `Health
 PowerUp` prefab. See PowerUp's `RollType`.

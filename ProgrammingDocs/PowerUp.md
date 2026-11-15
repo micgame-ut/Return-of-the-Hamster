@@ -36,9 +36,14 @@ There are eight types:
   down the player's lane (and each twin copy's) instead of dodging, and the ring turns pink. While Lance is active, **Boost Recharge adds
   `template.rechargeBoosts` shots (up to `lanceMaxShots`, 3) instead of free boosts** and leaves the dash alone. See PlayerLance. It is also in the Random
   roll, but a Mystery pickup won't roll it while Lance is already active.
+- **Warp** pops the player out, runs the whole game faster for `template.warpSeconds` (10) of game time while the player is gone, then pops the
+  player back in. The level, the spawner and every rock already on screen fast-forward together, the skipped waves still spawn and fly past, their
+  clear bonuses are paid, and the time points for the skipped time still count. While it runs the player can't be hit, can't move and can't pick
+  anything up. After the pop-in there is a short grace (`warpGraceTime`, 1.5) where the player has control and can pick things up but still can't
+  be hit, and wears the phase look. See PlayerWarp. It is also in the Random roll.
 
-A tenth type, **Random**, is the `Mystery PowerUp`: on pickup it rolls one of **eight** at random (Invincible,
-Twin, ScoreMultiplier, BoostRecharge, Jackpot, Slim, Bomb or Lance, never Health), using adjustable chances from the SpawnableTemplate, and skips any that
+A further type, **Random**, is the `Mystery PowerUp`: on pickup it rolls one of **nine** at random (Invincible,
+Twin, ScoreMultiplier, BoostRecharge, Jackpot, Slim, Bomb, Lance or Warp, never Health), using adjustable chances from the SpawnableTemplate, and skips any that
 would do nothing right now. Every pickup announces what it gave (`OnCollected`), and ScorePopups shows a label
 for it ("+1 LIFE", "INVINCIBLE", ...).
 
@@ -47,7 +52,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 - **Attached to:** each power-up prefab: `Mystery PowerUp` (type Random, the one the patterns use) and the
   fixed ones (`Health PowerUp`, `Invincibility PowerUp`, `Score Powerup`, `Boost Recharge PowerUp`: three upright
   amber discs, the middle one bigger, like the player's boost ring and its two small rings; `Jackpot PowerUp`: a gold coin
-  that flips edge-on as it spins; `Slim PowerUp`: two violet chevrons squeezing together, `> <`; `Bomb PowerUp`: a black round bomb with an orange spark; `Lance PowerUp`: a pink railgun bolt with a ring). `Mystery PowerUp` is the old
+  that flips edge-on as it spins; `Slim PowerUp`: two violet chevrons squeezing together, `> <`; `Bomb PowerUp`: a black round bomb with an orange spark; `Lance PowerUp`: a pink railgun bolt with a ring; `Warp PowerUp`: a lime glowing core inside two crossed discs, like a gyroscope). `Mystery PowerUp` is the old
   `Twin PowerUp` renamed (same GUID), so patterns that placed the Twin prefab now place it; there's no fixed
   Twin prefab any more. The prefab also needs
   a collider with **Is Trigger** on, and no Rigidbody (the player has the Rigidbody, the same as with
@@ -64,7 +69,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb or Lance on pickup, never Health |
+| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb, Lance or Warp on pickup, never Health |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
 | `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` (tiny green plus signs) and the `Mystery PowerUp` uses `vfx_mystery_pop` (golden stars) here |
 
@@ -89,7 +94,7 @@ length, so it follows), give it a chance in SpawnableTemplate and a line in `Cha
 wasted, and a label in ScorePopups.
 
 **Add new types at the end of the enum.** Unity saves an enum field as its position number (Health = 0,
-Invincible = 1, Twin = 2, ScoreMultiplier = 3, Random = 4, BoostRecharge = 5, Jackpot = 6, Slim = 7, Bomb = 8, Lance = 9). Inserting a type earlier in
+Invincible = 1, Twin = 2, ScoreMultiplier = 3, Random = 4, BoostRecharge = 5, Jackpot = 6, Slim = 7, Bomb = 8, Lance = 9, Warp = 10). Inserting a type earlier in
 the list would shift those numbers and quietly change the type of every existing power-up prefab. That's why Random went
 at the end, even though it's the main one now, and why BoostRecharge, Jackpot, Slim and Bomb come after it.
 
@@ -109,20 +114,20 @@ as long as its chance, and a random number is a dart thrown at the ruler.
    total itself, which no stretch contains, so if the walk ends without a winner, the last type with a
    weight wins.
 
-With the code's default chances (20 each, in the order Invincible, Twin, Score, Recharge, Jackpot, Slim, Bomb, Lance):
+With the code's default chances (20 each, in the order Invincible, Twin, Score, Recharge, Jackpot, Slim, Bomb, Lance, Warp):
 
-| Situation | Each of the eight |
+| Situation | Each of the nine |
 | --- | --- |
-| Normal | 20 of 160 (12.5% each) |
-| Twin at the cap (Twin wasted) | 20 of 140 (14% each) |
-| No asteroids on screen (Bomb wasted) | 20 of 140 (14% each) |
-| Lance already active (Lance wasted) | 20 of 140 (14% each) |
+| Normal | 20 of 180 (11% each) |
+| Twin at the cap (Twin wasted) | 20 of 160 (12.5% each) |
+| No asteroids on screen (Bomb wasted) | 20 of 160 (12.5% each) |
+| Lance already active (Lance wasted) | 20 of 160 (12.5% each) |
 
 A dart at 57.3 in the normal case: Invincible? 57.3 isn't under 20, so 37.3 is left. Twin? 37.3 isn't under 20,
 so 17.3 is left. Score? 17.3 is under 20, so Score wins. The chances are **shares of the total**, so they don't
 have to add up to 100; when one is wasted the others keep their sizes relative to each other. (The scene's asset
-uses 10 / 25 / 25 for the first three, and `rechargeChance`, `jackpotChance`, `slimChance`, `bombChance` and `lanceChance` are at their
-default of 20, so the shares are 10 / 25 / 25 / 20 / 20 / 20 / 20 / 20, a total of 160: about 6%, 16%, 16% and 12.5% for each of the other five.)
+uses 10 / 25 / 25 for the first three, and `rechargeChance`, `jackpotChance`, `slimChance`, `bombChance`, `lanceChance` and `warpChance` are at their
+default of 20, so the shares are 10 / 25 / 25 / 20 / 20 / 20 / 20 / 20 / 20, a total of 180: about 6%, 14% and 14%, and 11% for each of the other six.)
 
 **`IsWasted`** uses the same conditions that make the effect do nothing:
 
@@ -132,6 +137,7 @@ default of 20, so the shares are 10 / 25 / 25 / 20 / 20 / 20 / 20 / 20, a total 
 | BoostRecharge | while Lance is active: the shots are already at `lanceMaxShots`. Otherwise: the player already holds a full set of free boosts (`FreeBoosts >= template.rechargeBoosts`) and the normal boost is ready (`BoostCharge01 >= 1`), or there's no player or template |
 | Bomb | no asteroid is revealed right now (`AsteroidBehavior.Active.Count == 0`) |
 | Lance | no PlayerLance, or Lance is already active |
+| Warp | no PlayerWarp (a pickup can't happen while a Warp runs, so there is no "already active" case) |
 | Invincible, ScoreMultiplier, Jackpot, Slim | never (a second pickup restarts or stacks) |
 
 **A new type needs its own line in `ChanceOf`.** The last line of that switch is `_ => template.scoreChance`, the catch-all, so
@@ -196,7 +202,8 @@ When something touches it:
 
 1. **Is it the player or a twin copy?** PlayerTwins' `FindBody(other.transform)` returns the body that was
    touched (using `IsChildOf`, so colliders on children count), or null. Without a PlayerTwins, it falls back
-   to `other.transform.IsChildOf(player.transform)`. Anything else, or no cached player, is ignored.
+   to `other.transform.IsChildOf(player.transform)`. Anything else, or no cached player, is ignored. **While a Warp is running
+   (`PlayerWarp.IsWarping`) every touch is ignored too**, so the ship can't pick anything up while it is gone or popping.
 2. **Is the level already won?** It reads `GameManager.Instance`. If `HasWon` is set, it ignores the
    touch, and the power-up flies on through the ship without being used up.
 3. **Count it.** Adds one to RunStats' `PowerUpsPickedUp`. This happens before the effect, so a pickup
@@ -215,7 +222,7 @@ It runs once per pickup because the player only ever has **one** collider on (Pl
 off while the shield is on). With two, a pickup healed twice, counted twice and, with pooling, played a
 second explosion at the power-up's home spot.
 
-### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin`, `AddScoreMultiplier`, `RechargeBoost`, `StartJackpot`, `StartSlim`, `DetonateBomb` and `StartLance`
+### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin`, `AddScoreMultiplier`, `RechargeBoost`, `StartJackpot`, `StartSlim`, `DetonateBomb`, `StartLance` and `StartWarp`
 
 ### `OnCollected`
 
@@ -274,6 +281,10 @@ here (the pickup is switched off the moment it's collected). It does nothing if 
 **`StartLance`** calls `Activate()` on the cached PlayerLance (from `GameManager.PlayerLance`). **`RechargeBoost`** now checks Lance first: if
 Lance is active it calls `lance.AddShots(template.rechargeBoosts)`, otherwise `player.GrantFreeBoosts(...)` as before.
 
+**`StartWarp`** calls `Activate(...)` on the cached PlayerWarp (from `GameManager.PlayerWarp`), passing the template's `warpSeconds`, `warpOutTime`,
+`warpHoldTime`, `warpInTime` and `warpGraceTime`, plus the template's `phasedMaterial` (the look the ship wears during the grace). Nothing happens
+without a PlayerWarp or a template.
+
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
@@ -294,6 +305,7 @@ Lance is active it calls `lance.AddShots(template.rechargeBoosts)`, otherwise `p
 - **PlayerSlim**: calls `Activate(duration, scale, shrinkTime, growTime)` (Slim type).
 - **PlayerBomb**: calls `Detonate(points, sweepTime, shakeDuration, shakeMagnitude)` (Bomb type).
 - **PlayerLance**: `Activate` (Lance type), `AddShots` (Recharge while Lance is active), and `IsActive` / `ShotsLeft` in `IsWasted`.
+- **PlayerWarp**: `Activate` (Warp type), and `IsWarping`, checked first in `OnTriggerEnter` so nothing is picked up during a Warp.
 - **AsteroidBehavior**: reads `Active.Count` in `IsWasted` so a Mystery pickup won't roll Bomb with nothing on screen.
 - **PlayerTwins**: `FindBody` decides whether the player or a twin copy touched it; calls `AddBody()` (Twin
   type); reads `IsTwinned` so Health gives no life during the twin, and `CanAddBody` to skip Twin in a roll at the

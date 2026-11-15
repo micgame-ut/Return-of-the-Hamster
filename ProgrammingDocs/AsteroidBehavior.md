@@ -401,7 +401,8 @@ rewarded even if physics missed the contact.
    touched: the player, a copy, or null. It uses `IsChildOf`, so it still works if a collider is on a child.
    A hit on the copy the player jumped onto in this same frame counts as the player. Without a PlayerTwins,
    it falls back to `other.transform.IsChildOf(player.transform)`. Anything else, or no player at all, is
-   ignored. Any touch sets `hitPlayer`, so this flight can't score a close call.
+   ignored. Any touch sets `hitPlayer`, so this flight can't score a close call. **While a Warp runs, and during the grace after it (`PlayerWarp.IsProtected`), every touch is ignored
+   first**, before `hitPlayer` is set: no hit, no smash, no knockback and no lost twin body (this comes before `FindBody` and `LoseBody`). `warp` is cached in `Awake` from `GameManager.PlayerWarp`.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it `BreaksBySpeed` and the player's `Speed` is at least `destroySpeed`.
 
@@ -526,6 +527,8 @@ toward the tutorial.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
   arc are green and touching it explodes it.
 - **PlayerTwins**: `FindBody` on every contact; `LoseBody` on a hit during the twin; reads `IsTwinned`.
+- **PlayerWarp**: reads `IsProtected` (the Warp and the grace after it): contacts are ignored, and a rock that crosses the player's depth during
+  one is never a close-call threat (`closeCallThreat` is set false), so rocks flying past the empty orbit give no CLOSE CALL points.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins` and `Score` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.

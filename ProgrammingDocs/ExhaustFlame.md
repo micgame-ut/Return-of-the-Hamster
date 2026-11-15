@@ -116,9 +116,11 @@ shortens and thins out while still trailing behind the ship. With `deathFadeTime
    | 0.15 | 1.25 |
    | 0 | 1 |
 
-3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch × grow × fade` and
-   `width = Lerp(maxWidth, minWidth, Speed01) × grow × fade`. Faster means longer and narrower. The table below is
-   once `grow` has reached 1.
+3. **Length and width from speed:** `length = Lerp(minLength, maxLength, Speed01) × stretch × grow × fade × pop` and
+   `width = Lerp(maxWidth, minWidth, Speed01) × grow × fade × pop`. Faster means longer and narrower. The table below is
+   once `grow` has reached 1. `pop` is `PlayerWarp.Pop` (1 normally, 0 while the ship is popped out for a Warp, 1 if there is no
+   PlayerWarp), so the flame shrinks and returns with the ship. Scaling the ship alone doesn't hide it: the lines use world space, so
+   the ship's scale shrinks the length but not the width.
 4. **Flicker:** Perlin noise (−1 to 1) wobbles the width by up to `Lerp(maxFlicker, minFlicker, Speed01)`.
 
    | `Speed01` | Length (prefab) | Width before flicker | Flicker | Width range |
@@ -192,6 +194,8 @@ unsubscribes from the events.
 - **PlayerMovement**: reads the static `Speed01` and `MeshVisible` every frame; subscribes to `OnSpeedBoost`,
   and (player's flame only) `OnOrbitShifted`.
 - **PlayerInvincibility**: subscribes to `OnRainbowChanged`.
+- **PlayerWarp**: reads `Pop` every frame to shrink the flame with the ship. The player's flame finds it in its parent; a twin copy gets it from
+  `GameManager.PlayerWarp`.
 - **GameManager**: subscribes to `OnGameOver` (starts the death fade) and `OnWin` (hides at once). On a twin copy, gets `Player` and
   `PlayerInvincibility` in `Awake`. Reads `TimeSinceStart` every frame to grow in at the start.
 

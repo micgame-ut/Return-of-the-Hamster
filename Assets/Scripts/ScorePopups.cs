@@ -58,6 +58,8 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private string bombLabel = "BOMB";
     [Tooltip("Shown for Lance.")]
     [SerializeField] private string lanceLabel = "LANCE";
+    [Tooltip("Shown for Warp.")]
+    [SerializeField] private string warpLabel = "WARP";
 
     [Header("Outline Looks")]
     [Tooltip("The look for plain points and every labeled bonus (CLOSE CALL, WAVE CLEAR, BONUS...): a TextMeshPro material with a black outline, made from the font's material.")]
@@ -80,6 +82,8 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private Material bombLook;
     [Tooltip("The look for the LANCE popup. Empty = textLook.")]
     [SerializeField] private Material lanceLook;
+    [Tooltip("The look for the WARP popup. Empty = textLook.")]
+    [SerializeField] private Material warpLook;
 
     private class Popup
     {
@@ -172,6 +176,7 @@ public class ScorePopups : MonoBehaviour
             PowerUp.PowerUpType.Slim => slimLabel,
             PowerUp.PowerUpType.Bomb => bombLabel,
             PowerUp.PowerUpType.Lance => lanceLabel,
+            PowerUp.PowerUpType.Warp => warpLabel,
             _ => null,
         };
         Material look = type switch
@@ -185,6 +190,7 @@ public class ScorePopups : MonoBehaviour
             PowerUp.PowerUpType.Slim => slimLook,
             PowerUp.PowerUpType.Bomb => bombLook,
             PowerUp.PowerUpType.Lance => lanceLook,
+            PowerUp.PowerUpType.Warp => warpLook,
             _ => null,
         };
         if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition, look);

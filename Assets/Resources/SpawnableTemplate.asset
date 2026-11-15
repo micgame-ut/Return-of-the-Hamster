@@ -64,6 +64,10 @@ MonoBehaviour:
   lanceBeamTime: 0.2
   lanceBeamColor: {r: 3, g: 0.35, b: 1.6, a: 1}
   lanceBeamWidth: 0.3
+  warpSeconds: 10
+  warpOutTime: 0.5
+  warpHoldTime: 1
+  warpInTime: 0.5
   invincibleChance: 10
   twinChance: 25
   scoreChance: 25
@@ -72,3 +76,4 @@ MonoBehaviour:
   slimChance: 20
   bombChance: 20
   lanceChance: 20
+  warpChance: 20

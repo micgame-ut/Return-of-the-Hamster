@@ -57,6 +57,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerJackpot.cs | [PlayerJackpot.md](PlayerJackpot.md) | Done |
 | PlayerLance.cs | [PlayerLance.md](PlayerLance.md) | Done (untested in Play mode) |
 | PlayerSlim.cs | [PlayerSlim.md](PlayerSlim.md) | Done |
+| PlayerWarp.cs | [PlayerWarp.md](PlayerWarp.md) | Done (untested in Play mode) |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
 | PlayerTwins.cs | [PlayerTwins.md](PlayerTwins.md) | Done |

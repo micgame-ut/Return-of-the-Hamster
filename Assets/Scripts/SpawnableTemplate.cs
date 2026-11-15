@@ -121,6 +121,16 @@ public class SpawnableTemplate : ScriptableObject
     [ColorUsage(false, true)] public Color lanceBeamColor = new Color(3f, 0.35f, 1.6f, 1f);
     [Tooltip("Width of the lance beam's bright core, in world units. Thin, like a railgun. The lane it destroys is lanceWidth, which is wider.")]
     public float lanceBeamWidth = 0.3f;
+    [Tooltip("Seconds of game time a Warp power-up skips ahead. The level, the rocks and the spawner run fast for this long while the player is gone.")]
+    public float warpSeconds = 10f;
+    [Tooltip("Seconds the player takes to pop out at the start of Warp. The game runs at normal speed during it.")]
+    public float warpOutTime = 0.5f;
+    [Tooltip("Real seconds the player stays gone. The game runs warpSeconds ÷ warpHoldTime times faster during it (10 seconds in 1 = 10 times).")]
+    public float warpHoldTime = 1f;
+    [Tooltip("Seconds the player takes to pop back in at the end of Warp. The game runs at normal speed during it.")]
+    public float warpInTime = 0.5f;
+    [Tooltip("Seconds after a Warp ends during which rocks can't hurt the player, and the ship wears the phase look (Phased Material). 0 = none.")]
+    public float warpGraceTime = 1.5f;
 
     [Header("Random Power-Up Chances")]          // shares of the total, so 10/25/25 = 17%, 42%, 42%
     [Tooltip("How often a Random power-up gives Invincible. The chances are shares of their total.")]
@@ -139,6 +149,8 @@ public class SpawnableTemplate : ScriptableObject
     public float bombChance = 20f;
     [Tooltip("How often a Random power-up gives Lance.")]
     public float lanceChance = 20f;
+    [Tooltip("How often a Random power-up gives Warp.")]
+    public float warpChance = 20f;
 
     // How much to multiply a color by to fade it with depth. White = no change, farColor = fully faded.
     public Color GetDepthTint(float distanceAhead)
