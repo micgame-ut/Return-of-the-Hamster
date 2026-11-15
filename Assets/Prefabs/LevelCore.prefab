@@ -5832,6 +5832,8 @@ MonoBehaviour:
   maxSpeedUp: 3
   stackSpacing: 50
   stackWidth: 300
+  maxWidthShare: 0.5
+  edgeMargin: 40
   minScale: 1
   maxScale: 2
   pointsForMaxScale: 1000
@@ -5842,6 +5844,17 @@ MonoBehaviour:
   scoreLabel: SCORE x2
   rechargeLabel: RECHARGE
   jackpotLabel: JACKPOT
+  slimLabel: SLIM
+  bombLabel: BOMB
+  textLook: {fileID: 2100000, guid: 82efa54143092ba4fa5363b3578836a0, type: 2}
+  healthLook: {fileID: 2100000, guid: d0ec7c70e81ec954abc54c0981988954, type: 2}
+  invincibleLook: {fileID: 2100000, guid: cc2f56db896f88046a889a81b34ff99b, type: 2}
+  twinLook: {fileID: 2100000, guid: 334b240814d78e4498e3a20c12400155, type: 2}
+  scoreLook: {fileID: 2100000, guid: 97c345e55def9cd4089e0785e1f4b351, type: 2}
+  rechargeLook: {fileID: 2100000, guid: 7479f47542fddb24297b9c963bb73e5a, type: 2}
+  jackpotLook: {fileID: 2100000, guid: ed056ffb0d429cd41853c7cb7e2502dc, type: 2}
+  slimLook: {fileID: 2100000, guid: 0736b683951b8974491ceae202f85fe2, type: 2}
+  bombLook: {fileID: 2100000, guid: 4666e874d777f614e92b217e4c6ea1de, type: 2}
 --- !u!1 &7494937977655481531
 GameObject:
   m_ObjectHideFlags: 0
@@ -7305,6 +7318,8 @@ MonoBehaviour:
   playerShell: {fileID: 0}
   playerTwins: {fileID: 0}
   playerJackpot: {fileID: 0}
+  playerSlim: {fileID: 0}
+  playerBomb: {fileID: 0}
   closeCallZone: {fileID: 0}
   runStats: {fileID: 0}
   score: {fileID: 0}
@@ -7604,6 +7619,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1087807545884406108}
+    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5621000170111103861}
+    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4603989746226990270}
   m_SourcePrefab: {fileID: 100100000, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
 --- !u!4 &7017956157728675862 stripped
 Transform:
@@ -7628,6 +7649,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerJackpot
   blinkInterval: 0.1
+--- !u!114 &5621000170111103861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7651362182572966572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a45f035c0b7ca049ac475d450cf1fc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSlim
+--- !u!114 &4603989746226990270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7651362182572966572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3e637e77536049469bcc8045252dfc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBomb
 --- !u!114 &9095284659071500652 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}

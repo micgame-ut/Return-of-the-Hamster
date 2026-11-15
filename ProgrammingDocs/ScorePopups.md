@@ -30,6 +30,8 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `maxSpeedUp` | 3 | The most the hold and fade can speed up, as a multiple of normal speed. 1 turns it off |
 | `stackSpacing` | 50 | Canvas units between stacked popups, times the popup's scale. A new popup kicks any popup it would overlap up so they end this far above it |
 | `stackWidth` | 300 | How close sideways two popups must be to count as overlapping, in canvas units. Keep it larger than a label's width |
+| `maxWidthShare` | 0.5 (slider 0.2–1) | The widest a popup may be, as a share of the screen width. A longer popup is shrunk to fit. On a 1280 × 1024 (5:4) canvas, 0.5 is 640 units |
+| `edgeMargin` | 40 | Canvas units kept clear between a popup and the side of the screen. A popup near an edge slides inward to stay clear |
 | `minScale` | 1 | Size for a tiny gain |
 | `maxScale` | 2 | Size at `pointsForMaxScale` and above |
 | `pointsForMaxScale` | 1000 | The final gain (points × multiplier) that reaches `maxScale` |
@@ -40,6 +42,25 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `scoreLabel` | SCORE x2 | Shown for Score Multiplier |
 | `rechargeLabel` | RECHARGE | Shown for Boost Recharge |
 | `jackpotLabel` | JACKPOT | Shown for Jackpot |
+| `slimLabel` | SLIM | Shown for Slim |
+| `bombLabel` | BOMB | Shown for Bomb (the "N DESTROYED" points popup is separate: it comes from PlayerBomb through Score) |
+
+The **Outline Looks** group holds nine materials (all assigned on `Score HUD` in `LevelCore.prefab`):
+
+| Field | Material | Used for | Outline color |
+| --- | --- | --- | --- |
+| `textLook` | `Popup Black` | Plain points (`+250`) and every labeled bonus (CLOSE CALL, WAVE CLEAR, PERFECT WAVE, BONUS, N DESTROYED) | black |
+| `healthLook` | `Popup Health` | +1 LIFE | green (0.1, 0.8, 0.2) |
+| `invincibleLook` | `Popup Invincible` | INVINCIBLE | blue (0.1, 0.4, 1.0) |
+| `twinLook` | `Popup Twin` | TWIN | teal (0.0, 0.75, 0.8) |
+| `scoreLook` | `Popup Score` | SCORE x2 | pink (0.95, 0.3, 0.7) |
+| `rechargeLook` | `Popup Recharge` | RECHARGE | orange (1.0, 0.45, 0.0) |
+| `jackpotLook` | `Popup Jackpot` | JACKPOT | gold (0.95, 0.7, 0.0) |
+| `slimLook` | `Popup Slim` | SLIM | violet (0.6, 0.3, 1.0) |
+| `bombLook` | `Popup Bomb` | BOMB | red (0.9, 0.1, 0.1) |
+
+An empty power-up slot falls back to `textLook`. The materials are in `Assets/Fonts/`; each is a copy of the font's material
+with the outline on (`OUTLINE_ON`, outline width 0.2, softness 0), so a color or thickness can be changed on the material.
 
 ## How it works
 
@@ -104,10 +125,31 @@ popup, at the smallest size, with no `+points` part. Clearing a label in the Ins
 
 ### `Spawn`
 
-The shared part of every popup: take one from the pool, place it `startOffset` above the world position on
-the canvas (it always takes that spot), call `KickUp` so any popup already showing there moves up out of its way, reset its
-`age` and `lift`, store its `scale`, set its text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp` both use it, so points
+The shared part of every popup: take one from the pool, set its text, **fit it to the screen**, place it `startOffset` above the world
+position on the canvas (it always takes that spot), call `KickUp` so any popup already showing there moves up out of its way, reset its
+`age` and `lift`, store its `scale`, set its size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp` both use it, so points
 popups and labels behave the same.
+
+**The outline look.** `Spawn` takes a `Material look` and, before it sets the text, puts it on the popup: `use = look != null ? look : textLook`,
+then `popup.text.fontSharedMaterial = use` (skipped if both are empty). It's set every time a pooled popup is reused, so a popup that showed
+JACKPOT can't keep the gold; TextMeshPro ignores the change when the material is the same. `Show` always passes `textLook` (black), and
+`ShowPowerUp` picks the look for the type with a second `switch` next to the label one.
+
+**Why separate materials.** The popup used the font's own material, `PublicPixel Atlas Material`, which about 30 other texts share (the HUD score,
+menus, the leaderboard, the end screen). Turning the outline on there would outline all of them, so each look is its own copy. Using separate
+material assets (and not changing a color per popup) also means no material copies are made while playing.
+
+**Fitting it to the screen.** The text goes in first, because `preferredWidth` (the text's real width at normal size) only exists once the
+text is set. Then:
+
+1. **Shrink.** `scale = min(scale, canvas width × maxWidthShare ÷ width)`. A long popup can't be wider than `maxWidthShare` of the screen,
+   however big its points make it. Short popups are untouched. On a 1280-wide canvas the limit is 640, so `54 DESTROYED +2700` (720 wide at
+   scale 1, asked to be scale 2) becomes scale 0.89, and `PERFECT WAVE +500` (680) becomes 0.94. The shrunken scale is what `KickUp` and
+   the stack spacing use.
+2. **Slide in.** `reach = canvas width ÷ 2 − edgeMargin − width × scale ÷ 2` is how far from the middle the popup's centre may sit, and
+   `start.x` is clamped to ±`reach` (never below 0), so a smash at the far left or right can't push the text off the screen.
+
+The canvas width is read live (`canvasRect.rect.width`), so this follows any window shape, not only 5:4.
 
 ### `KickUp`
 
@@ -171,10 +213,19 @@ slid into the removed slot.
 - **The prefab's pivot matters.** Scaling and placement happen around it, so a non-center pivot makes big
   popups grow off to one side.
 - **Labels make popups much wider.** If `PERFECT WAVE +500` wraps onto two lines, widen the prefab's Rect
-  Transform or turn off Wrapping.
+  Transform or turn off Wrapping. (The prefab has Wrapping off and Overflow on, so the text is measured at its full width.)
+- **Long popups end up smaller than normal.** With the default `maxWidthShare` of 0.5, long labels like `PERFECT WAVE +500` and
+  `N DESTROYED` are drawn a little under scale 1. Raise `maxWidthShare` (0.6 gives about 1.13 and 0.95) if they look too small.
+- **Stacking measures popup centres.** `KickUp` treats two popups as overlapping only when their centres are within `stackWidth` (300)
+  sideways, so two wide popups 300 to 600 units apart at the same height can still overlap each other. A small improvement would be to
+  compare half-widths.
 - **Keep the `OnCollected` unsubscribe in `OnDisable`.** It's a static event; removing the `-=` leaves
   destroyed popups subscribed after every restart.
-- **A new power-up type needs a label here** (a field and a line in `ShowPowerUp`), or it shows no popup.
+- **A new power-up type needs a label here** (a field and a line in `ShowPowerUp`), or it shows no popup. It also wants its own look: a
+  `<type>Look` field, a line in the look `switch`, and an outline material made from the font's material (copy `Popup Bomb.mat` and change
+  the outline color), or it falls back to the black look.
+- **Never turn the outline on in `PublicPixel Atlas Material`.** It is shared by most of the game's text.
+- **The outline width is limited by the font's atlas padding** (9 for PublicPixel SDF). 0.2 shows cleanly; a much larger width can get clipped.
 - **Stacking only looks at popups sideways-close and still showing.** A popup that has faded out and returned to the
   pool no longer blocks anything. A busy moment can push the older popups high up the screen, because each new one
   kicks the whole stack up. The kick is instant, so older popups jump up when a new one arrives.

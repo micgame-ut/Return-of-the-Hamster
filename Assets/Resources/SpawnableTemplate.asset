@@ -47,8 +47,18 @@ MonoBehaviour:
   jackpotDestroySpeed: 50
   jackpotMaterial: {fileID: 2100000, guid: e1c7cb62686069b47be6cfc587126aaa, type: 2}
   jackpotWarningTime: 1
+  slimDuration: 6
+  slimScale: 0.5
+  slimShrinkTime: 0.25
+  slimGrowTime: 1
+  bombPoints: 50
+  bombSweepTime: 0.2
+  bombShakeDuration: 0.4
+  bombShakeMagnitude: 0.5
   invincibleChance: 10
   twinChance: 25
   scoreChance: 25
   rechargeChance: 20
   jackpotChance: 20
+  slimChance: 20
+  bombChance: 20

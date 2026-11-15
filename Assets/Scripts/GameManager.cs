@@ -31,6 +31,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerTwins playerTwins;
     [Tooltip("The player's Jackpot power-up state. Can be left empty if PlayerJackpot is on the player object.")]
     [SerializeField] private PlayerJackpot playerJackpot;
+    [Tooltip("The player's Slim power-up state. Can be left empty if PlayerSlim is on the player object.")]
+    [SerializeField] private PlayerSlim playerSlim;
+    [Tooltip("The player's Bomb power-up. Can be left empty if PlayerBomb is on the player object.")]
+    [SerializeField] private PlayerBomb playerBomb;
     [Tooltip("The close-call range on the player. Can be left empty if CloseCallZone is on the player object.")]
     [SerializeField] private CloseCallZone closeCallZone;
     [Tooltip("This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject.")]
@@ -58,6 +62,8 @@ public class GameManager : MonoBehaviour
     public PlayerShell PlayerShell => playerShell;
     public PlayerTwins PlayerTwins => playerTwins;
     public PlayerJackpot PlayerJackpot => playerJackpot;
+    public PlayerSlim PlayerSlim => playerSlim;
+    public PlayerBomb PlayerBomb => playerBomb;
     public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
@@ -108,6 +114,8 @@ public class GameManager : MonoBehaviour
         if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
         if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
         if (playerJackpot == null && player != null) playerJackpot = player.GetComponent<PlayerJackpot>();
+        if (playerSlim == null && player != null) playerSlim = player.GetComponent<PlayerSlim>();
+        if (playerBomb == null && player != null) playerBomb = player.GetComponent<PlayerBomb>();
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
 
         ApplyLevelConfig();

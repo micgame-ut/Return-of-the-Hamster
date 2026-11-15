@@ -26,6 +26,10 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private float stackSpacing = 50f;
     [Tooltip("How close sideways two popups must be to count as overlapping, in canvas units. Labels are wide, so keep it larger than a number's width.")]
     [SerializeField] private float stackWidth = 300f;
+    [Tooltip("The widest a popup may be, as a share of the screen width. 0.5 = half the screen. A long popup is shrunk to fit, so it never runs off the screen.")]
+    [SerializeField, Range(0.2f, 1f)] private float maxWidthShare = 0.5f;
+    [Tooltip("Canvas units kept clear between a popup and the side of the screen. A popup near an edge is slid inward to stay clear.")]
+    [SerializeField] private float edgeMargin = 40f;
     [Tooltip("Size for a tiny gain.")]
     [SerializeField] private float minScale = 1f;
     [Tooltip("Size at pointsForMaxScale and above.")]
@@ -48,6 +52,30 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private string rechargeLabel = "RECHARGE";
     [Tooltip("Shown for Jackpot.")]
     [SerializeField] private string jackpotLabel = "JACKPOT";
+    [Tooltip("Shown for Slim.")]
+    [SerializeField] private string slimLabel = "SLIM";
+    [Tooltip("Shown for Bomb.")]
+    [SerializeField] private string bombLabel = "BOMB";
+
+    [Header("Outline Looks")]
+    [Tooltip("The look for plain points and every labeled bonus (CLOSE CALL, WAVE CLEAR, BONUS...): a TextMeshPro material with a black outline, made from the font's material.")]
+    [SerializeField] private Material textLook;
+    [Tooltip("The look for the +1 LIFE popup. Empty = textLook.")]
+    [SerializeField] private Material healthLook;
+    [Tooltip("The look for the INVINCIBLE popup. Empty = textLook.")]
+    [SerializeField] private Material invincibleLook;
+    [Tooltip("The look for the TWIN popup. Empty = textLook.")]
+    [SerializeField] private Material twinLook;
+    [Tooltip("The look for the SCORE x2 popup. Empty = textLook.")]
+    [SerializeField] private Material scoreLook;
+    [Tooltip("The look for the RECHARGE popup. Empty = textLook.")]
+    [SerializeField] private Material rechargeLook;
+    [Tooltip("The look for the JACKPOT popup. Empty = textLook.")]
+    [SerializeField] private Material jackpotLook;
+    [Tooltip("The look for the SLIM popup. Empty = textLook.")]
+    [SerializeField] private Material slimLook;
+    [Tooltip("The look for the BOMB popup. Empty = textLook.")]
+    [SerializeField] private Material bombLook;
 
     private class Popup
     {
@@ -124,7 +152,7 @@ public class ScorePopups : MonoBehaviour
         int whole = Mathf.RoundToInt(points);
         string value = multiplier > showMultiplierAbove ? $"+{whole}x{multiplier:0.0}" : $"+{whole}";
         Spawn(string.IsNullOrEmpty(label) ? value : $"{label} {value}",
-              Mathf.Lerp(minScale, maxScale, points * multiplier / pointsForMaxScale), worldPosition);
+              Mathf.Lerp(minScale, maxScale, points * multiplier / pointsForMaxScale), worldPosition, textLook);
     }
 
     private void ShowPowerUp(PowerUp.PowerUpType type, Vector3 worldPosition)
@@ -137,9 +165,23 @@ public class ScorePopups : MonoBehaviour
             PowerUp.PowerUpType.ScoreMultiplier => scoreLabel,
             PowerUp.PowerUpType.BoostRecharge => rechargeLabel,
             PowerUp.PowerUpType.Jackpot => jackpotLabel,
+            PowerUp.PowerUpType.Slim => slimLabel,
+            PowerUp.PowerUpType.Bomb => bombLabel,
             _ => null,
         };
-        if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition);
+        Material look = type switch
+        {
+            PowerUp.PowerUpType.Health => healthLook,
+            PowerUp.PowerUpType.Invincible => invincibleLook,
+            PowerUp.PowerUpType.Twin => twinLook,
+            PowerUp.PowerUpType.ScoreMultiplier => scoreLook,
+            PowerUp.PowerUpType.BoostRecharge => rechargeLook,
+            PowerUp.PowerUpType.Jackpot => jackpotLook,
+            PowerUp.PowerUpType.Slim => slimLook,
+            PowerUp.PowerUpType.Bomb => bombLook,
+            _ => null,
+        };
+        if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition, look);
     }
 
     // Kicks every popup that sits where the new one will appear up, so the new one takes the spot and the older ones stack above it.
@@ -161,20 +203,27 @@ public class ScorePopups : MonoBehaviour
         }
     }
 
-    private void Spawn(string text, float scale, Vector3 worldPosition)
+    private void Spawn(string text, float scale, Vector3 worldPosition, Material look)
     {
         Popup popup = free.Count > 0 ? free.Pop() : CreatePopup();
+
+        Material use = look != null ? look : textLook;   // an empty slot falls back to the black look
+        if (use != null) popup.text.fontSharedMaterial = use;
+        popup.text.text = text;
+        float width = popup.text.preferredWidth;
+        scale = Mathf.Min(scale, canvasRect.rect.width * maxWidthShare / Mathf.Max(width, 1f));   // a long label shrinks to fit
 
         Vector2 screenPoint = cam.WorldToScreenPoint(worldPosition);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, null, out Vector2 local);
         popup.start = local + Vector2.up * startOffset;
+        float reach = Mathf.Max(canvasRect.rect.width / 2f - edgeMargin - width * scale / 2f, 0f);   // how far from the middle its centre may sit
+        popup.start.x = Mathf.Clamp(popup.start.x, -reach, reach);
         KickUp(popup.start, scale);
         popup.age = 0f;
         popup.fadeAge = 0f;
         popup.lift = 0f;
         popup.scale = scale;
 
-        popup.text.text = text;
         popup.text.rectTransform.localScale = Vector3.one * scale;
         popup.text.rectTransform.localPosition = popup.start;
         popup.text.alpha = 1f;

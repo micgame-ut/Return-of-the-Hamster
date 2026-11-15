@@ -6,7 +6,7 @@ A pickup that works like an asteroid: it flies toward the camera (and the player
 collider touches it, does something. Each power-up type has its own effect. Every pickup also adds one to
 the power-ups stat in RunStats.
 
-There are six types:
+There are eight types:
 
 - **Health** gives the player a life back, up to their max. During the twin power-up it gives nothing. It is only
   ever a fixed pickup, placed by hand in chosen waves: a Random pickup never gives it.
@@ -23,9 +23,18 @@ There are six types:
   asteroid counts as a smashable Bonus rock** (except Frost and Magnet comets), smashed at one shared speed
   (`template.jackpotDestroySpeed`, 50), paying each rock's `bonusPoints`, and swaps to the Gold material (`template.jackpotMaterial`) with an outline, flickering
   for the last second. Picking another up restarts the timer. See PlayerJackpot and AsteroidBehavior. It is also in the Random roll.
+- **Slim** shrinks the player and its twin copies to `template.slimScale` (0.5) for `template.slimDuration` (6 s in total): it
+  shrinks in `slimShrinkTime` (0.25 s), holds, then grows slowly back over the last `slimGrowTime` (1 s). The colliders scale with
+  the objects, so the hit area, close-call zone and shield shrink too, and so do the boost ring, free-boost rings and exhaust.
+  A second pickup restarts the timer. See PlayerSlim. It is also in the Random roll.
+- **Bomb** removes every asteroid that is revealed on screen when it is collected, in a sweep from the nearest outward over
+  `template.bombSweepTime` (0.2 s), each with its normal explosion, for a flat `template.bombPoints` (50) per rock, paid as one
+  "N DESTROYED" popup. It doesn't touch the combo, pickups or Frost patches (a Frost comet goes, its patches run out on their own).
+  The camera shakes once. With nothing on screen it does nothing. See PlayerBomb. It is also in the Random roll, but a Mystery
+  pickup collected with no asteroids on screen won't roll it (`IsWasted`).
 
-A seventh type, **Random**, is the `Mystery PowerUp`: on pickup it rolls one of **five** at random (Invincible,
-Twin, ScoreMultiplier, BoostRecharge or Jackpot, never Health), using adjustable chances from the SpawnableTemplate, and skips any that
+A ninth type, **Random**, is the `Mystery PowerUp`: on pickup it rolls one of **seven** at random (Invincible,
+Twin, ScoreMultiplier, BoostRecharge, Jackpot, Slim or Bomb, never Health), using adjustable chances from the SpawnableTemplate, and skips any that
 would do nothing right now. Every pickup announces what it gave (`OnCollected`), and ScorePopups shows a label
 for it ("+1 LIFE", "INVINCIBLE", ...).
 
@@ -34,7 +43,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 - **Attached to:** each power-up prefab: `Mystery PowerUp` (type Random, the one the patterns use) and the
   fixed ones (`Health PowerUp`, `Invincibility PowerUp`, `Score Powerup`, `Boost Recharge PowerUp`: three upright
   amber discs, the middle one bigger, like the player's boost ring and its two small rings; `Jackpot PowerUp`: a gold coin
-  that flips edge-on as it spins). `Mystery PowerUp` is the old
+  that flips edge-on as it spins; `Slim PowerUp`: two violet chevrons squeezing together, `> <`; `Bomb PowerUp`: a black round bomb with an orange spark). `Mystery PowerUp` is the old
   `Twin PowerUp` renamed (same GUID), so patterns that placed the Twin prefab now place it; there's no fixed
   Twin prefab any more. The prefab also needs
   a collider with **Is Trigger** on, and no Rigidbody (the player has the Rigidbody, the same as with
@@ -51,7 +60,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge or Jackpot on pickup, never Health |
+| `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim or Bomb on pickup, never Health |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
 | `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` (tiny green plus signs) and the `Mystery PowerUp` uses `vfx_mystery_pop` (golden stars) here |
 
@@ -76,9 +85,9 @@ length, so it follows), give it a chance in SpawnableTemplate and a line in `Cha
 wasted, and a label in ScorePopups.
 
 **Add new types at the end of the enum.** Unity saves an enum field as its position number (Health = 0,
-Invincible = 1, Twin = 2, ScoreMultiplier = 3, Random = 4, BoostRecharge = 5, Jackpot = 6). Inserting a type earlier in
+Invincible = 1, Twin = 2, ScoreMultiplier = 3, Random = 4, BoostRecharge = 5, Jackpot = 6, Slim = 7, Bomb = 8). Inserting a type earlier in
 the list would shift those numbers and quietly change the type of every existing power-up prefab. That's why Random went
-at the end, even though it's the main one now, and why BoostRecharge and Jackpot come after it.
+at the end, even though it's the main one now, and why BoostRecharge, Jackpot, Slim and Bomb come after it.
 
 ### `RollType`: the random pick (Random type)
 
@@ -96,18 +105,19 @@ as long as its chance, and a random number is a dart thrown at the ruler.
    total itself, which no stretch contains, so if the walk ends without a winner, the last type with a
    weight wins.
 
-With the code's default chances (20 each, in the order Invincible, Twin, Score, Recharge, Jackpot):
+With the code's default chances (20 each, in the order Invincible, Twin, Score, Recharge, Jackpot, Slim, Bomb):
 
-| Situation | Invincible | Twin | Score | Recharge | Jackpot |
-| --- | --- | --- | --- | --- | --- |
-| Normal | 0 – 20 (20%) | 20 – 40 (20%) | 40 – 60 (20%) | 60 – 80 (20%) | 80 – 100 (20%) |
-| Twin at the cap (Twin wasted) | 0 – 20 (25%) | — | 20 – 40 (25%) | 40 – 60 (25%) | 60 – 80 (25%) |
+| Situation | Each of the seven |
+| --- | --- |
+| Normal | 20 of 140 (14% each) |
+| Twin at the cap (Twin wasted) | 20 of 120 (17% each) |
+| No asteroids on screen (Bomb wasted) | 20 of 120 (17% each) |
 
 A dart at 57.3 in the normal case: Invincible? 57.3 isn't under 20, so 37.3 is left. Twin? 37.3 isn't under 20,
 so 17.3 is left. Score? 17.3 is under 20, so Score wins. The chances are **shares of the total**, so they don't
 have to add up to 100; when one is wasted the others keep their sizes relative to each other. (The scene's asset
-uses 10 / 25 / 25 for the first three, and `rechargeChance` and `jackpotChance` are at their default of 20, so the shares
-are 10 / 25 / 25 / 20 / 20, which happens to add up to 100: 10%, 25%, 25%, 20% and 20%.)
+uses 10 / 25 / 25 for the first three, and `rechargeChance`, `jackpotChance`, `slimChance` and `bombChance` are at their
+default of 20, so the shares are 10 / 25 / 25 / 20 / 20 / 20 / 20, a total of 140: about 7%, 18%, 18%, 14%, 14%, 14% and 14%.)
 
 **`IsWasted`** uses the same conditions that make the effect do nothing:
 
@@ -115,7 +125,8 @@ are 10 / 25 / 25 / 20 / 20, which happens to add up to 100: 10%, 25%, 25%, 20% a
 | --- | --- |
 | Twin | no PlayerTwins, or it's at the cap (`!CanAddBody`) |
 | BoostRecharge | the player already holds a full set of free boosts (`FreeBoosts >= template.rechargeBoosts`) and the normal boost is ready (`BoostCharge01 >= 1`), or there's no player or template |
-| Invincible, ScoreMultiplier, Jackpot | never (a second pickup restarts or stacks) |
+| Bomb | no asteroid is revealed right now (`AsteroidBehavior.Active.Count == 0`) |
+| Invincible, ScoreMultiplier, Jackpot, Slim | never (a second pickup restarts or stacks) |
 
 **A new type needs its own line in `ChanceOf`.** The last line of that switch is `_ => template.scoreChance`, the catch-all, so
 a rollable type without its own line would quietly use the Score Multiplier's chance.
@@ -198,7 +209,7 @@ It runs once per pickup because the player only ever has **one** collider on (Pl
 off while the shield is on). With two, a pickup healed twice, counted twice and, with pooling, played a
 second explosion at the power-up's home spot.
 
-### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin`, `AddScoreMultiplier`, `RechargeBoost` and `StartJackpot`
+### `ApplyEffect`, `Heal`, `MakeInvincible`, `AddTwin`, `AddScoreMultiplier`, `RechargeBoost`, `StartJackpot`, `StartSlim` and `DetonateBomb`
 
 ### `OnCollected`
 
@@ -246,16 +257,24 @@ The count lives in PlayerMovement, since the power-up is gone as soon as it's pi
 `jackpot` field, from `GameManager.PlayerJackpot`). Like Invincible, the timer lives on the player, not here. It does
 nothing if the player has no PlayerJackpot or there's no template.
 
+**`StartSlim`** calls `Activate(template.slimDuration, template.slimScale, template.slimShrinkTime, template.slimGrowTime)` on the
+cached PlayerSlim (the `slim` field, from `GameManager.PlayerSlim`). The size lives on the player, not here. It does nothing if the
+player has no PlayerSlim or there's no template.
+
+**`DetonateBomb`** calls `Detonate(template.bombPoints, template.bombSweepTime, template.bombShakeDuration, template.bombShakeMagnitude)`
+on the cached PlayerBomb (the `bomb` field, from `GameManager.PlayerBomb`). The sweep takes time, so it runs on the player, not
+here (the pickup is switched off the moment it's collected). It does nothing if the player has no PlayerBomb or there's no template.
+
 ## Talks to
 
 - **ObjectSpawner**: reveals it and reads `ApproachSpeed` to time the reveal.
 - **SpawnableTemplate**: calls `GetDepthTint` every frame for the depth fade, and reads `baseApproachSpeed`,
   `speedMultiplier`, `despawnBehindCamera`, `powerUpSpinSpeed`,
   `pickupEffectPrefab`, the pickup shake settings, `invincibleDuration`, `rechargeBoosts`, `jackpotDuration`,
-  `jackpotWarningTime` and the Random chances.
+  `jackpotWarningTime`, the four `slim*` values, the four `bomb*` values and the Random chances.
 - **ScorePopups**: listens to `OnCollected` and shows the picked type's label.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`,
-  `PlayerTwins`, `PlayerJackpot` and `Score` in `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
+  `PlayerTwins`, `PlayerJackpot`, `PlayerSlim`, `PlayerBomb` and `Score` in `Awake`, reads `HasWon`, and reaches RunStats through it. GameManager
   reads `PowerUp.Active` to decide the win.
 - **RunStats**: calls `AddPowerUpPickedUp()`.
 - **PlayerMovement**: checks whether what touched the power-up is the player, reads its static `Speed`, and calls
@@ -263,6 +282,9 @@ nothing if the player has no PlayerJackpot or there's no template.
 - **PlayerHealth**: calls `GainLife()` (Health type, a fixed pickup only).
 - **PlayerInvincibility**: calls `Activate(duration)` (Invincible type).
 - **PlayerJackpot**: calls `Activate(duration, warningTime)` (Jackpot type).
+- **PlayerSlim**: calls `Activate(duration, scale, shrinkTime, growTime)` (Slim type).
+- **PlayerBomb**: calls `Detonate(points, sweepTime, shakeDuration, shakeMagnitude)` (Bomb type).
+- **AsteroidBehavior**: reads `Active.Count` in `IsWasted` so a Mystery pickup won't roll Bomb with nothing on screen.
 - **PlayerTwins**: `FindBody` decides whether the player or a twin copy touched it; calls `AddBody()` (Twin
   type); reads `IsTwinned` so Health gives no life during the twin, and `CanAddBody` to skip Twin in a roll at the
   cap.

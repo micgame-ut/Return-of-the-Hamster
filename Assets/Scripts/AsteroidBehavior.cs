@@ -888,4 +888,18 @@ public class AsteroidBehavior : MonoBehaviour
         OnSmashed?.Invoke(Kind);
         Finish();
     }
+
+    // The Bomb power-up: removes this asteroid with its explosion. Returns false if it's already gone. The score and the camera shake
+    // belong to PlayerBomb, so there's no combo and no Bonus here.
+    public bool Bomb()
+    {
+        if (!Active.Contains(this)) return false;
+
+        if (template != null) EffectPool.Play(template.explosionPrefab, transform.position);
+
+        RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
+        if (stats != null) stats.AddAsteroidDestroyed();
+        Finish();
+        return true;
+    }
 }

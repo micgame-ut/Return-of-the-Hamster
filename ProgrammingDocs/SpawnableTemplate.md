@@ -132,6 +132,14 @@ These three are new, so the asset uses the defaults until they're changed.
 | `jackpotDestroySpeed` | 50 (the asset has 50) | The player Speed needed to smash any asteroid during Jackpot. Replaces each asteroid's own `destroySpeed`, including the Destructible ones. Compare to `maxSpeed` (100) |
 | `jackpotMaterial` | none (the asset has `Gold`) | The material every asteroid's body swaps to during Jackpot, normally the same `Gold` as the Bonus asteroids. Empty = the asteroids keep their own look. The depth fade still darkens it |
 | `jackpotWarningTime` | 1 | Seconds before the end of Jackpot that the asteroids flicker between gold and their own color. Passed to `PlayerJackpot.Activate` |
+| `slimDuration` | 6 | Seconds a Slim power-up lasts in total, from pickup until the player is back to full size. Includes the slow grow-back at the end. Passed to `PlayerSlim.Activate` |
+| `slimScale` | 0.5 | How small the player and its twin copies get during Slim, as a multiple of normal size. The hit area, boost ring and exhaust shrink with it |
+| `slimShrinkTime` | 0.25 | Seconds the player takes to shrink at the start of Slim |
+| `slimGrowTime` | 1 | Seconds at the end of Slim during which the player grows slowly back to full size. Part of `slimDuration` (keep it below it) |
+| `bombPoints` | 50 | Points for each asteroid a Bomb removes. Flat: not multiplied by speed or power-ups, and it doesn't touch the combo |
+| `bombSweepTime` | 0.2 | Seconds a Bomb takes to go off across all the asteroids, nearest first, like a shockwave moving out. 0 = all at once. No asteroid goes off later than half the time it needs to reach the player |
+| `bombShakeDuration` | 0.4 | Seconds the camera shakes when a Bomb goes off |
+| `bombShakeMagnitude` | 0.5 | How far the camera shakes when a Bomb goes off, in world units |
 
 ### Random Power-Up Chances
 
@@ -142,8 +150,10 @@ These three are new, so the asset uses the defaults until they're changed.
 | `scoreChance` | 20 | How often it gives Score Multiplier |
 | `rechargeChance` | 20 | How often it gives Boost Recharge |
 | `jackpotChance` | 20 | How often it gives Jackpot |
+| `slimChance` | 20 | How often it gives Slim |
+| `bombChance` | 20 | How often it gives Bomb |
 
-These are **shares of the total**, not strict percentages: 20 each is a fifth each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
+These are **shares of the total**, not strict percentages: 20 each is a seventh each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
 that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There
 is no Health chance: a Random power-up never gives Health, which is placed by hand with the fixed `Health
 PowerUp` prefab. See PowerUp's `RollType`.

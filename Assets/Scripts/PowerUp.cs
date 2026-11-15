@@ -6,9 +6,9 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot, Slim, Bomb }
 
-    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge or Jackpot on pickup, never Health.")]
+    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim or Bomb on pickup, never Health.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
@@ -24,6 +24,8 @@ public class PowerUp : MonoBehaviour
     private PlayerInvincibility invincibility;
     private PlayerTwins twins;
     private PlayerJackpot jackpot;
+    private PlayerSlim slim;
+    private PlayerBomb bomb;
     private Score score;
 
     private struct TintSlot
@@ -49,7 +51,7 @@ public class PowerUp : MonoBehaviour
 
     // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
     private static readonly PowerUpType[] RollTypes =
-        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot };
+        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot, PowerUpType.Slim, PowerUpType.Bomb };
     private readonly float[] rollWeights = new float[RollTypes.Length];
 
     private void Awake()
@@ -61,6 +63,8 @@ public class PowerUp : MonoBehaviour
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
         jackpot = GameManager.Instance != null ? GameManager.Instance.PlayerJackpot : null;
+        slim = GameManager.Instance != null ? GameManager.Instance.PlayerSlim : null;
+        bomb = GameManager.Instance != null ? GameManager.Instance.PlayerBomb : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
         // Every material slot under this power-up, with its own base color, kept for the depth tint.
@@ -156,6 +160,16 @@ public class PowerUp : MonoBehaviour
         if (jackpot != null && template != null) jackpot.Activate(template.jackpotDuration, template.jackpotWarningTime);
     }
 
+    private void StartSlim()
+    {
+        if (slim != null && template != null) slim.Activate(template.slimDuration, template.slimScale, template.slimShrinkTime, template.slimGrowTime);
+    }
+
+    private void DetonateBomb()
+    {
+        if (bomb != null && template != null) bomb.Detonate(template.bombPoints, template.bombSweepTime, template.bombShakeDuration, template.bombShakeMagnitude);
+    }
+
     private PowerUpType RollType()
     {
         float total = FillWeights(true);
@@ -192,6 +206,8 @@ public class PowerUp : MonoBehaviour
         PowerUpType.Twin => template.twinChance,
         PowerUpType.BoostRecharge => template.rechargeChance,
         PowerUpType.Jackpot => template.jackpotChance,
+        PowerUpType.Slim => template.slimChance,
+        PowerUpType.Bomb => template.bombChance,
         _ => template.scoreChance,
     };
 
@@ -199,6 +215,7 @@ public class PowerUp : MonoBehaviour
     private bool IsWasted(PowerUpType t) => t switch
     {
         PowerUpType.Twin => twins == null || !twins.CanAddBody,
+        PowerUpType.Bomb => AsteroidBehavior.Active.Count == 0,
         PowerUpType.BoostRecharge => player != null && template != null && player.FreeBoosts >= template.rechargeBoosts && player.BoostCharge01 >= 1f,
         _ => false,
     };
@@ -224,6 +241,12 @@ public class PowerUp : MonoBehaviour
                 break;
             case PowerUpType.Jackpot:
                 StartJackpot();
+                break;
+            case PowerUpType.Slim:
+                StartSlim();
+                break;
+            case PowerUpType.Bomb:
+                DetonateBomb();
                 break;
         }
     }

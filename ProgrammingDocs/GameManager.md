@@ -38,6 +38,8 @@ the matching end screen. It doesn't stop other scripts itself. It announces the 
 | `playerShell` | PlayerShell | The player's shield shell and its hitbox. Can be left empty if PlayerShell is on the `player` object |
 | `playerTwins` | PlayerTwins | The twin power-up on the player. Can be left empty if PlayerTwins is on the `player` object |
 | `playerJackpot` | PlayerJackpot | The Jackpot power-up state on the player. Can be left empty if PlayerJackpot is on the `player` object. Read through the `PlayerJackpot` property |
+| `playerSlim` | PlayerSlim | The Slim power-up state on the player. Can be left empty if PlayerSlim is on the `player` object. Read through the `PlayerSlim` property |
+| `playerBomb` | PlayerBomb | The Bomb power-up on the player. Can be left empty if PlayerBomb is on the `player` object. Read through the `PlayerBomb` property |
 | `closeCallZone` | CloseCallZone | The close-call range on the player. Can be left empty if CloseCallZone is on the `player` object |
 | `runStats` | RunStats | This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject |
 | `score` | Score | This level's score and its HUD counter. Can be left empty if Score is on the same GameObject |
@@ -227,7 +229,7 @@ anything. Other scripts read from it or call it:
 | **TwinCopy** | `Player`, `PlayerShell` | `Awake` |
 | **DangerWarning** | gets `PlayerHealth` and `PlayerTwins`; subscribes to `OnWin` | `Awake`; on a win |
 | **AsteroidBehavior** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `PlayerJackpot`, `Score`, `CloseCallZone`; `RunStats`. GameManager reads `AsteroidBehavior.Active` for `LevelCleared` | `Awake`; when an asteroid is smashed; every frame |
-| **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `PlayerJackpot`, `Score`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
+| **PowerUp** | `GameplayCamera`, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins`, `PlayerJackpot`, `PlayerSlim`, `PlayerBomb`, `Score`; reads `HasWon`, gets `RunStats`. GameManager reads `PowerUp.Active` for `LevelCleared` | `Awake`; on pickup; every frame |
 | **RunStats** | reads `HasStarted`, `HasWon` and `Player` (for `InOverdrive`); GameManager calls its `RecordDeath()` | every frame; at game over |
 | **Score** | `LevelTimer`, `Player`, `PlayerHealth`; reads `IsGameOver` and `HasWon` | `Awake`; when points are added |
 | **ScorePopups** | `GameplayCamera`, `Score` | `Awake` |

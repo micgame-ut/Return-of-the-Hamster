@@ -87,6 +87,22 @@ public class SpawnableTemplate : ScriptableObject
     public Material jackpotMaterial;
     [Tooltip("Seconds before the end of Jackpot that the asteroids start to flicker between gold and their own color.")]
     public float jackpotWarningTime = 1f;
+    [Tooltip("Seconds a Slim power-up lasts in total, from pickup until the player is back to full size. It includes the slow grow-back at the end.")]
+    public float slimDuration = 6f;
+    [Tooltip("How small the player and its twin copies get during Slim, as a multiple of normal size. 0.5 = half size. The hit area, boost ring and exhaust shrink with it.")]
+    public float slimScale = 0.5f;
+    [Tooltip("Seconds the player takes to shrink at the start of Slim.")]
+    public float slimShrinkTime = 0.25f;
+    [Tooltip("Seconds at the end of Slim during which the player grows slowly back to full size, so the end can be seen coming. Part of slimDuration.")]
+    public float slimGrowTime = 1f;
+    [Tooltip("Points for each asteroid a Bomb power-up removes. Flat: not multiplied by speed or power-ups, and it doesn't touch the combo.")]
+    public float bombPoints = 50f;
+    [Tooltip("Seconds a Bomb takes to go off across all the asteroids, nearest first, like a shockwave moving out. 0 = all at once. No asteroid goes off later than half the time it needs to reach the player.")]
+    public float bombSweepTime = 0.2f;
+    [Tooltip("Seconds the camera shakes when a Bomb goes off.")]
+    public float bombShakeDuration = 0.4f;
+    [Tooltip("How far the camera shakes when a Bomb goes off, in world units.")]
+    public float bombShakeMagnitude = 0.5f;
 
     [Header("Random Power-Up Chances")]          // shares of the total, so 10/25/25 = 17%, 42%, 42%
     [Tooltip("How often a Random power-up gives Invincible. The chances are shares of their total.")]
@@ -99,6 +115,10 @@ public class SpawnableTemplate : ScriptableObject
     public float rechargeChance = 20f;
     [Tooltip("How often a Random power-up gives Jackpot.")]
     public float jackpotChance = 20f;
+    [Tooltip("How often a Random power-up gives Slim.")]
+    public float slimChance = 20f;
+    [Tooltip("How often a Random power-up gives Bomb.")]
+    public float bombChance = 20f;
 
     // How much to multiply a color by to fade it with depth. White = no change, farColor = fully faded.
     public Color GetDepthTint(float distanceAhead)

@@ -500,8 +500,18 @@ come and go, so there's nothing stable to subscribe to). GameSFX uses them for s
 | `OnSplit` | in `Split`, when a Splitter bursts into pieces | nothing |
 | `OnCloseCall` | in `TrackCloseCall`, in the same `if` as `score.AddCloseCall`, so exactly when the close call scores | nothing |
 
+### `Bomb` (the Bomb power-up)
+
+`public bool Bomb()` removes this asteroid for PlayerBomb and returns whether it did. It returns `false` straight away if the asteroid
+is no longer in `Active` (it hit the player or left during the sweep), so nothing is removed twice. Otherwise it plays the template's
+normal explosion at its position, counts it in `RunStats.AddAsteroidDestroyed`, and calls `Finish` (a normal asteroid goes back to its
+pool; a Frost comet hides and waits for its patches to run out; a Splitter never splits). It does **not** add score, touch the combo,
+shake the camera or raise `OnSmashed`: the score and the shake belong to PlayerBomb, and `OnSmashed` would play the smash sound and count
+toward the tutorial.
+
 ## Talks to
 
+- **PlayerBomb**: calls `Bomb()` on each target; reads `Active`.
 - **GameSFX**: subscribes to the three static events above.
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`. A Magnet calls
   `AddPull` each frame, and a Frost comet calls `ApplyFrost` each frame the player is inside a patch.
