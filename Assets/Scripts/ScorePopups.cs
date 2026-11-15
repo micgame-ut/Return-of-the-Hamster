@@ -18,7 +18,11 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private float lifetime = 0.8f;
     [Tooltip("Seconds a popup stays fully opaque before it starts to fade, so it can be read. Keep it below lifetime.")]
     [SerializeField] private float holdTime = 0.3f;
-    [Tooltip("Canvas units between stacked popups, times the popup's scale. A new popup starts this far above any popup it would overlap.")]
+    [Tooltip("How much faster popups hold and fade for each popup showing beyond the first. 0.25 means 3 popups fade 1.5 times as fast. 0 turns it off.")]
+    [SerializeField] private float crowdSpeedUp = 0.25f;
+    [Tooltip("The most the hold and fade can speed up, as a multiple of normal speed. 1 turns it off.")]
+    [SerializeField] private float maxSpeedUp = 3f;
+    [Tooltip("Canvas units between stacked popups, times the popup's scale. A new popup kicks any popup it would overlap up, so they end this far above it.")]
     [SerializeField] private float stackSpacing = 50f;
     [Tooltip("How close sideways two popups must be to count as overlapping, in canvas units. Labels are wide, so keep it larger than a number's width.")]
     [SerializeField] private float stackWidth = 300f;
@@ -40,12 +44,19 @@ public class ScorePopups : MonoBehaviour
     [SerializeField] private string twinLabel = "TWIN";
     [Tooltip("Shown for Score Multiplier.")]
     [SerializeField] private string scoreLabel = "SCORE x2";
+    [Tooltip("Shown for Boost Recharge.")]
+    [SerializeField] private string rechargeLabel = "RECHARGE";
+    [Tooltip("Shown for Jackpot.")]
+    [SerializeField] private string jackpotLabel = "JACKPOT";
 
     private class Popup
     {
         public TMP_Text text;
         public Vector2 start;
         public float age;
+        public float fadeAge;   // age for the hold and fade, which runs faster when crowded
+        public float lift;   // extra height from being kicked up by newer popups
+        public float scale;   // its size, used for the gap above it
     }
 
     private readonly Stack<Popup> free = new Stack<Popup>();
@@ -78,13 +89,15 @@ public class ScorePopups : MonoBehaviour
 
     private void Update()
     {
+        float speedUp = Mathf.Min(1f + crowdSpeedUp * Mathf.Max(active.Count - 1, 0), maxSpeedUp);
         for (int i = active.Count - 1; i >= 0; i--)
         {
             Popup popup = active[i];
             popup.age += Time.unscaledDeltaTime;
+            popup.fadeAge += Time.unscaledDeltaTime * speedUp;
             float t = popup.age / lifetime;
 
-            if (t >= 1f)
+            if (popup.fadeAge >= lifetime)
             {
                 popup.text.gameObject.SetActive(false);
                 active.RemoveAt(i);
@@ -92,9 +105,9 @@ public class ScorePopups : MonoBehaviour
                 continue;
             }
 
-            popup.text.rectTransform.localPosition = popup.start + Vector2.up * (riseDistance * t);
+            popup.text.rectTransform.localPosition = popup.start + Vector2.up * (riseDistance * t + popup.lift);
             // Fully opaque for holdTime, then fades out over the rest of lifetime. The Max stops a divide by zero if holdTime is set to lifetime or more.
-            float fadeT = Mathf.Clamp01((popup.age - holdTime) / Mathf.Max(lifetime - holdTime, 0.01f));
+            float fadeT = Mathf.Clamp01((popup.fadeAge - holdTime) / Mathf.Max(lifetime - holdTime, 0.01f));
             popup.text.alpha = 1f - fadeT;
         }
     }
@@ -122,31 +135,30 @@ public class ScorePopups : MonoBehaviour
             PowerUp.PowerUpType.Invincible => invincibleLabel,
             PowerUp.PowerUpType.Twin => twinLabel,
             PowerUp.PowerUpType.ScoreMultiplier => scoreLabel,
+            PowerUp.PowerUpType.BoostRecharge => rechargeLabel,
+            PowerUp.PowerUpType.Jackpot => jackpotLabel,
             _ => null,
         };
         if (!string.IsNullOrEmpty(label)) Spawn(label, minScale, worldPosition);
     }
 
-    // Returns a start position pushed up until it no longer sits on a popup that's already showing.
-    private Vector2 FindFreeStart(Vector2 start, float scale)
+    // Kicks every popup that sits where the new one will appear up, so the new one takes the spot and the older ones stack above it.
+    private void KickUp(Vector2 start, float scale)
     {
-        float gap = stackSpacing * scale;
-        bool moved = true;
-        // Repeat until a full pass finds nothing in the way, since moving up can land on another popup.
-        for (int tries = 0; moved && tries < active.Count + 1; tries++)
+        active.Sort((a, b) => a.text.rectTransform.localPosition.y.CompareTo(b.text.rectTransform.localPosition.y));
+        float minY = start.y + stackSpacing * scale;
+        foreach (Popup other in active)
         {
-            moved = false;
-            foreach (Popup other in active)
+            Vector2 now = other.text.rectTransform.localPosition;
+            if (Mathf.Abs(now.x - start.x) >= stackWidth) continue;
+            if (now.y <= start.y - stackSpacing * other.scale) continue;
+            if (now.y < minY)
             {
-                Vector2 otherNow = other.text.rectTransform.localPosition;
-                if (Mathf.Abs(otherNow.x - start.x) < stackWidth && Mathf.Abs(otherNow.y - start.y) < gap)
-                {
-                    start.y = otherNow.y + gap;
-                    moved = true;
-                }
+                other.lift += minY - now.y;
+                now.y = minY;
             }
+            minY = now.y + stackSpacing * other.scale;
         }
-        return start;
     }
 
     private void Spawn(string text, float scale, Vector3 worldPosition)
@@ -156,8 +168,11 @@ public class ScorePopups : MonoBehaviour
         Vector2 screenPoint = cam.WorldToScreenPoint(worldPosition);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, null, out Vector2 local);
         popup.start = local + Vector2.up * startOffset;
-        popup.start = FindFreeStart(popup.start, scale);
+        KickUp(popup.start, scale);
         popup.age = 0f;
+        popup.fadeAge = 0f;
+        popup.lift = 0f;
+        popup.scale = scale;
 
         popup.text.text = text;
         popup.text.rectTransform.localScale = Vector3.one * scale;

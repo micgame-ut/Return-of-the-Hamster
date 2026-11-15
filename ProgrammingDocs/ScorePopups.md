@@ -26,7 +26,9 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `riseDistance` | 80 | Canvas units it rises over its life |
 | `lifetime` | 0.8 (1.1 on the HUD canvas) | Seconds to rise and fade out, including the `holdTime` |
 | `holdTime` | 0.3 | Seconds a popup stays fully opaque before it starts to fade. Keep it below `lifetime` |
-| `stackSpacing` | 50 | Canvas units between stacked popups, times the popup's scale. A new popup starts this far above any popup it would overlap |
+| `crowdSpeedUp` | 0.25 | How much faster popups hold and fade for each popup showing beyond the first. 0.25 means 3 popups fade 1.5 times as fast. 0 turns it off |
+| `maxSpeedUp` | 3 | The most the hold and fade can speed up, as a multiple of normal speed. 1 turns it off |
+| `stackSpacing` | 50 | Canvas units between stacked popups, times the popup's scale. A new popup kicks any popup it would overlap up so they end this far above it |
 | `stackWidth` | 300 | How close sideways two popups must be to count as overlapping, in canvas units. Keep it larger than a label's width |
 | `minScale` | 1 | Size for a tiny gain |
 | `maxScale` | 2 | Size at `pointsForMaxScale` and above |
@@ -36,14 +38,18 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `invincibleLabel` | INVINCIBLE | Shown for Invincible |
 | `twinLabel` | TWIN | Shown for Twin |
 | `scoreLabel` | SCORE x2 | Shown for Score Multiplier |
+| `rechargeLabel` | RECHARGE | Shown for Boost Recharge |
+| `jackpotLabel` | JACKPOT | Shown for Jackpot |
 
 ## How it works
 
 ### `Popup` and the two lists
 
-`Popup` is a small nested class bundling one text object with its own `start` position and `age`. Several
-popups can be on screen at once, each started at a different time and place, so each needs its own. It's a
-class (a reference type), so changing `popup.age` changes the one object, not a copy.
+`Popup` is a small nested class bundling one text object with its own `start` position, `age`, `fadeAge`, `lift` and `scale`.
+Several popups can be on screen at once, each started at a different time and place, so each needs its own. It's a
+class (a reference type), so changing `popup.age` changes the one object, not a copy. `fadeAge` is a second age for the
+hold and fade, which runs faster when the screen is crowded (see `Update`). `lift` is the extra height a popup has been
+kicked up by newer popups, and `scale` is its size, used for the gap above it.
 
 - `free` is a `Stack` of popups waiting to be used (like EffectPool's pool).
 - `active` is a `List` of popups currently showing, walked every frame.
@@ -99,20 +105,21 @@ popup, at the smallest size, with no `+points` part. Clearing a label in the Ins
 ### `Spawn`
 
 The shared part of every popup: take one from the pool, place it `startOffset` above the world position on
-the canvas, push that start up with `FindFreeStart` if it would sit on a popup that's already showing, set its
-text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp` both use it, so points
+the canvas (it always takes that spot), call `KickUp` so any popup already showing there moves up out of its way, reset its
+`age` and `lift`, store its `scale`, set its text and size, full opacity, switch it on and add it to `active`. `Show` and `ShowPowerUp` both use it, so points
 popups and labels behave the same.
 
-### `FindFreeStart`
+### `KickUp`
 
-Stops popups covering each other, so each one stays readable. It goes through the `active` popups and checks each
-one's **current** position (`localPosition`, not its start, because older popups have been rising). If one is within
-`stackWidth` sideways and within `stackSpacing × scale` vertically, the new start moves to just above it. That can
-land on another popup, so it repeats, at most `active.Count + 1` times, until a full pass moves nothing. The new
-popup isn't in `active` yet, so it never checks itself.
+Stops popups covering each other, so each one stays readable, by moving the **older** popups instead of the new one.
+It sorts `active` from lowest to highest (current `localPosition.y`, because older popups have been rising; `Sort` takes
+a lambda, as in `AsteroidSpawner`), then walks up with a running minimum height `minY`, which starts at the new popup's
+start plus `stackSpacing × scale`. It skips popups more than `stackWidth` sideways away, and popups well below the new
+spot. A popup lower than `minY` gets its `lift` raised by the difference, so it sits at `minY`, and the next popup has to
+clear that one by its own `stackSpacing × scale`. The new popup isn't in `active` yet, so it never checks itself.
 
-Example (spacing 50, scale 1): `+250` is at y = 47. A close call spawns at 40 and finds it within 50, so it
-starts at 97. A power-up label spawns at 40, moves to 97, then finds that one and moves to 147. A popup more than
+Example (spacing 50, scale 1): `+250` is at y = 47. A close call spawns at 40 and stays there, and `+250` is kicked up
+to 90. A power-up label then spawns at 40, the close call is kicked to 90 and `+250` to 140. A popup more than
 `stackWidth` away sideways is ignored. With nothing showing, nothing moves.
 
 | Gain | Text | Final | Size |
@@ -124,14 +131,19 @@ starts at 97. A power-up label spawns at 40, moves to 97, then finds that one an
 
 ### `Update`
 
-Animates every active popup. For each one, its age grows by `Time.unscaledDeltaTime`, and
-`t = age ÷ lifetime` goes from 0 to 1:
+Animates every active popup. First it works out one speed-up for the frame:
+`speedUp = min(1 + crowdSpeedUp × (active popups − 1), maxSpeedUp)`. With one popup it is 1, and with `crowdSpeedUp` 0.25
+and `maxSpeedUp` 3 it is 1.5 for 3 popups, 2 for 5 and 3 for 9 or more. Then, for each popup, `age` grows by
+`Time.unscaledDeltaTime` and `fadeAge` by that times `speedUp`, and `t = age ÷ lifetime` goes from 0 to 1:
 
-- Position: `start + up × riseDistance × t`, calculated fresh from `start` each frame.
-- Opacity: fully opaque until `age` reaches `holdTime`, then it fades to 0 over the rest of `lifetime`:
-  `fadeT = Clamp01((age − holdTime) ÷ max(lifetime − holdTime, 0.01))`, opacity `1 − fadeT`. The `max` avoids
-  dividing by zero if `holdTime` is `lifetime` or more. The rise still uses the whole `lifetime`.
-- When `t` reaches 1, it's switched off, removed from `active`, and pushed back onto `free`.
+- Position: `start + up × (riseDistance × t + lift)`, calculated fresh from `start` each frame. `lift` is how far newer
+  popups have kicked it up. The rise uses the normal `age`, so a crowd doesn't make popups climb faster.
+- Opacity: fully opaque until `fadeAge` reaches `holdTime`, then it fades to 0 over the rest of `lifetime`:
+  `fadeT = Clamp01((fadeAge − holdTime) ÷ max(lifetime − holdTime, 0.01))`, opacity `1 − fadeT`. The `max` avoids
+  dividing by zero if `holdTime` is `lifetime` or more.
+- When `fadeAge` reaches `lifetime` (fully faded), it's switched off, removed from `active`, and pushed back onto `free`.
+  `speedUp` is never below 1, so `fadeAge` is never behind `age`: the popup is always gone by the time it would have
+  finished rising, and with one popup the two ages are equal, so nothing changes.
 
 Unscaled time lets popups finish rising and fading during the game-over freeze. The loop runs backward,
 because removing an element shifts the later ones down one index, and a forward loop would skip the one that
@@ -164,7 +176,7 @@ slid into the removed slot.
   destroyed popups subscribed after every restart.
 - **A new power-up type needs a label here** (a field and a line in `ShowPowerUp`), or it shows no popup.
 - **Stacking only looks at popups sideways-close and still showing.** A popup that has faded out and returned to the
-  pool no longer blocks anything. A busy moment can push popups high up the screen, because each new one goes above
-  the whole stack.
+  pool no longer blocks anything. A busy moment can push the older popups high up the screen, because each new one
+  kicks the whole stack up. The kick is instant, so older popups jump up when a new one arrives.
 - **Set `lifetime` to about 1.1 on the canvas.** With the 0.8 default and a 0.3 hold, the fade lasts only 0.5 s.
 - **Overdrive won't use these popups.** It will get its own running-tally popup (stage 6 in TODO.md).

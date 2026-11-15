@@ -199,7 +199,7 @@ MonoBehaviour:
   orbitSlow: 0.5
   trail: {fileID: 0}
   ribbon: {fileID: 0}
-  destroySpeed: 5
+  destroySpeed: 50
   scorePoints: 150
   bonusPoints: 200
   bonusLabel: BONUS

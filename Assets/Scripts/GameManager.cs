@@ -29,6 +29,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerShell playerShell;
     [Tooltip("The twin power-up on the player. Can be left empty if PlayerTwins is on the player object.")]
     [SerializeField] private PlayerTwins playerTwins;
+    [Tooltip("The player's Jackpot power-up state. Can be left empty if PlayerJackpot is on the player object.")]
+    [SerializeField] private PlayerJackpot playerJackpot;
     [Tooltip("The close-call range on the player. Can be left empty if CloseCallZone is on the player object.")]
     [SerializeField] private CloseCallZone closeCallZone;
     [Tooltip("This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject.")]
@@ -55,6 +57,7 @@ public class GameManager : MonoBehaviour
     public PlayerInvincibility PlayerInvincibility => playerInvincibility;
     public PlayerShell PlayerShell => playerShell;
     public PlayerTwins PlayerTwins => playerTwins;
+    public PlayerJackpot PlayerJackpot => playerJackpot;
     public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
@@ -104,6 +107,7 @@ public class GameManager : MonoBehaviour
         if (playerInvincibility == null && player != null) playerInvincibility = player.GetComponent<PlayerInvincibility>();
         if (playerShell == null && player != null) playerShell = player.GetComponent<PlayerShell>();
         if (playerTwins == null && player != null) playerTwins = player.GetComponent<PlayerTwins>();
+        if (playerJackpot == null && player != null) playerJackpot = player.GetComponent<PlayerJackpot>();
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
 
         ApplyLevelConfig();

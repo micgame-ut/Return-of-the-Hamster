@@ -30,6 +30,10 @@ public class SpawnableTemplate : ScriptableObject
     [Tooltip("Outline color when the player is fast enough to smash it.")]
     [ColorUsage(false, true)] public Color outlineCanBreak = Color.green;
 
+    [Header("Asteroid Look")]
+    [Tooltip("Materials the ordinary asteroids pick from, one at random when each is first created. Frost, Magnet and Bonus asteroids keep their own. Empty = every asteroid keeps the material on its prefab.")]
+    public Material[] asteroidMaterials;
+
     [Header("Phase")]
     [Tooltip("The hologram look a Phase asteroid swaps to while phased (and during its flicker).")]
     public Material phasedMaterial;
@@ -73,14 +77,28 @@ public class SpawnableTemplate : ScriptableObject
     public float pickupShakeMagnitude = 0f;
     [Tooltip("Seconds of invincibility from an Invincible power-up.")]
     public float invincibleDuration = 5f;
+    [Tooltip("Free boosts a Boost Recharge power-up gives. They skip the cooldown and are used up one at a time. Picking another up refills to this number, it doesn't add to it.")]
+    public int rechargeBoosts = 2;
+    [Tooltip("Seconds a Jackpot power-up lasts. While it does, every asteroid (except Frost and Magnet comets) can be smashed for its bonus points, at the speed in jackpotDestroySpeed.")]
+    public float jackpotDuration = 8f;
+    [Tooltip("The player Speed needed to smash any asteroid while Jackpot lasts. It replaces each asteroid's own smash speed, including the Destructible ones. Compare to maxSpeed (100).")]
+    public float jackpotDestroySpeed = 50f;
+    [Tooltip("The material every asteroid's body swaps to during Jackpot, normally the same Gold as the Bonus asteroids. Empty = the asteroids keep their own look. The depth fade still darkens it with distance.")]
+    public Material jackpotMaterial;
+    [Tooltip("Seconds before the end of Jackpot that the asteroids start to flicker between gold and their own color.")]
+    public float jackpotWarningTime = 1f;
 
     [Header("Random Power-Up Chances")]          // shares of the total, so 10/25/25 = 17%, 42%, 42%
-    [Tooltip("How often a Random power-up gives Invincible. The three chances are shares of their total.")]
+    [Tooltip("How often a Random power-up gives Invincible. The chances are shares of their total.")]
     public float invincibleChance = 20f;
     [Tooltip("How often a Random power-up gives Twin.")]
     public float twinChance = 20f;
     [Tooltip("How often a Random power-up gives Score Multiplier.")]
     public float scoreChance = 20f;
+    [Tooltip("How often a Random power-up gives Boost Recharge.")]
+    public float rechargeChance = 20f;
+    [Tooltip("How often a Random power-up gives Jackpot.")]
+    public float jackpotChance = 20f;
 
     // How much to multiply a color by to fade it with depth. White = no change, farColor = fully faded.
     public Color GetDepthTint(float distanceAhead)

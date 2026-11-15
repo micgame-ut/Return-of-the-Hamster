@@ -22,12 +22,18 @@ showing only its back faces, in a flat color.
 
 ## How it works
 
-### Vertex: inflate the mesh
+### Vertex: inflate the mesh (group `dir`)
 
-`Position = Position + Normal × OutlineWidth` (both in object space)
+`dir = Normalize(Position)` (object space): the direction from the asteroid's centre out to the vertex. Made by a
+Normalize node on the Position node, in the group `dir`.
 
-Every vertex is pushed out along its normal, so the second copy of the mesh is a slightly bigger shell
-around the asteroid.
+`Position = Position + dir × OutlineWidth` (object space)
+
+Every vertex is pushed out along `dir`, so the second copy of the mesh is a slightly bigger shell around the
+asteroid. The push uses the direction from the centre, **not the vertex normal**: the asteroid mesh has hard edges, so
+its corner vertices are stored once per face with different normals, and pushing each copy along its own normal tore
+the shell apart at the edges. Two copies at the same position have the same `dir`, so they move together and the
+shell stays closed.
 
 ### Back faces only
 
@@ -48,6 +54,7 @@ Base Color = `OutlineColor`. No lighting, so the rim reads clearly against the s
 ## Gotchas
 
 - **Width is in object units.** A scaled-up asteroid gets a thicker outline too.
-- **Hard edges split.** On meshes with sharp edges (split normals), the shell pulls apart at the corners and
-  gaps can show. Smooth-shaded meshes outline cleanly.
+- **The mesh must be centred on its origin and roughly round.** The push is "away from the centre", so a mesh with an
+  off-centre pivot gets an uneven outline, and a long thin one gets a thicker outline on its ends. The asteroid model
+  (`asteroid.fbx`, bounds centred on 0) is fine. (Before this was the vertex normal, which left gaps at the hard edges.)
 - **The reference name `_OutlineColor` is used by code.** Renaming it breaks the color switch silently.

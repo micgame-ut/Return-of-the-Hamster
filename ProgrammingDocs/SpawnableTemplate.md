@@ -70,6 +70,12 @@ saves it; they're ignored.
 | `outlineTooSlow` | red | red | Outline color when the player is too slow to smash it |
 | `outlineCanBreak` | green | green | Outline color when the player is fast enough to smash it |
 
+### Asteroid Look
+
+| Field | Default | In the asset | What it changes |
+| --- | --- | --- | --- |
+| `asteroidMaterials` | empty | (fill in) | Materials ordinary asteroids pick from at random, once, when each is first created (and keep when pooled). Frost, Magnet and Bonus asteroids keep their own. Empty = every asteroid keeps its prefab's material |
+
 ### Phase
 
 | Field | Default | In the asset | What it changes |
@@ -121,17 +127,23 @@ These three are new, so the asset uses the defaults until they're changed.
 | `pickupShakeDuration` | 0 | Seconds the camera shakes on a pickup. 0 means no shake (PowerUp skips the call entirely, so it can't cut a running shake short) |
 | `pickupShakeMagnitude` | 0 | How far the camera shakes on a pickup, in world units |
 | `invincibleDuration` | 5 | Seconds of invincibility from an Invincible power-up. Passed to `PlayerInvincibility.Activate` |
+| `rechargeBoosts` | 2 | Free boosts a Boost Recharge power-up gives. They skip the cooldown and are used up one at a time. Picking another up refills to this number, it doesn't add to it |
+| `jackpotDuration` | 8 | Seconds a Jackpot power-up lasts. Every asteroid (except Frost and Magnet comets) can be smashed for its bonus points while it does. Passed to `PlayerJackpot.Activate` |
+| `jackpotDestroySpeed` | 50 (the asset has 50) | The player Speed needed to smash any asteroid during Jackpot. Replaces each asteroid's own `destroySpeed`, including the Destructible ones. Compare to `maxSpeed` (100) |
+| `jackpotMaterial` | none (the asset has `Gold`) | The material every asteroid's body swaps to during Jackpot, normally the same `Gold` as the Bonus asteroids. Empty = the asteroids keep their own look. The depth fade still darkens it |
+| `jackpotWarningTime` | 1 | Seconds before the end of Jackpot that the asteroids flicker between gold and their own color. Passed to `PlayerJackpot.Activate` |
 
 ### Random Power-Up Chances
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `invincibleChance` | 20 | How often a Random power-up gives Invincible |
+| `invincibleChance` | 20 | How often a Random power-up gives Invincible (the scene's asset uses 10, with Twin and Score at 25) |
 | `twinChance` | 20 | How often it gives Twin |
 | `scoreChance` | 20 | How often it gives Score Multiplier |
+| `rechargeChance` | 20 | How often it gives Boost Recharge |
+| `jackpotChance` | 20 | How often it gives Jackpot |
 
-These are **shares of the total**, not strict percentages: 20/20/20 is a third each, and 2/2/2 would mean the
-same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
+These are **shares of the total**, not strict percentages: 20 each is a fifth each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
 that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There
 is no Health chance: a Random power-up never gives Health, which is placed by hand with the fixed `Health
 PowerUp` prefab. See PowerUp's `RollType`.

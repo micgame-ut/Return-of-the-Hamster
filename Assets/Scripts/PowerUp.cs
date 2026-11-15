@@ -6,9 +6,9 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot }
 
-    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin or Score Multiplier on pickup, never Health.")]
+    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge or Jackpot on pickup, never Health.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
@@ -23,6 +23,7 @@ public class PowerUp : MonoBehaviour
     private PlayerHealth health;
     private PlayerInvincibility invincibility;
     private PlayerTwins twins;
+    private PlayerJackpot jackpot;
     private Score score;
 
     private struct TintSlot
@@ -48,7 +49,7 @@ public class PowerUp : MonoBehaviour
 
     // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
     private static readonly PowerUpType[] RollTypes =
-        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier };
+        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot };
     private readonly float[] rollWeights = new float[RollTypes.Length];
 
     private void Awake()
@@ -59,6 +60,7 @@ public class PowerUp : MonoBehaviour
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
+        jackpot = GameManager.Instance != null ? GameManager.Instance.PlayerJackpot : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
         // Every material slot under this power-up, with its own base color, kept for the depth tint.
@@ -144,6 +146,16 @@ public class PowerUp : MonoBehaviour
         if (score != null) score.AddMultiplierPowerUp();
     }
 
+    private void RechargeBoost()
+    {
+        if (player != null && template != null) player.GrantFreeBoosts(template.rechargeBoosts);
+    }
+
+    private void StartJackpot()
+    {
+        if (jackpot != null && template != null) jackpot.Activate(template.jackpotDuration, template.jackpotWarningTime);
+    }
+
     private PowerUpType RollType()
     {
         float total = FillWeights(true);
@@ -178,6 +190,8 @@ public class PowerUp : MonoBehaviour
     {
         PowerUpType.Invincible => template.invincibleChance,
         PowerUpType.Twin => template.twinChance,
+        PowerUpType.BoostRecharge => template.rechargeChance,
+        PowerUpType.Jackpot => template.jackpotChance,
         _ => template.scoreChance,
     };
 
@@ -185,6 +199,7 @@ public class PowerUp : MonoBehaviour
     private bool IsWasted(PowerUpType t) => t switch
     {
         PowerUpType.Twin => twins == null || !twins.CanAddBody,
+        PowerUpType.BoostRecharge => player != null && template != null && player.FreeBoosts >= template.rechargeBoosts && player.BoostCharge01 >= 1f,
         _ => false,
     };
 
@@ -203,6 +218,12 @@ public class PowerUp : MonoBehaviour
                 break;
             case PowerUpType.ScoreMultiplier:
                 AddScoreMultiplier();
+                break;
+            case PowerUpType.BoostRecharge:
+                RechargeBoost();
+                break;
+            case PowerUpType.Jackpot:
+                StartJackpot();
                 break;
         }
     }

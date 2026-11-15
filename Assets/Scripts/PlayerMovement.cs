@@ -61,6 +61,16 @@ public class PlayerMovement : MonoBehaviour
 
     private const float SensitivityScale = 0.001f; // Mouse Sensitivity and Acceleration are entered in thousandths, so 5 means 0.005
 
+    // The values the tuning overlay edits and saves. A plain class, so JsonUtility can write it to the file.
+    [Serializable]
+    public class Tuning
+    {
+        public float mouseSensitivity, forwardThreshold, minInputForAngle;
+        public float acceleration, speedDecay, maxSpeed, overdriveFraction, topSpeedDegrade;
+        public float boostForce, boostDecay, speedBoost, boostCooldown, sideInputMemory;
+        public float invulnerableTime;
+    }
+
     // Speed
     // Readable anywhere, but only PlayerMovement changes it; other scripts go
     // through methods like TakeHit so clamping stays in one place.
@@ -109,6 +119,9 @@ public class PlayerMovement : MonoBehaviour
     public event Action OnBoostReady; // the boost cooldown has just finished
     public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
     public float BoostDecay => boostDecay;
+    private int freeBoosts;   // boosts that skip the cooldown, from a Boost Recharge power-up
+    public int FreeBoosts => freeBoosts;
+    public event Action OnFreeBoostsChanged;   // the count went up or down, so the rings can update
     public event Action OnOrbitShifted;
     private float lastSideDirection;
     private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
@@ -132,8 +145,30 @@ public class PlayerMovement : MonoBehaviour
 
     public void SetMinSpeed(float value) => minSpeed = Mathf.Clamp(value, 0f, maxSpeed);
 
+    public Tuning GetTuning() => new Tuning
+    {
+        mouseSensitivity = mouseSensitivity, forwardThreshold = forwardThreshold, minInputForAngle = minInputForAngle,
+        acceleration = acceleration, speedDecay = speedDecay, maxSpeed = maxSpeed,
+        overdriveFraction = overdriveFraction, topSpeedDegrade = topSpeedDegrade,
+        boostForce = boostForce, boostDecay = boostDecay, speedBoost = speedBoost,
+        boostCooldown = boostCooldown, sideInputMemory = sideInputMemory, invulnerableTime = invulnerableTime,
+    };
+
+    public void SetTuning(Tuning t)
+    {
+        mouseSensitivity = t.mouseSensitivity; forwardThreshold = t.forwardThreshold; minInputForAngle = t.minInputForAngle;
+        acceleration = t.acceleration; speedDecay = t.speedDecay; maxSpeed = t.maxSpeed;
+        overdriveFraction = t.overdriveFraction; topSpeedDegrade = t.topSpeedDegrade;
+        boostForce = t.boostForce; boostDecay = t.boostDecay; speedBoost = t.speedBoost;
+        boostCooldown = t.boostCooldown; sideInputMemory = t.sideInputMemory; invulnerableTime = t.invulnerableTime;
+
+        MaxSpeed = maxSpeed;
+        OverdriveFraction = overdriveFraction;
+        minSpeed = Mathf.Clamp(minSpeed, 0f, maxSpeed);
+    }
+
     // Before the game starts, and once it's over or won, all input is ignored.
-    private bool InputLocked => GameManager.Instance != null &&
+    private bool InputLocked => TuningOverlay.IsOpen || GameManager.Instance != null &&
                                 (!GameManager.Instance.IsFlying || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
@@ -253,6 +288,19 @@ public class PlayerMovement : MonoBehaviour
     // Magnet asteroids call this each frame to drag the player along the orbit. Pulls from several add up.
     public void AddPull(float radiansPerSecond) => pullRate += radiansPerSecond;
 
+    // Boost Recharge power-up: sets the free boosts to count (a refill, not an add) and makes the normal boost ready now.
+    public void GrantFreeBoosts(int count)
+    {
+        freeBoosts = Mathf.Max(count, 0);
+        OnFreeBoostsChanged?.Invoke();
+
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer = 0f;
+            OnBoostReady?.Invoke();
+        }
+    }
+
     // Frost patches call this each frame the player is inside one. Only the strongest request counts.
     public void ApplyFrost(float speedSlow, float orbitSlow)
     {
@@ -351,22 +399,34 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        if (!value.isPressed || InputLocked || cooldownTimer > 0f)
+        bool free = freeBoosts > 0;   // a free boost ignores the cooldown
+        if (!value.isPressed || InputLocked || (cooldownTimer > 0f && !free))
             return;
 
         if (Time.time - lastSideInputTime <= sideInputMemory)
         {
             // Boost around the circle in whichever direction the mouse was last moving horizontally
             boostVelocity = lastSideDirection * boostForce;
-            cooldownTimer = boostCooldown;
+            SpendBoost(free);
             OnSideBoost?.Invoke(lastSideDirection);
         }
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, SpeedFloor, maxSpeed);
-            cooldownTimer = boostCooldown;
+            SpendBoost(free);
             OnSpeedBoost?.Invoke();
         }
+    }
+
+    // A free boost is used up instead of starting the cooldown.
+    private void SpendBoost(bool free)
+    {
+        if (free)
+        {
+            freeBoosts--;
+            OnFreeBoostsChanged?.Invoke();
+        }
+        else cooldownTimer = boostCooldown;
     }
 }

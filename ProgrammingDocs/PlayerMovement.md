@@ -94,6 +94,23 @@ While it's true, PlayerMovement gets out of the way:
 
 The name stayed `InputLocked`, although it now stops movement as well as input.
 
+`InputLocked` is also true while the tuning overlay is open (`TuningOverlay.IsOpen`, checked first). `Update` keeps
+running at `Time.timeScale` 0 and the mouse movement isn't multiplied by time, so without it the mouse would steer
+the ship behind the overlay.
+
+### Tuning for the overlay (`Tuning`, `GetTuning`, `SetTuning`)
+
+`Tuning` is a nested `[Serializable]` class holding 14 public floats: `mouseSensitivity`, `forwardThreshold`,
+`minInputForAngle`, `acceleration`, `speedDecay`, `maxSpeed`, `overdriveFraction`, `topSpeedDegrade`, `boostForce`,
+`boostDecay`, `speedBoost`, `boostCooldown`, `sideInputMemory` and `invulnerableTime`. It is a plain copy, so
+`JsonUtility` can write it to TuningOverlay's file. The real fields stay private with their tooltips.
+
+- **`GetTuning()`** returns a new `Tuning` filled from the current fields.
+- **`SetTuning(t)`** copies each value back into its field, then refreshes what `Awake` copied into statics:
+  `MaxSpeed` and `OverdriveFraction` (read by the HUD, `Speed01` and `SkyboxSpeedController`), and re-clamps
+  `minSpeed` to the new `maxSpeed`. It doesn't touch `Speed`: if `maxSpeed` drops below it, `UpdateSpeed` clamps it
+  on the next frame.
+
 ### `Start`: the cursor lock and the start angle
 
 `Start` gets the LevelTimer and sets `orbitAngle` from `startAngle`. It also locks and hides the cursor
@@ -307,6 +324,15 @@ Pressing the button boosts, depending on the current input, unless the boost is 
 - **Otherwise:** boosts forward instead, adding `speedBoost` to `Speed` (capped at max). It does nothing once
   the level is complete. It raises **`OnSpeedBoost`**, which ExhaustFlame uses to stretch the flame.
 
+**Free boosts (Boost Recharge power-up).** `freeBoosts` is a private count (read-only `FreeBoosts`), changed only here.
+`OnButton` starts with `free = freeBoosts > 0` and ignores the cooldown check when `free` is true. Each boost then calls
+`SpendBoost(free)` instead of setting `cooldownTimer`: a free boost lowers `freeBoosts` by one and raises
+**`OnFreeBoostsChanged`** and starts no cooldown; a normal boost starts the cooldown as before. A forward boost that does
+nothing (after the earth has arrived) never reaches `SpendBoost`, so it doesn't use one up. Free boosts are spent
+before the normal boost. `GrantFreeBoosts(count)` (called by PowerUp) sets `freeBoosts` to `count` (a refill, not an
+add), raises the event, and ends a running cooldown (raising `OnBoostReady`, so the ring flashes), so the pickup gives
+`count` free boosts plus the normal one. The count starts at 0 on each level load, so it doesn't survive a restart.
+
 **Boost ready.** `Update` counts `cooldownTimer` down, and on the frame it reaches 0 it raises
 **`OnBoostReady`** once (GameSFX uses it for the "boost ready" sound). It sits after the input-locked return, so
 it stays silent on the menu and after game over.
@@ -405,6 +431,9 @@ Side effects of doing it this way:
 - **Score**: reads the static `Speed01` for its speed multiplier
 - **PlayerDeath**: no direct link, but both move the same ship. PlayerMovement stops at game over so
   PlayerDeath can take over
+- **TuningOverlay**: reads `IsOpen` (through `InputLocked`), and calls `GetTuning`, `SetTuning` and `SetMinSpeed`
+- **PowerUp**: calls `GrantFreeBoosts` (Boost Recharge)
+- **FreeBoostPips**: reads `FreeBoosts` and subscribes to `OnFreeBoostsChanged`
 - **Anything reading `Speed`**: see the table above
 
 ## Gotchas

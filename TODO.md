@@ -436,3 +436,22 @@ Built one feature at a time, each with a test point.
   it for release. **Running score:** the score carries from level to level (`Score.CarriedScore`, banked when leaving a win
   screen) and goes back to 0 on Restart, Continue, Menu and Credits. The win breakdown has an "Earlier levels" row, and the
   leaderboard name page appears only on a game over or after the last level. See `Score.md`, `EndScreen.md`.
+
+## New power-ups
+Planned from a brainstorm. Each one is built a step at a time: variables, logic, snippets, then a Play-mode test. New types
+go at the **end** of the `PowerUpType` enum, so existing prefabs keep their type. The numbers live on `SpawnableTemplate`.
+
+- [x] **Boost Recharge** (built, waiting for a Play-mode check): the normal boost is ready at once, plus 2 free boosts
+  (`rechargeBoosts`) that skip the cooldown. Two small rings on the ship (and each twin copy), the same Ring Glow material as
+  the boost ring, show how many are left. The `PatternTest` scene was rebuilt from `LevelCore` (99 lives, `PatternTestConfig`
+  with level time 9999), so Test This Pattern uses the real player. `hamter.prefab` is no longer in any scene, but keep it:
+  the pattern builder reads the player's max speed from it.
+  Prefab `Boost Recharge PowerUp` (amber discs), test pattern `Patterns/Pattern_BoostRecharge` (a ring with a gap on the far
+  side, so you need about three boosts). In the Mystery roll (`rechargeChance`, default 20). See `PowerUp.md`, `FreeBoostPips.md`, `PlayerMovement.md`.
+- [ ] **Slim:** the player shrinks (hit area and mesh) for a set time.
+- [x] **Jackpot** (built, waiting for your Play-mode check): for 8 s every asteroid except Frost and Magnet comets counts as a Bonus rock (`PlayerJackpot`, `AsteroidBehavior.Kind`), smashed at one shared speed (`jackpotDestroySpeed` 50), swaps to the Bonus rocks' `Gold` material (`jackpotMaterial`) with a green or red outline (green at Speed 50+), flickering for the last second. Prefab `Jackpot PowerUp` (a gold coin), test pattern `Patterns/Pattern_Jackpot` (three rings with gaps, to plow through at Speed 50+). In the Mystery roll (`jackpotChance` 20). Checked by script and screenshot: rocks gold with outlines, Bonus smashes counted, and everything reverts when it ends. See `PlayerJackpot.md`, `AsteroidBehavior.md`.
+- [ ] **Bomb:** deletes every asteroid present (points, Frost/Magnet/Bonus and pickups still to decide).
+- [ ] **Lance:** the next click fires a beam down the player's lane that destroys everything in it.
+- [ ] **Warp:** the player pops out, the level fast-forwards a set number of seconds, then the player pops back in
+  (skipped waves, Play Once waves, time points and rocks on screen still to decide).
+- [x] **Every new power-up joins the Mystery roll** (decided): when each of Slim, Jackpot, Bomb, Lance and Warp is built, also add it to `RollTypes`, give it a `<type>Chance` on the template, a line in `ChanceOf` (the catch-all would otherwise use `scoreChance`) and `IsWasted` if it can do nothing.

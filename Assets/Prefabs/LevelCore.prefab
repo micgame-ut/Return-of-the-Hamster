@@ -5828,6 +5828,8 @@ MonoBehaviour:
   riseDistance: 80
   lifetime: 0.8
   holdTime: 0.3
+  crowdSpeedUp: 0.25
+  maxSpeedUp: 3
   stackSpacing: 50
   stackWidth: 300
   minScale: 1
@@ -5838,6 +5840,8 @@ MonoBehaviour:
   invincibleLabel: INVINCIBLE
   twinLabel: TWIN
   scoreLabel: SCORE x2
+  rechargeLabel: RECHARGE
+  jackpotLabel: JACKPOT
 --- !u!1 &7494937977655481531
 GameObject:
   m_ObjectHideFlags: 0
@@ -7300,6 +7304,7 @@ MonoBehaviour:
   playerInvincibility: {fileID: 0}
   playerShell: {fileID: 0}
   playerTwins: {fileID: 0}
+  playerJackpot: {fileID: 0}
   closeCallZone: {fileID: 0}
   runStats: {fileID: 0}
   score: {fileID: 0}
@@ -7595,19 +7600,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1087807545884406108}
   m_SourcePrefab: {fileID: 100100000, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
 --- !u!4 &7017956157728675862 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4265488849847642640, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
   m_PrefabInstance: {fileID: 6509608509676466694}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7651362182572966572 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+  m_PrefabInstance: {fileID: 6509608509676466694}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1087807545884406108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7651362182572966572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ce5a3fa3b0eead40957980d84d4dc7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerJackpot
+  blinkInterval: 0.1
 --- !u!114 &9095284659071500652 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
   m_PrefabInstance: {fileID: 6509608509676466694}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7651362182572966572}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95d7a07d8b7866147850aec3d0cb23fc, type: 3}

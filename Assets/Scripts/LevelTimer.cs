@@ -18,6 +18,7 @@ public class LevelTimer : MonoBehaviour
     public float Progress { get; private set; }
     public bool IsComplete => Progress >= 1f;
     public float LevelTime => levelTime;
+    public float SpeedTimeFactor { get => speedTimeFactor; set => speedTimeFactor = value; }
 
     public void SetLevelTime(float seconds) => levelTime = seconds;
 

@@ -50,6 +50,21 @@ editor crash during a test, so it has to be cleared deliberately (see `Clear`).
   `ObjectSpawner` uses it as the test wave's `delayAfter`, after the last asteroid and power-up are gone.
 - **`Clear()`** deletes both saved values, so `Active` is `false` again. It doesn't touch the pattern builder.
 
+### The `PatternTest` scene
+
+`Assets/Scenes/PatternTest.unity` is built from the shared level setup, like the levels: one **`LevelCore`** instance
+plus the `AudioManager` prefab (the same two things as `LevelTemplate`). So it always has the real player, with every
+current feature (boost rings, free-boost rings, the tuning overlay). Two overrides on the scene make it suit testing:
+
+- **`maxLives` 99** on the player (`PlayerHealth`), so you can't die mid-test.
+- **`levelConfig` = `Assets/Levels/PatternTestConfig.asset`** on the Game Manager: level time 9999 and `minSpeed` 0, so the
+  earth never arrives and the speed can be anything. (`GameManager` takes the level time from the config, so a value set
+  on the scene's `LevelTimer` would be ignored.)
+
+The old hand-built copy of the level setup, with its own standalone `hamter.prefab`, was replaced, so no scene uses
+`hamter.prefab` any more. **Keep the prefab:** the pattern builder still reads the player's max speed from it (see
+PatternGizmosEditor). The scene is still in the build's scene list, switched off.
+
 ### The life of a test
 
 1. **You press Test This Pattern.** The builder saves the open pattern, calls `Request`, opens `PatternTest` and

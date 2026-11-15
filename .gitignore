@@ -78,3 +78,6 @@ crashlytics-build.properties
 /[Aa]ssets/AB/
 /[Aa]ssets/AB.meta
 .mcp.json
+
+# Playtest tuning file written by TuningOverlay (per machine)
+/MovementTuning.json
