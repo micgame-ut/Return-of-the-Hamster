@@ -166,7 +166,17 @@ That angle is `halfAngle`, how far the danger zone spreads each way from `midAng
 cosine back into an angle, just as `Atan2` turns an x/y back into an angle. The value is clamped between
 -1 and 1 first, because rounding errors could push it just outside that range, where `Acos` has no answer.
 
+### Following the palette (`Awake`, `OnEnable`, `OnDisable`, `FollowPalette`)
+
+`Awake` keeps the three arc colours set in the Inspector. `OnEnable` subscribes `FollowPalette` to `PaletteApplier.OnChanged` and
+applies `PaletteApplier.Current` at once; `OnDisable` unsubscribes. `FollowPalette` sets `dangerColor`, `breakableColor` and
+`phasedColor` to the palette's `danger`, `breakable` and `phased`, or back to the Inspector colours when no palette is chosen
+(`null`) or the palette is the original. The faint ring colour is not changed. `LateUpdate` already reads those fields every
+frame, so nothing else changed.
+
 ## Talks to
+
+- **PaletteApplier**: subscribes to `OnChanged` and reads `Current`, so the arc colours follow the chosen palette.
 
 - **GameManager**: reads `ShowOrbitRing` and gets `Player` and `PlayerShell` in `Start`; reads `HasStarted`
   every frame.

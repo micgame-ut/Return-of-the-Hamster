@@ -1,0 +1,463 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b745925ea8b1564488f2e5bb98f3bed6, type: 3}
+  m_Name: PaletteTargets
+  m_EditorClassIdentifier: Assembly-CSharp::PaletteTargets
+  materials:
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _SpaceColor
+    role: 1
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Cloud_Color_Deep
+    role: 2
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Cloud_Color_Mid
+    role: 3
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Cloud_Color_Bright
+    role: 4
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Cloud_Color_Core
+    role: 5
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Alt_Color_Deep
+    role: 8
+    role2: 1
+    blend: 0.6
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Alt_Color_Mid
+    role: 8
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Alt_Color_Bright
+    role: 6
+    role2: 3
+    blend: 0.3
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Alt_Color_Core
+    role: 5
+    role2: 3
+    blend: 0.4
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Core_Glow_Color
+    role: 5
+    role2: 0
+    blend: 0
+    brightness: 0.85
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Stream_Color_1
+    role: 4
+    role2: 0
+    blend: 0
+    brightness: 0.7
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Stream_Color_2
+    role: 4
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Stream_Color_3
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 0.5
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Stream_Color_4
+    role: 2
+    role2: 3
+    blend: 0.3
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Sparkle_Color_1
+    role: 12
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Sparkle_Color_2
+    role: 6
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Sparkle_Color_3
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3240ecb68e11ca447ba54bb12a2e0f38, type: 2}
+    property: _Sparkle_Color_4
+    role: 14
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3ca5301964fdbd643a36439a9fc84478, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 766d7e28fae10224d90774b2a16d6e45, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 0.82
+    hueShift: 0.07
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 3fd08279c23c745409d59ca892c0cc64, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 0.6
+    hueShift: 0.04
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 5d2016ffd620f7e4084cc3abeb13b2d3, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 0.8
+    hueShift: -0.08
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 5d1260cd77a2eb049b454ffdd92a58bd, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 0.68
+    hueShift: -0.18
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 041dac6517d5b83409578dc37bea4d61, type: 2}
+    property: _BaseColor
+    role: 9
+    role2: 0
+    blend: 0
+    brightness: 0.78
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 442ceb179a8ed1349a4d4dd70342112e, type: 2}
+    property: _Holo_Color
+    role: 8
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
+    property: _Base_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 0.3
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
+    property: _Glow_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
+    property: _Ring_1_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: d822b747a99913843b5340a7f90c51db, type: 2}
+    property: _Ring_2_Color
+    role: 10
+    role2: 11
+    blend: 0.5
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 6124df92eb4ba854190ceffaa9ec78a4, type: 2}
+    property: _Base_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 0.3
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 6124df92eb4ba854190ceffaa9ec78a4, type: 2}
+    property: _Glow_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 6124df92eb4ba854190ceffaa9ec78a4, type: 2}
+    property: _Ring_1_Color
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 6124df92eb4ba854190ceffaa9ec78a4, type: 2}
+    property: _Ring_2_Color
+    role: 10
+    role2: 11
+    blend: 0.5
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: d37e1d5e0db73454f83964708bcdfdf7, type: 2}
+    property: _Shield_Color
+    role: 8
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: db65f8e2e3082414bbf4b2410562b126, type: 2}
+    property: _Shield_Color
+    role: 8
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 09f07fe08f17f294697e8f573c1d8899, type: 2}
+    property: _BaseColor
+    role: 12
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: 852552e51278a514784eaaf5172ae57a, type: 2}
+    property: _BaseColor
+    role: 12
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: e2de475535d09c84193e69f0813c8ddf, type: 2}
+    property: _BaseColor
+    role: 13
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: 1acd7215d6f24c64da9e7677346379d1, type: 2}
+    property: _BaseColor
+    role: 13
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 337cad356052fda488e5e371d1772302, type: 2}
+    property: _BaseColor
+    role: 13
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: e1c7cb62686069b47be6cfc587126aaa, type: 2}
+    property: _BaseColor
+    role: 13
+    role2: 0
+    blend: 0
+    brightness: 0.75
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: acaa561aab07cd8409b5c22f05003210, type: 2}
+    property: _BaseColor
+    role: 16
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: 0b7f5b7efab89904ca55e25fdd5a4794, type: 2}
+    property: _BaseColor
+    role: 11
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: 06da27f3863d7f94887815e233f65168, type: 2}
+    property: _BaseColor
+    role: 14
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: b11263417c7f4314b9bcd7a87bbe3c40, type: 2}
+    property: _BaseColor
+    role: 4
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: 493f40cc24ecf8448a3a96427a4ab7bc, type: 2}
+    property: _BaseColor
+    role: 15
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: _EmissionColor
+  - material: {fileID: 2100000, guid: d0ec7c70e81ec954abc54c0981988954, type: 2}
+    property: _OutlineColor
+    role: 12
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: ed056ffb0d429cd41853c7cb7e2502dc, type: 2}
+    property: _OutlineColor
+    role: 13
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 7cd161ce1018b544bb4974e46e37e2ff, type: 2}
+    property: _OutlineColor
+    role: 14
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 0736b683951b8974491ceae202f85fe2, type: 2}
+    property: _OutlineColor
+    role: 16
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 4cb23df506d810544b5a71a9cfb362e5, type: 2}
+    property: _OutlineColor
+    role: 15
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 4666e874d777f614e92b217e4c6ea1de, type: 2}
+    property: _OutlineColor
+    role: 11
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 7479f47542fddb24297b9c963bb73e5a, type: 2}
+    property: _OutlineColor
+    role: 4
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 334b240814d78e4498e3a20c12400155, type: 2}
+    property: _OutlineColor
+    role: 10
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: cc2f56db896f88046a889a81b34ff99b, type: 2}
+    property: _OutlineColor
+    role: 8
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 97c345e55def9cd4089e0785e1f4b351, type: 2}
+    property: _OutlineColor
+    role: 3
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 

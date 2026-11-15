@@ -12,6 +12,7 @@ public class LeaderboardPanel : MonoBehaviour
     [SerializeField, Range(1, 9)] private int scoreDigits = 6;
 
     private int highlight = -1;   // the place to highlight, 0 = first, -1 = none
+    private Color originalHighlight;   // the Inspector colour, kept so the original palette can put it back
 
     // Opens the window. Pass the new entry's place to highlight it, or -1 for no highlight.
     public void Show(int highlightRank)
@@ -26,7 +27,22 @@ public class LeaderboardPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void OnEnable() => Refresh();
+    private void Awake() => originalHighlight = highlightColor;
+
+    private void OnEnable()
+    {
+        PaletteApplier.OnChanged += FollowPalette;
+        FollowPalette(PaletteApplier.Current);
+        Refresh();
+    }
+
+    private void OnDisable() => PaletteApplier.OnChanged -= FollowPalette;
+
+    // No palette chosen (null) and the original palette both mean the Inspector colour.
+    private void FollowPalette(ColorPalette palette)
+    {
+        highlightColor = palette == null || palette.isOriginal ? originalHighlight : palette.uiAccent;
+    }
 
     // Writes one line per place, filling the places nobody has reached with dashes.
     private void Refresh()

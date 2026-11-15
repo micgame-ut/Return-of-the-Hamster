@@ -29,12 +29,22 @@ public class TuningOverlay : MonoBehaviour
     }
 
     [System.Serializable]
+    public class Display
+    {
+        public bool crt;   // the CRT screen effect; false = the normal picture
+        public string palette = "";   // the colour palette's name; empty = the game's own colours
+    }
+
+    [System.Serializable]
     public class SaveData
     {
         public PlayerMovement.Tuning player = new PlayerMovement.Tuning();
         public World world = new World();
         public List<LevelMin> minSpeeds = new List<LevelMin>();
+        public Display display = new Display();
     }
+
+    private static readonly int CrtIntensityId = Shader.PropertyToID("_CRTIntensity");
 
     private SaveData current = new SaveData();    // what the sliders edit, and what gets saved
     private SaveData defaults = new SaveData();   // the values the game started with, for Reset
@@ -103,6 +113,9 @@ public class TuningOverlay : MonoBehaviour
 
         LevelMin min = current.minSpeeds.Find(m => m.level == levelName);
         if (min != null) player.SetMinSpeed(min.minSpeed);
+
+        Shader.SetGlobalFloat(CrtIntensityId, current.display.crt ? 1f : 0f);
+        if (PaletteApplier.Instance != null) PaletteApplier.Instance.SelectByName(current.display.palette);
     }
 
     // Runs when a level loads: finds what the overlay changes, reads the starting values, then applies the file.
@@ -160,8 +173,8 @@ public class TuningOverlay : MonoBehaviour
         else if (CanOpen) Open();
     }
 
-    // Only while flying: not in the menu, before the start, or after a game over or win.
-    private bool CanOpen => GameManager.Instance.IsFlying && !GameManager.Instance.IsGameOver && !GameManager.Instance.HasWon;
+    // Not after a game over or win. It works on the menu and in the tutorial too, so the display settings can be reached there.
+    private bool CanOpen => !GameManager.Instance.IsGameOver && !GameManager.Instance.HasWon;
 
     private void Open()
     {
@@ -260,6 +273,38 @@ public class TuningOverlay : MonoBehaviour
         return changed;
     }
 
+    // The display rows. Returns true when any value changed.
+    private bool DrawDisplay()
+    {
+        bool before = current.display.crt;
+        string paletteBefore = current.display.palette;
+
+        GUILayout.Label("DISPLAY");
+        current.display.crt = GUILayout.Toggle(current.display.crt, new GUIContent("CRT screen",
+            "Draws the whole game as an old curved CRT screen, with scanlines and a colour fringe. Off = the normal picture."));
+
+        PaletteApplier applier = PaletteApplier.Instance;
+        if (applier != null)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(new GUIContent("Palette", "The game's colour preset: sky, rocks, rings, power-ups and UI. The first one is the game's own colours."), GUILayout.Width(170f));
+            if (GUILayout.Button(new GUIContent("<", "The previous palette."), GUILayout.Width(36f)))
+            {
+                applier.Previous();
+                current.display.palette = applier.CurrentName;
+            }
+            GUILayout.Label(applier.CurrentName);
+            if (GUILayout.Button(new GUIContent(">", "The next palette."), GUILayout.Width(36f)))
+            {
+                applier.Next();
+                current.display.palette = applier.CurrentName;
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        return current.display.crt != before || current.display.palette != paletteBefore;
+    }
+
     private Vector2 scroll;
 
     private void OnGUI()
@@ -272,7 +317,8 @@ public class TuningOverlay : MonoBehaviour
         GUILayout.Label("MOVEMENT TUNING     Tab: close and save");
 
         scroll = GUILayout.BeginScrollView(scroll);
-        bool changed = DrawSteeringAndSpeed();
+        bool changed = DrawDisplay();
+        changed |= DrawSteeringAndSpeed();
         changed |= DrawBoostAndHit();
         changed |= DrawWorld();
         GUILayout.EndScrollView();

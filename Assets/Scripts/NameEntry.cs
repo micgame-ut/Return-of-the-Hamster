@@ -37,6 +37,13 @@ public class NameEntry : MonoBehaviour
     private float forward;       // downward movement so far toward the next letter (negative = toward the previous)
     private float backward;      // leftward movement so far toward stepping back a slot
     private float openedAt;      // the unscaled time the page opened, for inputDelay
+    private Color originalActive, originalInactive;   // the Inspector colours, kept so the original palette can put them back
+
+    private void Awake()
+    {
+        originalActive = activeColor;
+        originalInactive = inactiveColor;
+    }
 
     private void OnEnable()
     {
@@ -50,7 +57,27 @@ public class NameEntry : MonoBehaviour
         if (moveAction != null) moveAction.action.Enable();
         if (selectAction != null) selectAction.action.Enable();
 
+        PaletteApplier.OnChanged += FollowPalette;
+        FollowPalette(PaletteApplier.Current);
+
         Draw();
+    }
+
+    private void OnDisable() => PaletteApplier.OnChanged -= FollowPalette;
+
+    // The letter being chosen is the palette's text colour, and the others a dimmer version of it.
+    private void FollowPalette(ColorPalette palette)
+    {
+        if (palette == null || palette.isOriginal)
+        {
+            activeColor = originalActive;
+            inactiveColor = originalInactive;
+            return;
+        }
+
+        activeColor = palette.text;
+        inactiveColor = palette.text * 0.5f;
+        inactiveColor.a = 1f;
     }
 
     // Shows each slot's letter, with the one being chosen in the active colour.

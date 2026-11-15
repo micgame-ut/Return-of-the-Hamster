@@ -39,6 +39,7 @@ public class OverdriveTally : MonoBehaviour
     private float endTimer;
     private Vector2 startPosition;
     private Color startColor;
+    private Color originalStart, originalExit;   // kept so the original palette can put them back
     private PlayerMovement player;
     private Score score;
     private bool levelEnded;
@@ -55,6 +56,9 @@ public class OverdriveTally : MonoBehaviour
             startColor = tallyText.color;
             tallyText.gameObject.SetActive(false);
         }
+
+        originalStart = startColor;
+        originalExit = exitColor;
     }
 
     private void Update()
@@ -107,6 +111,9 @@ public class OverdriveTally : MonoBehaviour
 
     private void OnEnable()
     {
+        PaletteApplier.OnChanged += FollowPalette;
+        FollowPalette(PaletteApplier.Current);
+
         GameManager gm = GameManager.Instance;
         if (gm == null) return;
         gm.OnGameOver += HandleLevelEnd;
@@ -115,10 +122,28 @@ public class OverdriveTally : MonoBehaviour
 
     private void OnDisable()
     {
+        PaletteApplier.OnChanged -= FollowPalette;
+
         GameManager gm = GameManager.Instance;
         if (gm == null) return;
         gm.OnGameOver -= HandleLevelEnd;
         gm.OnWin -= HandleLevelEnd;
+    }
+
+    // The tally's resting colour is the palette's text colour, and the flash when overdrive ends is its accent, lightened.
+    private void FollowPalette(ColorPalette palette)
+    {
+        if (palette == null || palette.isOriginal)
+        {
+            startColor = originalStart;
+            exitColor = originalExit;
+            return;
+        }
+
+        Color text = palette.text;
+        text.a = originalStart.a;
+        startColor = text;
+        exitColor = Color.Lerp(palette.uiAccent, Color.white, 0.4f);
     }
 
     // Game over or win: bank whatever was counting, and stop counting for the rest of the level.

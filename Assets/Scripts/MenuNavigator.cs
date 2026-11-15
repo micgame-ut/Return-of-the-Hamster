@@ -78,8 +78,8 @@ public class MenuNavigator : MonoBehaviour
 
     private void Update()
     {
-        // Only the page on top reacts; a page with no buttons has nothing to select.
-        if (!IsTopPage || buttons.Length == 0) return;
+        // Only the page on top reacts; a page with no buttons has nothing to select. Nothing reacts while the tuning window is open.
+        if (TuningOverlay.IsOpen || !IsTopPage || buttons.Length == 0) return;
 
         // Only the axis that matches the layout counts. Rolling down is negative y, rolling right is positive x.
         // 'roll' is positive when the ball moves toward the next button.

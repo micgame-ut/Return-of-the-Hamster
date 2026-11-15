@@ -240,6 +240,14 @@ PrefabInstance:
       propertyPath: m_text
       value: CREDITS
       objectReference: {fileID: 0}
+    - target: {fileID: 3875575888124013669, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      propertyPath: m_fontSize
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 3875575888124013669, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 25
+      objectReference: {fileID: 0}
     - target: {fileID: 4446367316171026102, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
       propertyPath: levelConfig
       value: 
@@ -251,8 +259,46 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2401974378404976988, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1727060191}
   m_SourcePrefab: {fileID: 100100000, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+--- !u!1 &1727060189 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2401974378404976988, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+  m_PrefabInstance: {fileID: 1727060188}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1727060190 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 726004863908581492, guid: 56e000a8b5e3d4d49ab15e48e8c5fbc7, type: 3}
+  m_PrefabInstance: {fileID: 1727060188}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1727060189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1727060191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1727060189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44579bae8bc984b42aaff98573c70656, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PostFXPulse
+  volume: {fileID: 1727060190}
+  decaySpeed: 4
+  hitVignette: 0.55
+  hitAberration: 0.6
+  warpAberration: 0.8
+  warpLensDistortion: -0.4
+  jackpotBloomBoost: 1.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

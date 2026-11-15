@@ -128,7 +128,17 @@ end-of-level freeze too.
 | `emphasisTime` | 1.0 | resting color |
 | End of the fade | 1.0 | transparent, then hidden |
 
+### Following the palette (`FollowPalette`)
+
+`Awake` keeps `startColor` (the text's own colour) and `exitColor` as `originalStart` and `originalExit`. `OnEnable` subscribes
+`FollowPalette` to `PaletteApplier.OnChanged` and applies `Current` (before the early return on a missing `GameManager`);
+`OnDisable` unsubscribes. `FollowPalette` makes `startColor` the palette's `text` colour (keeping its original transparency) and
+`exitColor` the palette's `uiAccent` blended 40% toward white. With no palette chosen, or the original one, the originals come back.
+The tally keeps setting the text from `startColor`, which is why the UI sweep alone wouldn't stick.
+
 ## Talks to
+
+- **PaletteApplier**: subscribes to `OnChanged` and reads `Current`, so the tally's colours follow the chosen palette.
 
 - **PlayerMovement**: reads `InOverdrive` every frame (through GameManager's `Player`).
 - **Score**: calls `AddOverdriveBonus` to bank the tally.

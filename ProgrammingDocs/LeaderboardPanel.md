@@ -42,7 +42,16 @@ text, one line for each of `MaxEntries` places:
   the box's width, so every name and score starts at the same spot and forms a column.
 - The highlighted line is wrapped in `<color=#RRGGBB>...</color>`, using `highlightColor`.
 
+### Following the palette (`FollowPalette`)
+
+`Awake` keeps the `highlightColor` set in the Inspector. `OnEnable` subscribes `FollowPalette` to `PaletteApplier.OnChanged`,
+applies `Current`, and then runs `Refresh`; `OnDisable` unsubscribes. `FollowPalette` sets `highlightColor` to the palette's
+`uiAccent`, or back to the Inspector colour for no palette or the original. The colour is written into the text when the window
+opens, so a change shows the next time it opens.
+
 ## Talks to
+
+- **PaletteApplier**: subscribes to `OnChanged` and reads `Current`, so the highlight follows the chosen palette.
 
 - **LeaderboardStore**: reads `Entries` and `MaxEntries`.
 - **EndScreen**: calls `Show` and `Close`.

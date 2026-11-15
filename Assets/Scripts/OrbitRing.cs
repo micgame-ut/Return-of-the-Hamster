@@ -44,6 +44,31 @@ public class OrbitRing : MonoBehaviour
     private float drawnZ;
     private int drawnSegments = -1; // -1 so the ring always draws on the first frame
     private bool ringShown = true; // last value given to ring.enabled
+    private Color originalDanger, originalBreakable, originalPhased;   // the Inspector colours, kept so the original palette can put them back
+
+    private void Awake()
+    {
+        originalDanger = dangerColor;
+        originalBreakable = breakableColor;
+        originalPhased = phasedColor;
+    }
+
+    private void OnEnable()
+    {
+        PaletteApplier.OnChanged += FollowPalette;
+        FollowPalette(PaletteApplier.Current);
+    }
+
+    private void OnDisable() => PaletteApplier.OnChanged -= FollowPalette;
+
+    // No palette chosen (null) and the original palette both mean the Inspector colours.
+    private void FollowPalette(ColorPalette palette)
+    {
+        bool own = palette == null || palette.isOriginal;
+        dangerColor = own ? originalDanger : palette.danger;
+        breakableColor = own ? originalBreakable : palette.breakable;
+        phasedColor = own ? originalPhased : palette.phased;
+    }
 
     private void Start()
     {

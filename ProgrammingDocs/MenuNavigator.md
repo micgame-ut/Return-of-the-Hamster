@@ -72,7 +72,8 @@ because `-1 % 4` is `-1` in C#, not 3.
 
 ### `Update`
 
-Runs only for the top page (and only if it has buttons):
+Runs only for the top page (and only if it has buttons), and does nothing while `TuningOverlay.IsOpen` is true, so the
+mouse and Space used in the tuning window can't move or press anything behind it:
 
 1. **Roll.** The Move action's value is read. Only the axis that matches `layout` counts, and the sign is chosen so
    a positive `roll` always means "toward the next button": rolling down (negative y) for Vertical, right
@@ -98,6 +99,7 @@ up starts again from 0.
   move, a page opening, or the page below becoming top again), `OnMoved` (the selection landed on a different button, not raised when a
   page opens or when nothing else is usable), `OnPressed` (Space on a button that can be pressed) and `OnBlocked`
   (Space on one that can't). Only the top page's `Update` raises them.
+- **TuningOverlay**: reads its static `IsOpen` in `Update` and ignores input while the window is open.
 - **PlayerMovement**: no direct link. It ignores input before the start, after game over and after a win, so the
   same Space press can't dodge.
 
