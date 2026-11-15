@@ -27,6 +27,8 @@ public class BoostRing : MonoBehaviour
     [Tooltip("The color of the ring's second sharp line while Lance is active. HDR.")]
     [SerializeField, ColorUsage(false, true)] private Color lanceRing2Color = new Color(3f, 0.8f, 2.2f);
 
+    private Color originalLanceBase, originalLanceGlow, originalLanceRing1, originalLanceRing2;   // the Inspector colours, kept so the original palette can put them back
+
     private PlayerMovement movement;
     private PlayerLance lance;
     private bool shownLance;         // whether the pink was last sent, so a change in either direction forces a resend
@@ -50,18 +52,46 @@ public class BoostRing : MonoBehaviour
         ringRenderer = GetComponent<Renderer>();
         props = new MaterialPropertyBlock();
         restRotation = transform.localRotation;
+
+        originalLanceBase = lanceBaseColor;
+        originalLanceGlow = lanceGlowColor;
+        originalLanceRing1 = lanceRing1Color;
+        originalLanceRing2 = lanceRing2Color;
     }
 
     private void OnEnable()
     {
         if (movement != null) movement.OnSideBoost += StartSpin;
         if (movement != null) movement.OnBoostReady += StartPulse;
+
+        PaletteApplier.OnChanged += FollowPalette;
+        FollowPalette(PaletteApplier.Current);
     }
 
     private void OnDisable()
     {
         if (movement != null) movement.OnSideBoost -= StartSpin;
         if (movement != null) movement.OnBoostReady -= StartPulse;
+
+        PaletteApplier.OnChanged -= FollowPalette;
+    }
+
+    // The four Lance colours follow the palette's Lance colour, each at its original strength.
+    private void FollowPalette(ColorPalette palette)
+    {
+        if (palette == null || palette.isOriginal)
+        {
+            lanceBaseColor = originalLanceBase;
+            lanceGlowColor = originalLanceGlow;
+            lanceRing1Color = originalLanceRing1;
+            lanceRing2Color = originalLanceRing2;
+            return;
+        }
+
+        lanceBaseColor = ColorPalette.AtStrength(palette.lance, originalLanceBase.maxColorComponent);
+        lanceGlowColor = ColorPalette.AtStrength(palette.lance, originalLanceGlow.maxColorComponent);
+        lanceRing1Color = ColorPalette.AtStrength(palette.lance, originalLanceRing1.maxColorComponent);
+        lanceRing2Color = ColorPalette.AtStrength(Color.Lerp(palette.lance, Color.white, 0.3f), originalLanceRing2.maxColorComponent);
     }
 
     private void StartPulse() => pulseTimer = readyPulseTime;

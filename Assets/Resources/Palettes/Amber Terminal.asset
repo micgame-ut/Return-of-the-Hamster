@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6816e659533e24478bf11ddf058b419, type: 3}
+  m_Name: Amber Terminal
+  m_EditorClassIdentifier: Assembly-CSharp::ColorPalette
+  displayName: Amber Terminal
+  isOriginal: 0
+  space: {r: 0.039215688, g: 0.023529412, b: 0, a: 1}
+  nebDeep: {r: 0.22745098, g: 0.13333334, b: 0, a: 1}
+  nebMid: {r: 0.65882355, g: 0.41568628, b: 0, a: 1}
+  nebBright: {r: 1, g: 0.6901961, b: 0, a: 1}
+  nebCore: {r: 1, g: 0.8784314, b: 0.5411765, a: 1}
+  danger: {r: 1, g: 0.3529412, b: 0.12156863, a: 1}
+  breakable: {r: 1, g: 0.8784314, b: 0.5411765, a: 1}
+  phased: {r: 0.47843137, g: 0.32156864, b: 0, a: 1}
+  rock: {r: 0.47843137, g: 0.41568628, b: 0.2901961, a: 1}
+  player: {r: 1, g: 0.8156863, b: 0.3764706, a: 1}
+  ring2: {r: 1, g: 0.54901963, b: 0, a: 1}
+  health: {r: 1, g: 0.8784314, b: 0.5411765, a: 1}
+  wild: {r: 1, g: 0.6901961, b: 0, a: 1}
+  lance: {r: 1, g: 0.47843137, b: 0, a: 1}
+  warp: {r: 1, g: 0.8156863, b: 0.3764706, a: 1}
+  slim: {r: 0.7882353, g: 0.5411765, b: 0.101960786, a: 1}
+  uiAccent: {r: 1, g: 0.6901961, b: 0, a: 1}
+  text: {r: 1, g: 0.9137255, b: 0.72156864, a: 1}

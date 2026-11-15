@@ -57,10 +57,15 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerJackpot.cs | [PlayerJackpot.md](PlayerJackpot.md) | Done |
 | PlayerLance.cs | [PlayerLance.md](PlayerLance.md) | Done (untested in Play mode) |
 | PlayerSlim.cs | [PlayerSlim.md](PlayerSlim.md) | Done |
+| ColorPalette.cs | [ColorPalette.md](ColorPalette.md) | Done (untested in Play mode) |
+| PaletteApplier.cs | [PaletteApplier.md](PaletteApplier.md) | Done (untested in Play mode) |
+| PaletteRole.cs | [PaletteRole.md](PaletteRole.md) | Done |
+| PaletteTargets.cs | [PaletteTargets.md](PaletteTargets.md) | Done (untested in Play mode) |
 | PlayerWarp.cs | [PlayerWarp.md](PlayerWarp.md) | Done (untested in Play mode) |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
 | PlayerTwins.cs | [PlayerTwins.md](PlayerTwins.md) | Done |
+| PostFXPulse.cs | [PostFXPulse.md](PostFXPulse.md) | Done |
 | PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
@@ -80,6 +85,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Asteroid Phase.shadergraph | [AsteroidPhase.md](AsteroidPhase.md) | Done |
 | Asteroid Rock.shadergraph | [AsteroidRock.md](AsteroidRock.md) | Done |
 | Black Hole.shadergraph | [BlackHole.md](BlackHole.md) | Done |
+| CRT Screen.shadergraph | [CRTScreen.md](CRTScreen.md) | Done |
 | Frost Gas.shadergraph | [FrostGas.md](FrostGas.md) | Done |
 | Frost Rock.shadergraph | [FrostRock.md](FrostRock.md) | Done |
 | Frost Trail.shadergraph | [FrostTrail.md](FrostTrail.md) | Done |

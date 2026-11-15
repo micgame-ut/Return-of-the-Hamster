@@ -127,7 +127,17 @@ and `shownPulse` start at −1, values no real one can have, so the first frame 
 changing the material. `renderer.material` would quietly make a copy that must be destroyed in `OnDestroy`. A
 property block isn't a Unity object, so there's nothing to clean up.
 
+### Following the palette (`FollowPalette`)
+
+`Awake` keeps the four Lance colours set in the Inspector. `OnEnable` subscribes `FollowPalette` to `PaletteApplier.OnChanged`
+and applies `Current` at once (so a twin copy made later gets it too); `OnDisable` unsubscribes. `FollowPalette` makes each
+Lance colour the palette's `lance` hue at that colour's original strength (`ColorPalette.AtStrength`), so the glow still
+shines with Bloom: base 0.3, glow 1, and the two lines about 3. Ring 2 is the same hue blended 30% toward white. With no palette
+chosen, or the original one, the Inspector colours are put back. `WriteLanceColors` is unchanged and reads these fields when Lance starts.
+
 ## Talks to
+
+- **PaletteApplier**: subscribes to `OnChanged` and reads `Current`, so the Lance ring colours follow the chosen palette.
 
 - **PlayerMovement**: subscribes to `OnSideBoost` and `OnBoostReady`; reads `BoostDecay` (spin) and
   `BoostCharge01` (glow) every frame.

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6816e659533e24478bf11ddf058b419, type: 3}
+  m_Name: Neon Arcade
+  m_EditorClassIdentifier: Assembly-CSharp::ColorPalette
+  displayName: Neon Arcade
+  isOriginal: 1
+  space: {r: 0.0627451, g: 0.047058824, b: 0.105882354, a: 1}
+  nebDeep: {r: 0.23529412, g: 0.078431375, b: 0.3529412, a: 1}
+  nebMid: {r: 0.78431374, g: 0.23529412, b: 0.50980395, a: 1}
+  nebBright: {r: 1, g: 0.50980395, b: 0.19607843, a: 1}
+  nebCore: {r: 1, g: 0.88235295, b: 0.6666667, a: 1}
+  danger: {r: 1, g: 0.2, b: 0.2, a: 1}
+  breakable: {r: 0.2, g: 1, b: 0.29803923, a: 1}
+  phased: {r: 0.2, g: 0.5019608, b: 1, a: 1}
+  rock: {r: 0.47058824, g: 0.47058824, b: 0.47058824, a: 1}
+  player: {r: 0, g: 0.9019608, b: 1, a: 1}
+  ring2: {r: 1, g: 0.8156863, b: 0.2509804, a: 1}
+  health: {r: 0.09803922, g: 1, b: 0.2509804, a: 1}
+  wild: {r: 1, g: 0.8509804, b: 0.09803922, a: 1}
+  lance: {r: 1, g: 0.09803922, b: 0.6, a: 1}
+  warp: {r: 0.69803923, g: 1, b: 0.09803922, a: 1}
+  slim: {r: 0.6, g: 0.29803923, b: 1, a: 1}
+  uiAccent: {r: 0.85882354, g: 0.83137256, b: 0.26666668, a: 1}
+  text: {r: 1, g: 1, b: 1, a: 1}

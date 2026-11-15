@@ -2,8 +2,9 @@
 
 ## Purpose
 
-A playtest tool. Press **Tab** while flying and a window opens with sliders for the movement values (steering,
-speed, boost, hits, and how fast the world comes at the player). The game pauses while it's open. Changes apply live,
+A playtest tool. Press **Tab** (on the menu, in the tutorial or while flying) and a window opens with a **CRT screen**
+checkbox and sliders for the movement values (steering, speed, boost, hits, and how fast the world comes at the player).
+The game pauses while it's open. Changes apply live,
 and are saved to a JSON file next to the game. That file is loaded again at the start of every level, so playtesters'
 tuning carries over, and the values in it can be copied into the project (or the file dropped into a build) to set the
 final numbers.
@@ -24,6 +25,8 @@ There are no Inspector fields. The two constants are `Enabled` and `FileName` (`
 
 | Section | Value | Where it lives | Range |
 | --- | --- | --- | --- |
+| Display | `CRT screen` (checkbox) | the `_CRTIntensity` shader global, read by the CRT Screen pass | off / on (default off) |
+| Display | `Palette` (`<` name `>`) | `PaletteApplier` (the game's colours) | the palettes in `Resources/Palettes` (default: the first, Neon Arcade) |
 | Steering | `mouseSensitivity` | PlayerMovement | 0.5 – 20 |
 | | `forwardThreshold` | PlayerMovement | 0 – 90 |
 | | `minInputForAngle` | PlayerMovement | 0 – 10 |
@@ -54,8 +57,8 @@ Each row is a label (hover it for a tooltip, shown at the bottom of the window),
 
 Next to the exe in a build, and in the project root in the Editor (`Application.dataPath`'s parent). It is a
 `SaveData`: `player` (a `PlayerMovement.Tuning`), `world` (`knockbackForce`, `speedLoss`, `baseApproachSpeed`,
-`speedMultiplier`, `speedTimeFactor`, `orbitRadius`) and `minSpeeds`, a list of `{ level, minSpeed }` entries named
-after each scene. A value missing from the file keeps the game's own value, because loading uses
+`speedMultiplier`, `speedTimeFactor`, `orbitRadius`), `minSpeeds`, a list of `{ level, minSpeed }` entries named
+after each scene, and `display` (`crt`, a bool, and `palette`, the chosen palette's name; empty means the first, Neon Arcade). A value missing from the file keeps the game's own value, because loading uses
 `JsonUtility.FromJsonOverwrite`. A file that can't be read gives a warning in the log and the game carries on.
 
 ### `current` and `defaults`
@@ -80,12 +83,15 @@ it clears `player` and stops (menus). Otherwise it:
 ### `Apply`
 
 `player.SetTuning`, `timer.SpeedTimeFactor`, the four `SpawnableTemplate` values, `orbit.OrbitRadius`, and
-`player.SetMinSpeed` for this level. Called after loading, and whenever a row changes.
+`player.SetMinSpeed` for this level, then `Shader.SetGlobalFloat("_CRTIntensity", ...)`: 1 when `display.crt` is on, 0 when
+off (the property id is looked up once, in `CrtIntensityId`), then `PaletteApplier.Instance.SelectByName(display.palette)`, which does
+nothing if that palette is already on. Called after loading, and whenever a row changes.
 
 ### Tab, pause and cursor
 
 `Update` reads `Keyboard.current.tabKey` directly (a developer tool, so it isn't an action in the input asset). It only
-works with a bound level, and only while `CanOpen`: the game is flying and isn't over or won.
+works with a bound level, and only while `CanOpen`: the game isn't over or won. That includes the menu (Level 1 before
+Start) and the tutorial, as well as flying.
 
 - **Open:** `IsOpen = true`, `Time.timeScale = 0`, cursor free and visible.
 - **Close:** `IsOpen = false`, `Time.timeScale = 1`, cursor locked and hidden, and `Save`.
@@ -94,8 +100,10 @@ works with a bound level, and only while `CanOpen`: the game is flying and isn't
 
 ### The window (`OnGUI`)
 
-Immediate-mode GUI, scaled by screen height from a 1080p layout. A scroll view holds three methods' rows
-(`DrawSteeringAndSpeed`, `DrawBoostAndHit`, `DrawWorld`). Each `Row` draws a label with tooltip, a slider and a number
+Immediate-mode GUI, scaled by screen height from a 1080p layout. A scroll view holds four methods' rows
+(`DrawDisplay`, which is the CRT screen checkbox and the Palette row at the top, then `DrawSteeringAndSpeed`, `DrawBoostAndHit`, `DrawWorld`).
+The Palette row is a label, `<`, the current palette's name and `>`. A button calls `Previous` or `Next` on the applier and stores the new
+name in `display.palette`; the row is hidden if there's no applier. Each `Row` draws a label with tooltip, a slider and a number
 box, and returns whether the value changed; `Apply` runs once if any did. The number box keeps its own text while it
 has focus (the `typed` dictionary) so a decimal point can be typed. Buttons: **Reset to defaults**, **Save**, **Copy to
 clipboard** (the same JSON as the file, on the clipboard).
@@ -112,6 +120,9 @@ stay after you stop, so this keeps the project's real values safe. Scene objects
 - **LevelTimer**: `SpeedTimeFactor`.
 - **OrbitSettings**: `OrbitRadius` (read and set).
 - **SpawnableTemplate**: four fields, read and set.
+- **CRT Screen** (shader and renderer feature): sets the `_CRTIntensity` global that the pass blends by.
+- **PaletteApplier**: `SelectByName` in `Apply`; `Next`, `Previous`, `CurrentName` and `Instance` in the Palette row.
+- **MenuNavigator**: reads `IsOpen` and ignores the mouse and Space while the window is open.
 
 ## Gotchas
 
@@ -124,4 +135,7 @@ stay after you stop, so this keeps the project's real values safe. Scene objects
 - **The file is per machine.** To set the final numbers, copy its values into the Inspector fields and assets, or ship the file
   with the build. Add the file to `.gitignore` (done) so playtest tweaks don't land in commits.
 - **`minSpeed` writes nothing to the `LevelConfig` assets.** It only calls `SetMinSpeed`, so those stay as they are.
+- **The CRT setting is only applied by `Apply`,** which needs a bound level. In a scene with no player (the old `Menu`
+  scene, for example) the global is left as it was.
+- **Opening it on the menu pauses the menu too** (`Time.timeScale` is 0), so the hamster float and planets freeze while it's open.
 - **Turning it off:** set `Enabled` to `false`. `PlayerMovement` still compiles against `TuningOverlay.IsOpen`, which stays `false`.

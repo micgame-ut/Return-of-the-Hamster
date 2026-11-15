@@ -88,7 +88,16 @@ the name from the three letters, switches the page **off first**, then raises `O
   `letterChange`, `letterLock` and `nameSubmitted` slots. The last lock raises both `OnLetterLocked` and
   `OnNameSubmitted`.
 
+### Following the palette (`Awake`, `OnEnable`, `OnDisable`, `FollowPalette`)
+
+`Awake` keeps `activeColor` and `inactiveColor` as set in the Inspector. `OnEnable` subscribes `FollowPalette` to
+`PaletteApplier.OnChanged` and applies `Current` before the first `Draw`; `OnDisable` unsubscribes. `FollowPalette` makes
+`activeColor` the palette's `text` colour and `inactiveColor` half of it (alpha 1), or puts the Inspector colours back for no
+palette or the original. `Draw` already colours each letter from those two fields.
+
 ## Talks to
+
+- **PaletteApplier**: subscribes to `OnChanged` and reads `Current`, so the letter colours follow the chosen palette.
 
 - **EndScreen**: switches this page on, and listens to `OnSubmitted`.
 - **MenuNavigator**: the page's own empty one takes the top spot in the page stack.
