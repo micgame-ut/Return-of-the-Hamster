@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerSlim playerSlim;
     [Tooltip("The player's Bomb power-up. Can be left empty if PlayerBomb is on the player object.")]
     [SerializeField] private PlayerBomb playerBomb;
+    [Tooltip("The player's Lance power-up. Can be left empty if PlayerLance is on the player object.")]
+    [SerializeField] private PlayerLance playerLance;
     [Tooltip("The close-call range on the player. Can be left empty if CloseCallZone is on the player object.")]
     [SerializeField] private CloseCallZone closeCallZone;
     [Tooltip("This run's stats and the Apollo number. Can be left empty if RunStats is on the same GameObject.")]
@@ -64,6 +66,7 @@ public class GameManager : MonoBehaviour
     public PlayerJackpot PlayerJackpot => playerJackpot;
     public PlayerSlim PlayerSlim => playerSlim;
     public PlayerBomb PlayerBomb => playerBomb;
+    public PlayerLance PlayerLance => playerLance;
     public CloseCallZone CloseCallZone => closeCallZone;
     public RunStats RunStats => runStats;
     public Score Score => score;
@@ -116,6 +119,7 @@ public class GameManager : MonoBehaviour
         if (playerJackpot == null && player != null) playerJackpot = player.GetComponent<PlayerJackpot>();
         if (playerSlim == null && player != null) playerSlim = player.GetComponent<PlayerSlim>();
         if (playerBomb == null && player != null) playerBomb = player.GetComponent<PlayerBomb>();
+        if (playerLance == null && player != null) playerLance = player.GetComponent<PlayerLance>();
         if (closeCallZone == null && player != null) closeCallZone = player.GetComponent<CloseCallZone>();
 
         ApplyLevelConfig();

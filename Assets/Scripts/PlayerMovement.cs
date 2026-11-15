@@ -115,9 +115,10 @@ public class PlayerMovement : MonoBehaviour
     private float boostVelocity;
     public event Action OnSpeedBoost;
     private float cooldownTimer; // seconds until the next boost; 0 or below = ready
+    private float cooldownLength;   // how long the running cooldown was, so BoostCharge01 is right for a lance shot's short one too
     public event Action<float> OnSideBoost; // direction: +1 counter-clockwise, -1 clockwise
     public event Action OnBoostReady; // the boost cooldown has just finished
-    public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
+    public float BoostCharge01 => cooldownLength > 0f ? Mathf.Clamp01(1f - cooldownTimer / cooldownLength) : 1f; // 0 just after a boost, 1 when ready
     public float BoostDecay => boostDecay;
     private int freeBoosts;   // boosts that skip the cooldown, from a Boost Recharge power-up
     public int FreeBoosts => freeBoosts;
@@ -135,6 +136,7 @@ public class PlayerMovement : MonoBehaviour
     // Level
     private LevelTimer levelTimer;
     private PlayerInvincibility invincibility;
+    private PlayerLance lance;
 
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
@@ -196,6 +198,7 @@ public class PlayerMovement : MonoBehaviour
             : GetComponentsInChildren<Renderer>();
 
         invincibility = GetComponent<PlayerInvincibility>();
+        lance = GetComponent<PlayerLance>();
     }
 
     void Start()
@@ -301,6 +304,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    // Ends a running boost cooldown at once, so the ring shows ready. The Lance power-up starts from a ready ring.
+    public void ReadyBoost()
+    {
+        if (cooldownTimer <= 0f) return;
+
+        cooldownTimer = 0f;
+        OnBoostReady?.Invoke();
+    }
+
     // Frost patches call this each frame the player is inside one. Only the strongest request counts.
     public void ApplyFrost(float speedSlow, float orbitSlow)
     {
@@ -399,9 +411,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        bool free = freeBoosts > 0;   // a free boost ignores the cooldown
-        if (!value.isPressed || InputLocked || (cooldownTimer > 0f && !free))
+        if (!value.isPressed || InputLocked) return;
+
+        // While Lance has shots, every click fires it, in place of any dodge or boost. A shot waits for the ring to be ready.
+        // After the last shot the dodge goes on its normal cooldown.
+        if (lance != null && lance.IsActive)
+        {
+            if (cooldownTimer <= 0f && lance.TryFire())
+                StartCooldown(lance.IsActive ? lance.ShotCooldown : boostCooldown);
             return;
+        }
+
+        bool free = freeBoosts > 0;   // a free boost ignores the cooldown
+        if (cooldownTimer > 0f && !free) return;
 
         if (Time.time - lastSideInputTime <= sideInputMemory)
         {
@@ -427,6 +449,12 @@ public class PlayerMovement : MonoBehaviour
             freeBoosts--;
             OnFreeBoostsChanged?.Invoke();
         }
-        else cooldownTimer = boostCooldown;
+        else StartCooldown(boostCooldown);
+    }
+
+    private void StartCooldown(float seconds)
+    {
+        cooldownTimer = seconds;
+        cooldownLength = seconds;
     }
 }

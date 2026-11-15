@@ -31,8 +31,13 @@ A twin copy has none, so it falls back to `GameManager.Instance.Player`, the sam
 
 ### `Refresh`
 
-Goes through `pips` once and sets ring `i` active when `i < FreeBoosts`. With 2 free boosts both rings are on; after one
-boost only ring 0 is; after both, neither. A refill turns the missing ring back on. An empty slot in the list is skipped.
+Goes through `pips` once and sets ring `i` active when `i < count`. Normally `count` is `FreeBoosts`: with 2 free boosts both rings are on;
+after one boost only ring 0 is; after both, neither. A refill turns the missing ring back on. An empty slot in the list is skipped.
+
+**While Lance is active** `count` is `ShotsLeft − 1`: the center ring is the first shot and the two small rings are the extra ones (3 shots = both on).
+`Tint` also paints each small ring pink with a property block filled by `BoostRing.WriteLanceColors`, and clears the block (`SetPropertyBlock(null)`) when Lance ends.
+`Awake` finds the PlayerLance (`GameManager.PlayerLance`) and the ring (`GetComponentInChildren<BoostRing>(true)`); `OnEnable`/`OnDisable` also
+subscribe to `PlayerLance.OnShotsChanged`.
 
 ### `OnEnable` / `OnDisable`
 
@@ -43,6 +48,8 @@ switched on and off as the twin power-up comes and goes. There is no `Update`: t
 ## Talks to
 
 - **PlayerMovement**: reads `FreeBoosts` and `OnFreeBoostsChanged`.
+- **PlayerLance**: reads `IsActive`, `ShotsLeft` and `OnShotsChanged`.
+- **BoostRing**: `WriteLanceColors`, for the pink.
 
 ## Gotchas
 

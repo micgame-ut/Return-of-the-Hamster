@@ -6,9 +6,9 @@ using UnityEngine;
 // pickup and applies the effect for its type.
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot, Slim, Bomb }
+    public enum PowerUpType { Health, Invincible, Twin, ScoreMultiplier, Random, BoostRecharge, Jackpot, Slim, Bomb, Lance }
 
-    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim or Bomb on pickup, never Health.")]
+    [Tooltip("Which effect this power-up has. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb or Lance on pickup, never Health.")]
     [SerializeField] private PowerUpType type = PowerUpType.Health;
     [Tooltip("The SpawnableTemplate asset. Assign the same one the asteroids use.")]
     [SerializeField] private SpawnableTemplate template;
@@ -26,6 +26,7 @@ public class PowerUp : MonoBehaviour
     private PlayerJackpot jackpot;
     private PlayerSlim slim;
     private PlayerBomb bomb;
+    private PlayerLance lance;
     private Score score;
 
     private struct TintSlot
@@ -51,7 +52,7 @@ public class PowerUp : MonoBehaviour
 
     // The types a Random power-up can roll, and each one's weight for the current roll (reused, so no allocation per pickup).
     private static readonly PowerUpType[] RollTypes =
-        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot, PowerUpType.Slim, PowerUpType.Bomb };
+        { PowerUpType.Invincible, PowerUpType.Twin, PowerUpType.ScoreMultiplier, PowerUpType.BoostRecharge, PowerUpType.Jackpot, PowerUpType.Slim, PowerUpType.Bomb, PowerUpType.Lance };
     private readonly float[] rollWeights = new float[RollTypes.Length];
 
     private void Awake()
@@ -65,6 +66,7 @@ public class PowerUp : MonoBehaviour
         jackpot = GameManager.Instance != null ? GameManager.Instance.PlayerJackpot : null;
         slim = GameManager.Instance != null ? GameManager.Instance.PlayerSlim : null;
         bomb = GameManager.Instance != null ? GameManager.Instance.PlayerBomb : null;
+        lance = GameManager.Instance != null ? GameManager.Instance.PlayerLance : null;
         score = GameManager.Instance != null ? GameManager.Instance.Score : null;
 
         // Every material slot under this power-up, with its own base color, kept for the depth tint.
@@ -152,7 +154,11 @@ public class PowerUp : MonoBehaviour
 
     private void RechargeBoost()
     {
-        if (player != null && template != null) player.GrantFreeBoosts(template.rechargeBoosts);
+        if (template == null) return;
+
+        // While Lance is active, a Recharge adds lance shots instead of free boosts, and leaves the dash alone.
+        if (lance != null && lance.IsActive) lance.AddShots(template.rechargeBoosts);
+        else if (player != null) player.GrantFreeBoosts(template.rechargeBoosts);
     }
 
     private void StartJackpot()
@@ -168,6 +174,11 @@ public class PowerUp : MonoBehaviour
     private void DetonateBomb()
     {
         if (bomb != null && template != null) bomb.Detonate(template.bombPoints, template.bombSweepTime, template.bombShakeDuration, template.bombShakeMagnitude);
+    }
+
+    private void StartLance()
+    {
+        if (lance != null) lance.Activate();
     }
 
     private PowerUpType RollType()
@@ -208,6 +219,7 @@ public class PowerUp : MonoBehaviour
         PowerUpType.Jackpot => template.jackpotChance,
         PowerUpType.Slim => template.slimChance,
         PowerUpType.Bomb => template.bombChance,
+        PowerUpType.Lance => template.lanceChance,
         _ => template.scoreChance,
     };
 
@@ -216,7 +228,10 @@ public class PowerUp : MonoBehaviour
     {
         PowerUpType.Twin => twins == null || !twins.CanAddBody,
         PowerUpType.Bomb => AsteroidBehavior.Active.Count == 0,
-        PowerUpType.BoostRecharge => player != null && template != null && player.FreeBoosts >= template.rechargeBoosts && player.BoostCharge01 >= 1f,
+        PowerUpType.Lance => lance == null || lance.IsActive,
+        PowerUpType.BoostRecharge => lance != null && lance.IsActive
+            ? lance.ShotsLeft >= template.lanceMaxShots
+            : player != null && template != null && player.FreeBoosts >= template.rechargeBoosts && player.BoostCharge01 >= 1f,
         _ => false,
     };
 
@@ -247,6 +262,9 @@ public class PowerUp : MonoBehaviour
                 break;
             case PowerUpType.Bomb:
                 DetonateBomb();
+                break;
+            case PowerUpType.Lance:
+                StartLance();
                 break;
         }
     }

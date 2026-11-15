@@ -36,7 +36,7 @@ bombs just run side by side.
    capped at `ArriveShare` (0.5) of the rock's own travel time to the player, `distance ÷ ApproachSpeed`, so **no rock goes off later than half
    the time it needs to reach the player**, and a fast player can't hit one first, whatever the layout or speed (a rock with no approach speed
    isn't capped). Fixed in advance, so the rocks flying toward the player during the sweep don't reshuffle the order.
-3. Loops: every frame it scans the targets still waiting, and any whose time has come gets `Bomb()` (counting the `true`s) and is marked done.
+3. Loops: every frame it scans the targets still waiting, and any whose time has come gets `Blast()` (counting the `true`s) and is marked done.
    It scans all of them, not just the next in line, because the safety cap can make a nearer, faster rock due later than a farther, slower
    one. Then it waits a frame (`yield return null`) and adds `Time.deltaTime`, so a frozen game pauses the sweep.
 4. At the end, if anything was removed and `pointsPerRock` is above 0, it adds `removed × pointsPerRock` through `Score.AddBonusPoints` with
@@ -50,7 +50,7 @@ four loops: the three rings went off at about 0, 0.1 and 0.2 s, and no lives wer
 ## Talks to
 
 - **PowerUp**: calls `Detonate`.
-- **AsteroidBehavior**: calls `Bomb()` on each target; reads the static `Active` list.
+- **AsteroidBehavior**: calls `Blast()` on each target; reads the static `Active` list.
 - **Score**: `AddBonusPoints` for the one summary popup.
 - **CameraShake**: `Shake` once.
 - **GameManager**: exposes it, and provides `Score`.

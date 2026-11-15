@@ -6,6 +6,10 @@ public class BoostRing : MonoBehaviour
 {
     private static readonly int ChargeId = Shader.PropertyToID("_Charge");
     private static readonly int PulseId = Shader.PropertyToID("_Ready_Pulse");
+    private static readonly int BaseColorId = Shader.PropertyToID("_Base_Color");
+    private static readonly int GlowColorId = Shader.PropertyToID("_Glow_Color");
+    private static readonly int Ring1ColorId = Shader.PropertyToID("_Ring_1_Color");
+    private static readonly int Ring2ColorId = Shader.PropertyToID("_Ring_2_Color");
 
     [Tooltip("The ring's local axis to roll around. Its sign sets which way the ring rolls for a given dodge. Flip to (0, 0, -1) to reverse.")]
     [SerializeField] private Vector3 spinAxis = Vector3.forward;
@@ -13,7 +17,19 @@ public class BoostRing : MonoBehaviour
     [Tooltip("Seconds the ring's flash takes to fade out after the boost becomes ready. 0 = no flash.")]
     [SerializeField] private float readyPulseTime = 0.5f;
 
+    [Header("Lance")]
+    [Tooltip("The ring's base color while Lance is active (the normal one is a dark blue-gray).")]
+    [SerializeField, ColorUsage(false, true)] private Color lanceBaseColor = new Color(0.3f, 0.05f, 0.2f);
+    [Tooltip("The ring's glow color while Lance is active. HDR, so values above 1 shine with Bloom.")]
+    [SerializeField, ColorUsage(false, true)] private Color lanceGlowColor = new Color(1f, 0.1f, 0.6f);
+    [Tooltip("The color of the ring's first sharp line while Lance is active. HDR.")]
+    [SerializeField, ColorUsage(false, true)] private Color lanceRing1Color = new Color(3f, 0.3f, 1.6f);
+    [Tooltip("The color of the ring's second sharp line while Lance is active. HDR.")]
+    [SerializeField, ColorUsage(false, true)] private Color lanceRing2Color = new Color(3f, 0.8f, 2.2f);
+
     private PlayerMovement movement;
+    private PlayerLance lance;
+    private bool shownLance;         // whether the pink was last sent, so a change in either direction forces a resend
     private Renderer ringRenderer;
     private MaterialPropertyBlock props;
     private float shownCharge = -1f; // last Charge sent to the shader; -1 so the first frame always sends it
@@ -29,6 +45,7 @@ public class BoostRing : MonoBehaviour
         // On the player, PlayerMovement is on a parent. A twin copy has none, so it follows the player through GameManager.
         movement = GetComponentInParent<PlayerMovement>();
         if (movement == null && GameManager.Instance != null) movement = GameManager.Instance.Player;
+        lance = GameManager.Instance != null ? GameManager.Instance.PlayerLance : null;
 
         ringRenderer = GetComponent<Renderer>();
         props = new MaterialPropertyBlock();
@@ -89,13 +106,25 @@ public class BoostRing : MonoBehaviour
             float t = Mathf.Clamp01(pulseTimer / readyPulseTime);
             pulse = t * t; // squared, so it falls away fast after the first flash
         }
-        if (charge == shownCharge && pulse == shownPulse) return;
+        bool lanceOn = lance != null && lance.IsActive;
+        if (charge == shownCharge && pulse == shownPulse && lanceOn == shownLance) return;
 
         shownCharge = charge;
         shownPulse = pulse;
-        ringRenderer.GetPropertyBlock(props);
+        shownLance = lanceOn;
+        props.Clear();
         props.SetFloat(ChargeId, charge);
         props.SetFloat(PulseId, pulse);
+        if (lanceOn) WriteLanceColors(props);
         ringRenderer.SetPropertyBlock(props);
+    }
+
+    // Writes the lance colors into block, so the small rings beside this ring can match it.
+    public void WriteLanceColors(MaterialPropertyBlock block)
+    {
+        block.SetColor(BaseColorId, lanceBaseColor);
+        block.SetColor(GlowColorId, lanceGlowColor);
+        block.SetColor(Ring1ColorId, lanceRing1Color);
+        block.SetColor(Ring2ColorId, lanceRing2Color);
     }
 }

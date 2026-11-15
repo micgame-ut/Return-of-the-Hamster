@@ -7,30 +7,59 @@ public class FreeBoostPips : MonoBehaviour
     [SerializeField] private GameObject[] pips;
 
     private PlayerMovement movement;
+    private PlayerLance lance;
+    private BoostRing ring;                 // the main ring beside the small ones, which knows the pink
+    private MaterialPropertyBlock block;    // the pink, written to a small ring while Lance is active
 
     private void Awake()
     {
         // On the player, PlayerMovement is on a parent. A twin copy has none, so it follows the player through GameManager.
         movement = GetComponentInParent<PlayerMovement>();
         if (movement == null && GameManager.Instance != null) movement = GameManager.Instance.Player;
+        lance = GameManager.Instance != null ? GameManager.Instance.PlayerLance : null;
+        ring = GetComponentInChildren<BoostRing>(true);
+        block = new MaterialPropertyBlock();
     }
 
-    // Shows the first FreeBoosts rings and hides the rest.
+    // Shows the first rings and hides the rest: one per free boost, or, while Lance is active, one per shot after the first.
     private void Refresh()
     {
+        bool lanceOn = lance != null && lance.IsActive;
+        int count = lanceOn ? lance.ShotsLeft - 1 : movement.FreeBoosts;
         for (int i = 0; i < pips.Length; i++)
-            if (pips[i] != null) pips[i].SetActive(i < movement.FreeBoosts);
+        {
+            if (pips[i] == null) continue;
+            pips[i].SetActive(i < count);
+            Tint(pips[i], lanceOn);
+        }
+    }
+
+    // Pink while Lance is active, the material's own color otherwise.
+    private void Tint(GameObject pip, bool lanceOn)
+    {
+        Renderer r = pip.GetComponent<Renderer>();
+        if (r == null) return;
+
+        if (lanceOn && ring != null)
+        {
+            block.Clear();
+            ring.WriteLanceColors(block);
+            r.SetPropertyBlock(block);
+        }
+        else r.SetPropertyBlock(null);
     }
 
     private void OnEnable()
     {
         if (movement == null) return;
         movement.OnFreeBoostsChanged += Refresh;
+        if (lance != null) lance.OnShotsChanged += Refresh;
         Refresh();
     }
 
     private void OnDisable()
     {
         if (movement != null) movement.OnFreeBoostsChanged -= Refresh;
+        if (lance != null) lance.OnShotsChanged -= Refresh;
     }
 }

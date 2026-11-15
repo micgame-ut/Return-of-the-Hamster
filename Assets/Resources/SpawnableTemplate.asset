@@ -55,6 +55,15 @@ MonoBehaviour:
   bombSweepTime: 0.2
   bombShakeDuration: 0.4
   bombShakeMagnitude: 0.5
+  lanceShots: 1
+  lanceMaxShots: 3
+  lanceCooldown: 0.6
+  lanceWidth: 1.4
+  lanceRange: 80
+  lancePoints: 50
+  lanceBeamTime: 0.2
+  lanceBeamColor: {r: 3, g: 0.35, b: 1.6, a: 1}
+  lanceBeamWidth: 0.3
   invincibleChance: 10
   twinChance: 25
   scoreChance: 25
@@ -62,3 +71,4 @@ MonoBehaviour:
   jackpotChance: 20
   slimChance: 20
   bombChance: 20
+  lanceChance: 20

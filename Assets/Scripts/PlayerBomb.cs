@@ -47,7 +47,7 @@ public class PlayerBomb : MonoBehaviour
             for (int i = 0; i < targets.Count; i++)
             {
                 if (targets[i] == null || due[i] > elapsed) continue;
-                if (targets[i].Bomb()) removed++;
+                if (targets[i].Blast()) removed++;
                 targets[i] = null;
                 remaining--;
             }

@@ -103,6 +103,24 @@ public class SpawnableTemplate : ScriptableObject
     public float bombShakeDuration = 0.4f;
     [Tooltip("How far the camera shakes when a Bomb goes off, in world units.")]
     public float bombShakeMagnitude = 0.5f;
+    [Tooltip("Lance shots a Lance power-up gives. The lance stays active until they are all fired.")]
+    public int lanceShots = 1;
+    [Tooltip("The most lance shots the player can hold. A Recharge picked up while Lance is active adds its free boosts as shots, up to this.")]
+    public int lanceMaxShots = 3;
+    [Tooltip("Seconds between lance shots while there are more to fire. The ring charges during it.")]
+    public float lanceCooldown = 0.6f;
+    [Tooltip("Width of the lane a lance shot destroys, in world units, measured across the player's lane. About 3 rocks of a ring at the orbit radius.")]
+    public float lanceWidth = 1.4f;
+    [Tooltip("How far ahead of the player a lance shot reaches, in world units.")]
+    public float lanceRange = 80f;
+    [Tooltip("Points for each asteroid a lance shot hits. Flat: not multiplied by speed or power-ups, and it doesn't touch the combo.")]
+    public float lancePoints = 50f;
+    [Tooltip("Seconds the lance beam flash stays on screen before it fades out.")]
+    public float lanceBeamTime = 0.2f;
+    [Tooltip("The color of the lance beam's glow. HDR, so values above 1 shine with Bloom. The core is a lighter version of it.")]
+    [ColorUsage(false, true)] public Color lanceBeamColor = new Color(3f, 0.35f, 1.6f, 1f);
+    [Tooltip("Width of the lance beam's bright core, in world units. Thin, like a railgun. The lane it destroys is lanceWidth, which is wider.")]
+    public float lanceBeamWidth = 0.3f;
 
     [Header("Random Power-Up Chances")]          // shares of the total, so 10/25/25 = 17%, 42%, 42%
     [Tooltip("How often a Random power-up gives Invincible. The chances are shares of their total.")]
@@ -119,6 +137,8 @@ public class SpawnableTemplate : ScriptableObject
     public float slimChance = 20f;
     [Tooltip("How often a Random power-up gives Bomb.")]
     public float bombChance = 20f;
+    [Tooltip("How often a Random power-up gives Lance.")]
+    public float lanceChance = 20f;
 
     // How much to multiply a color by to fade it with depth. White = no change, farColor = fully faded.
     public Color GetDepthTint(float distanceAhead)

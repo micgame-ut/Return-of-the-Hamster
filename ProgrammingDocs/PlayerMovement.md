@@ -365,6 +365,13 @@ clamp keeps `BoostCharge01` at exactly 1, which matters to the shader's "below 1
 Knockback sets `boostVelocity` in `TakeHit`, not through `OnButton`, so a hit neither starts the cooldown nor
 spins the ring.
 
+**Lance.** `Awake` finds the `PlayerLance` on the same object. While `lance.IsActive`, `OnButton` does no dash at all: if the cooldown is 0 it calls
+`lance.TryFire()` and, on success, starts the cooldown with `StartCooldown(...)`: `lance.ShotCooldown` (0.6 s) if shots remain, or `boostCooldown`
+(the normal dash cooldown) if that was the last shot. It then returns. `StartCooldown(seconds)` sets `cooldownTimer` and remembers the length in
+`cooldownLength`, so `BoostCharge01` is now `1 − cooldownTimer ÷ cooldownLength` and the ring fills correctly for either length (1 when `cooldownLength` is 0).
+`SpendBoost` uses it with `boostCooldown`. **`ReadyBoost()`** ends a running cooldown and raises `OnBoostReady`; PlayerLance calls it when Lance
+is picked up or a Recharge adds shots, so the next click can fire at once.
+
 `OnMove` records `lastSideDirection` (−1 or +1) and `lastSideInputTime` whenever the mouse moves sideways.
 The memory is needed because at high frame rates many frames report zero sideways movement even mid-sweep;
 checking only this frame's input turned some side boosts into forward boosts. `lastSideInputTime` starts at
@@ -433,6 +440,7 @@ Side effects of doing it this way:
   PlayerDeath can take over
 - **TuningOverlay**: reads `IsOpen` (through `InputLocked`), and calls `GetTuning`, `SetTuning` and `SetMinSpeed`
 - **PowerUp**: calls `GrantFreeBoosts` (Boost Recharge)
+- **PlayerLance**: asked first on every click (`IsActive`, `TryFire`, `ShotCooldown`); calls `ReadyBoost`
 - **FreeBoostPips**: reads `FreeBoosts` and subscribes to `OnFreeBoostsChanged`
 - **Anything reading `Speed`**: see the table above
 

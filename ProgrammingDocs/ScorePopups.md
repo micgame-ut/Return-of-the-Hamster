@@ -44,8 +44,9 @@ up ("+1 LIFE", "INVINCIBLE", ...) the same way, without any points. Popups are r
 | `jackpotLabel` | JACKPOT | Shown for Jackpot |
 | `slimLabel` | SLIM | Shown for Slim |
 | `bombLabel` | BOMB | Shown for Bomb (the "N DESTROYED" points popup is separate: it comes from PlayerBomb through Score) |
+| `lanceLabel` | LANCE | Shown for Lance (the "N HIT" points popup is separate: it comes from PlayerLance through Score) |
 
-The **Outline Looks** group holds nine materials (all assigned on `Score HUD` in `LevelCore.prefab`):
+The **Outline Looks** group holds ten materials (all assigned on `Score HUD` in `LevelCore.prefab`):
 
 | Field | Material | Used for | Outline color |
 | --- | --- | --- | --- |
@@ -58,6 +59,7 @@ The **Outline Looks** group holds nine materials (all assigned on `Score HUD` in
 | `jackpotLook` | `Popup Jackpot` | JACKPOT | gold (0.95, 0.7, 0.0) |
 | `slimLook` | `Popup Slim` | SLIM | violet (0.6, 0.3, 1.0) |
 | `bombLook` | `Popup Bomb` | BOMB | red (0.9, 0.1, 0.1) |
+| `lanceLook` | `Popup Lance` | LANCE | pink (1.0, 0.1, 0.6) |
 
 An empty power-up slot falls back to `textLook`. The materials are in `Assets/Fonts/`; each is a copy of the font's material
 with the outline on (`OUTLINE_ON`, outline width 0.2, softness 0), so a color or thickness can be changed on the material.

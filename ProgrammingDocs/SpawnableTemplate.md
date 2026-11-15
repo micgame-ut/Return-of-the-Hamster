@@ -140,6 +140,15 @@ These three are new, so the asset uses the defaults until they're changed.
 | `bombSweepTime` | 0.2 | Seconds a Bomb takes to go off across all the asteroids, nearest first, like a shockwave moving out. 0 = all at once. No asteroid goes off later than half the time it needs to reach the player |
 | `bombShakeDuration` | 0.4 | Seconds the camera shakes when a Bomb goes off |
 | `bombShakeMagnitude` | 0.5 | How far the camera shakes when a Bomb goes off, in world units |
+| `lanceShots` | 1 | Shots a Lance pickup gives. They don't expire until fired |
+| `lanceMaxShots` | 3 | The most shots you can hold. A Boost Recharge picked up while Lance is active adds `rechargeBoosts` shots up to this |
+| `lanceCooldown` | 0.6 | Seconds before the next shot after one is fired, while more are left. The last shot starts the normal dash cooldown instead |
+| `lanceWidth` | 1.4 | Width of the beam's lane, in world units, measured sideways. A rock is hit if it's within half of this plus its own radius |
+| `lanceRange` | 80 | How far ahead, in depth, the beam reaches |
+| `lancePoints` | 50 | Points for each asteroid a Lance shot removes. Flat, paid as one "N HIT" popup per shot |
+| `lanceBeamTime` | 0.2 | Seconds the beam stays on screen, thinning and fading |
+| `lanceBeamColor` | (3, 0.35, 1.6) | The glow's colour (HDR pink). The core is a lighter version |
+| `lanceBeamWidth` | 0.3 | Width of the beam's bright core. The glow is three times wider |
 
 ### Random Power-Up Chances
 
@@ -152,6 +161,7 @@ These three are new, so the asset uses the defaults until they're changed.
 | `jackpotChance` | 20 | How often it gives Jackpot |
 | `slimChance` | 20 | How often it gives Slim |
 | `bombChance` | 20 | How often it gives Bomb |
+| `lanceChance` | 20 | How often it gives Lance |
 
 These are **shares of the total**, not strict percentages: 20 each is a seventh each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
 that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There

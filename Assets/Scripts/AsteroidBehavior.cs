@@ -889,9 +889,9 @@ public class AsteroidBehavior : MonoBehaviour
         Finish();
     }
 
-    // The Bomb power-up: removes this asteroid with its explosion. Returns false if it's already gone. The score and the camera shake
-    // belong to PlayerBomb, so there's no combo and no Bonus here.
-    public bool Bomb()
+    // The Bomb and Lance power-ups: removes this asteroid with its explosion. Returns false if it's already gone. The score and the camera shake
+    // belong to PlayerBomb and PlayerLance, so there's no combo and no Bonus here.
+    public bool Blast()
     {
         if (!Active.Contains(this)) return false;
 

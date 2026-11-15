@@ -5846,6 +5846,7 @@ MonoBehaviour:
   jackpotLabel: JACKPOT
   slimLabel: SLIM
   bombLabel: BOMB
+  lanceLabel: LANCE
   textLook: {fileID: 2100000, guid: 82efa54143092ba4fa5363b3578836a0, type: 2}
   healthLook: {fileID: 2100000, guid: d0ec7c70e81ec954abc54c0981988954, type: 2}
   invincibleLook: {fileID: 2100000, guid: cc2f56db896f88046a889a81b34ff99b, type: 2}
@@ -5855,6 +5856,7 @@ MonoBehaviour:
   jackpotLook: {fileID: 2100000, guid: ed056ffb0d429cd41853c7cb7e2502dc, type: 2}
   slimLook: {fileID: 2100000, guid: 0736b683951b8974491ceae202f85fe2, type: 2}
   bombLook: {fileID: 2100000, guid: 4666e874d777f614e92b217e4c6ea1de, type: 2}
+  lanceLook: {fileID: 2100000, guid: 7cd161ce1018b544bb4974e46e37e2ff, type: 2}
 --- !u!1 &7494937977655481531
 GameObject:
   m_ObjectHideFlags: 0
@@ -7320,6 +7322,7 @@ MonoBehaviour:
   playerJackpot: {fileID: 0}
   playerSlim: {fileID: 0}
   playerBomb: {fileID: 0}
+  playerLance: {fileID: 0}
   closeCallZone: {fileID: 0}
   runStats: {fileID: 0}
   score: {fileID: 0}
@@ -7625,6 +7628,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4603989746226990270}
+    - targetCorrespondingSourceObject: {fileID: 3493068378728214698, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7469752281098188701}
   m_SourcePrefab: {fileID: 100100000, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
 --- !u!4 &7017956157728675862 stripped
 Transform:
@@ -7673,6 +7679,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3e637e77536049469bcc8045252dfc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomb
+--- !u!114 &7469752281098188701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7651362182572966572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22382de1b31c996419dfc7c758136f0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLance
+  template: {fileID: 11400000, guid: 91b3c017f07baa6458506b2d342c9f89, type: 2}
+  beamPrefab: {fileID: 6011990157993545363, guid: 6f8eb06b377c78746b310513a598ee3e, type: 3}
 --- !u!114 &9095284659071500652 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2625096408153486186, guid: cb981b533da608c4baaedabcc3fe690d, type: 3}
