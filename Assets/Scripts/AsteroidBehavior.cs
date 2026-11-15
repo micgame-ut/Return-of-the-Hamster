@@ -150,13 +150,16 @@ public class AsteroidBehavior : MonoBehaviour
     private MaterialPropertyBlock tintBlock;
     private Color[] baseColors;  // each non-outline slot's own base color, before the depth tint
     private Color lastTint;  // the tint last sent to the renderer, so unchanged frames skip the call
+    private bool lastGold;   // whether the last color sent was the Jackpot gold, so switching it on or off forces a resend
     private WaitForSeconds warnWait;
     private Transform mesh;
     private Transform cam;
     private PlayerInvincibility invincibility;
+    private PlayerJackpot jackpot;
     private PlayerMovement player;
     private PlayerHealth health;
     private PlayerTwins twins;
+    private PlayerWarp warp;
     private Score score;
     private CloseCallZone closeCalls;
     private bool passedPlayer;      // has crossed the player's depth and been measured
@@ -169,6 +172,11 @@ public class AsteroidBehavior : MonoBehaviour
     private int outlineState = -1; // 0 too slow, 1 can break, -1 not yet set
     private float hitRadius;            // collider footprint, measured once in Awake so it survives the collider being off
     private Material[] solidMaterials;  // the normal look, including any outline
+    private Material[] outlinedMaterials;   // the normal body plus the outline, so a Jackpot can outline any rock (none for comets)
+    private Material[] goldMaterials;       // the Jackpot gold body plus the outline
+    private Color goldBaseColor = Color.white;   // the Jackpot material's own base color, which the depth tint starts from
+    private int lookState = 0;              // which list is on the renderer: 0 normal, 1 outlined, 2 gold
+    private int outlineSlot = -1;           // the outline's slot in the outlined and gold lists
     private Material[] phasedMaterials; // the hologram look
     private bool showingPhased;         // which look is on the renderer right now
 
@@ -225,11 +233,18 @@ public class AsteroidBehavior : MonoBehaviour
     // Set by EffectPool on a pooled piece: the prefab it was made from, so it knows which pile to go back to.
     public GameObject PoolSource { get; set; }
     public bool IsPhased { get; private set; }
+    // Jackpot applies to every asteroid except the Frost and Magnet comets.
+    private bool JackpotApplies => jackpot != null && jackpot.IsActive && effectType != EffectType.Frost && effectType != EffectType.Magnet;
+    // What this asteroid counts as right now: a Bonus rock during Jackpot, otherwise its own kind.
+    private AsteroidKind Kind => JackpotApplies ? AsteroidKind.BonusCarrier : kind;
+    // The player Speed needed to smash it: one shared value during Jackpot, otherwise its own.
+    private float DestroySpeed => JackpotApplies && template != null ? template.jackpotDestroySpeed : destroySpeed;
+
     // Whether the player's speed can smash this kind. Hazard can't.
-    private bool BreaksBySpeed => kind == AsteroidKind.Destructible || kind == AsteroidKind.BonusCarrier;
+    private bool BreaksBySpeed => Kind == AsteroidKind.Destructible || Kind == AsteroidKind.BonusCarrier;
     public bool CanBreak => !IsPhased &&
                             ((invincibility != null && invincibility.IsInvincible) ||
-                             (BreaksBySpeed && PlayerMovement.Speed >= destroySpeed));
+                             (BreaksBySpeed && PlayerMovement.Speed >= DestroySpeed));
 
     // XY footprint of the collider, measured once in Awake, since its bounds are only valid while it's enabled.
     public float HitRadius => col != null ? hitRadius : 0f;
@@ -260,16 +275,31 @@ public class AsteroidBehavior : MonoBehaviour
         Camera gameCam = GameManager.Instance != null ? GameManager.Instance.GameplayCamera : null;
         cam = gameCam != null ? gameCam.transform : null;
         invincibility = GameManager.Instance != null ? GameManager.Instance.PlayerInvincibility : null;
+        jackpot = GameManager.Instance != null ? GameManager.Instance.PlayerJackpot : null;
         player = GameManager.Instance != null ? GameManager.Instance.Player : null;
         health = GameManager.Instance != null ? GameManager.Instance.PlayerHealth : null;
         twins = GameManager.Instance != null ? GameManager.Instance.PlayerTwins : null;
-        score = GameManager.Instance != null ? GameManager.Instance.Score : null;
+        warp = GameManager.Instance != null ? GameManager.Instance.PlayerWarp : null;
+        score =GameManager.Instance != null ? GameManager.Instance.Score : null;
         closeCalls = GameManager.Instance != null ? GameManager.Instance.CloseCallZone : null;
+
+        // Ordinary asteroids pick a random body material once and keep it when pooled. Frost, Magnet and Bonus have their own looks.
+        if (rend != null && template != null && template.asteroidMaterials != null && template.asteroidMaterials.Length > 0 &&
+            effectType != EffectType.Frost && effectType != EffectType.Magnet && kind != AsteroidKind.BonusCarrier)
+        {
+            Material picked = template.asteroidMaterials[Random.Range(0, template.asteroidMaterials.Length)];
+            if (picked != null)
+            {
+                Material[] body = rend.sharedMaterials;
+                body[0] = picked;
+                rend.sharedMaterials = body;
+            }
+        }
 
         // Asteroids that speed can smash get the outline added as an extra material, which
         // renders the whole mesh a second time as the inverted hull. Done at runtime
         // so the Kind alone decides whether an asteroid is outlined.
-        if (BreaksBySpeed && rend != null && template != null && template.outlineMaterial != null)
+        if ((kind == AsteroidKind.Destructible || kind == AsteroidKind.BonusCarrier) && rend != null && template != null && template.outlineMaterial != null)
         {
             Material[] current = rend.sharedMaterials;
             Material[] withOutline = new Material[current.Length + 1];
@@ -284,6 +314,28 @@ public class AsteroidBehavior : MonoBehaviour
         if (rend != null) solidMaterials = rend.sharedMaterials;
         if (effectType == EffectType.Phase && template != null && template.phasedMaterial != null)
             phasedMaterials = new[] { template.phasedMaterial };
+
+        // Jackpot: every rock except the comets also gets an outlined look and a gold look, made once so a switch allocates nothing.
+        if (rend != null && template != null && template.outlineMaterial != null &&
+            effectType != EffectType.Frost && effectType != EffectType.Magnet)
+        {
+            if (outlineIndex >= 0) outlinedMaterials = solidMaterials;
+            else
+            {
+                outlinedMaterials = new Material[solidMaterials.Length + 1];
+                solidMaterials.CopyTo(outlinedMaterials, 0);
+                outlinedMaterials[solidMaterials.Length] = template.outlineMaterial;
+                outlineBlock = new MaterialPropertyBlock();
+            }
+            outlineSlot = outlinedMaterials.Length - 1;
+
+            if (template.jackpotMaterial != null)
+            {
+                goldMaterials = (Material[])outlinedMaterials.Clone();
+                goldMaterials[0] = template.jackpotMaterial;
+                if (template.jackpotMaterial.HasProperty(BaseColorId)) goldBaseColor = template.jackpotMaterial.GetColor(BaseColorId);
+            }
+        }
 
         // Each slot's own base color, kept for the depth tint. The outline slot is left out so it stays bright.
         if (rend != null)
@@ -393,8 +445,23 @@ public class AsteroidBehavior : MonoBehaviour
     {
         if (phased == showingPhased || phasedMaterials == null) return;
         showingPhased = phased;
-        rend.sharedMaterials = phased ? phasedMaterials : solidMaterials;
+        rend.sharedMaterials = phased ? phasedMaterials : LookMaterials();
         if (!phased) outlineState = -1; // the outline slot is back, so refresh its color
+    }
+
+    // The materials for the current non-phased look: 0 normal, 1 outlined, 2 gold.
+    private Material[] LookMaterials() => lookState == 2 ? goldMaterials : lookState == 1 ? outlinedMaterials : solidMaterials;
+
+    // Jackpot: picks the normal, outlined or gold look and puts it on the renderer, only when the choice changes.
+    private void UpdateLook()
+    {
+        if (outlinedMaterials == null || showingPhased) return;   // comets keep their own look, and the Phase hologram takes over while phased
+
+        int want = !JackpotApplies ? 0 : (jackpot.ColorShowing && goldMaterials != null ? 2 : 1);
+        if (want == lookState) return;
+        lookState = want;
+        rend.sharedMaterials = LookMaterials();
+        outlineState = -1;   // the outline slot may be new, so refresh its color
     }
 
     // Phase effect: the collider follows the real cycle, and the look flickers just before each switch.
@@ -421,7 +488,7 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void UpdateOutline()
     {
-        if (outlineIndex < 0 || showingPhased) return;
+        if (outlineSlot < 0 || showingPhased || (outlineIndex < 0 && lookState == 0)) return;
 
         // Only touch the renderer when the state flips, not every frame.
         int state = CanBreak ? 1 : 0;
@@ -429,7 +496,7 @@ public class AsteroidBehavior : MonoBehaviour
         outlineState = state;
 
         outlineBlock.SetColor(OutlineColorId, state == 1 ? template.outlineCanBreak : template.outlineTooSlow);
-        rend.SetPropertyBlock(outlineBlock, outlineIndex);
+        rend.SetPropertyBlock(outlineBlock, outlineSlot);
     }
 
     // Fades the body toward template.farColor the further it is ahead of the player. The outline slot is left alone.
@@ -437,13 +504,16 @@ public class AsteroidBehavior : MonoBehaviour
     {
         if (baseColors == null || template == null || player == null) return;
 
+        bool gold = lookState == 2 && !showingPhased;
         Color tint = template.GetDepthTint(transform.position.z - player.transform.position.z);
-        if (tint == lastTint) return;
+        if (tint == lastTint && gold == lastGold) return;
         lastTint = tint;
+        lastGold = gold;
 
         for (int i = 0; i < baseColors.Length; i++)
         {
-            tintBlock.SetColor(BaseColorId, baseColors[i] * tint);
+            Color body = gold && i == 0 ? goldBaseColor : baseColors[i];
+            tintBlock.SetColor(BaseColorId, body * tint);
             tintBlock.SetColor(TintId, tint);
             rend.SetPropertyBlock(tintBlock, i);
         }
@@ -650,6 +720,7 @@ public class AsteroidBehavior : MonoBehaviour
     {
         // Spins during the warning too, so asteroids appear already tumbling.
         Spin();
+        UpdateLook();
         UpdateOutline();
         UpdateDepthTint();
 
@@ -750,7 +821,7 @@ public class AsteroidBehavior : MonoBehaviour
             if (depth > 0f) return;
             passedPlayer = true;
             closeCallGap = closeCalls.NearestGap(transform.position, HitRadius, out closeCallBody);
-            closeCallThreat = !CanBreak && !IsPhased;
+            closeCallThreat = !CanBreak && !IsPhased && !(warp != null && warp.IsProtected);
         }
 
         if (depth > -(HitRadius + closeCalls.Reach)) return;
@@ -767,7 +838,7 @@ public class AsteroidBehavior : MonoBehaviour
     {
         // Only react to the player or a twin copy. FindBody also covers the
         // collider being on a child, and says which body was touched.
-        if (player == null) return;
+        if (player == null || (warp != null && warp.IsProtected)) return;
         Transform body = twins != null ? twins.FindBody(other.transform)
                        : other.transform.IsChildOf(player.transform) ? player.transform : null;
         if (body == null) return;
@@ -798,7 +869,7 @@ public class AsteroidBehavior : MonoBehaviour
 
     private void Explode(Vector3 bodyPosition)
     {
-        bool bonus = kind == AsteroidKind.BonusCarrier;
+        bool bonus = Kind == AsteroidKind.BonusCarrier;
         if (template != null)
         {
             ParticleSystem explosion = bonus && bonusExplosion != null ? bonusExplosion : template.explosionPrefab;
@@ -816,7 +887,21 @@ public class AsteroidBehavior : MonoBehaviour
                 score.AddBonusPoints(bonusPoints, bodyPosition, bonusLabel, Score.ScoreSource.Asteroids);
         }
 
-        OnSmashed?.Invoke(kind);
+        OnSmashed?.Invoke(Kind);
         Finish();
+    }
+
+    // The Bomb and Lance power-ups: removes this asteroid with its explosion. Returns false if it's already gone. The score and the camera shake
+    // belong to PlayerBomb and PlayerLance, so there's no combo and no Bonus here.
+    public bool Blast()
+    {
+        if (!Active.Contains(this)) return false;
+
+        if (template != null) EffectPool.Play(template.explosionPrefab, transform.position);
+
+        RunStats stats = GameManager.Instance != null ? GameManager.Instance.RunStats : null;
+        if (stats != null) stats.AddAsteroidDestroyed();
+        Finish();
+        return true;
     }
 }

@@ -42,6 +42,10 @@ SpawnableTemplate's gotchas). `orbitRadius` and `orbitCenter` take effect immedi
 | `SpawnerPosition` | ObjectSpawner (moves itself there), PatternGizmos (to work out spawner space) |
 | `SpawnDistance` | SpawnableTemplate's `GetDepthTint` (to measure the depth fade as a share of it) |
 
+`OrbitRadius` is a property with a `get` and a `set`. The `set` applies the same `Max(0.01, value)` as `OnValidate`, so
+TuningOverlay can change the radius while playing without ever reaching 0. PlayerMovement reads it every frame, so the
+ring changes straight away. Patterns and warnings already spawned keep the size they had.
+
 `SameZTolerance` isn't here. It's a plain number, not something you'd tune, so it lives in ObjectSpawner
 as `public const`, and PatternGizmos reads it from there.
 
@@ -95,6 +99,7 @@ OrbitSettings doesn't read from or call anything. These scripts read from it:
 - **AsteroidBehavior**: radius and center, for Wave movement.
 - **ObjectSpawner**: spawner position.
 - **PatternGizmos / PatternGizmosEditor**: all of it, measured from the spawner.
+- **TuningOverlay**: sets `OrbitRadius` live, and puts the asset's original radius back when the game quits.
 
 ## Gotchas
 

@@ -22,6 +22,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | EffectPool.cs | [EffectPool.md](EffectPool.md) | Done |
 | EndScreen.cs | [EndScreen.md](EndScreen.md) | Done |
 | ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
+| FreeBoostPips.cs | [FreeBoostPips.md](FreeBoostPips.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
 | Audio/GameSFX.cs | [GameSFX.md](GameSFX.md) | Done |
 | Audio/UISFX.cs | [UISFX.md](UISFX.md) | Done |
@@ -51,7 +52,12 @@ It lives outside `Assets/` so Unity does not import these files.
 | PlayerCamera.cs | [PlayerCamera.md](PlayerCamera.md) | Done |
 | PlayerDeath.cs | [PlayerDeath.md](PlayerDeath.md) | Done |
 | PlayerHealth.cs | [PlayerHealth.md](PlayerHealth.md) | Done |
+| PlayerBomb.cs | [PlayerBomb.md](PlayerBomb.md) | Done |
 | PlayerInvincibility.cs | [PlayerInvincibility.md](PlayerInvincibility.md) | Done |
+| PlayerJackpot.cs | [PlayerJackpot.md](PlayerJackpot.md) | Done |
+| PlayerLance.cs | [PlayerLance.md](PlayerLance.md) | Done (untested in Play mode) |
+| PlayerSlim.cs | [PlayerSlim.md](PlayerSlim.md) | Done |
+| PlayerWarp.cs | [PlayerWarp.md](PlayerWarp.md) | Done (untested in Play mode) |
 | PlayerMovement.cs | [PlayerMovement.md](PlayerMovement.md) | Done |
 | PlayerShell.cs | [PlayerShell.md](PlayerShell.md) | Done |
 | PlayerTwins.cs | [PlayerTwins.md](PlayerTwins.md) | Done |
@@ -63,6 +69,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | SkyboxSpeedController.cs | [SkyboxSpeedController.md](SkyboxSpeedController.md) | Done |
 | SpawnableTemplate.cs | [SpawnableTemplate.md](SpawnableTemplate.md) | Done |
 | StarfieldStreamer.cs | [StarfieldStreamer.md](StarfieldStreamer.md) | Done |
+| TuningOverlay.cs | [TuningOverlay.md](TuningOverlay.md) | Done |
 | TwinCopy.cs | [TwinCopy.md](TwinCopy.md) | Done |
 
 ## Shaders
@@ -71,6 +78,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | --- | --- | --- |
 | Asteroid Outline.shadergraph | [AsteroidOutline.md](AsteroidOutline.md) | Done |
 | Asteroid Phase.shadergraph | [AsteroidPhase.md](AsteroidPhase.md) | Done |
+| Asteroid Rock.shadergraph | [AsteroidRock.md](AsteroidRock.md) | Done |
 | Black Hole.shadergraph | [BlackHole.md](BlackHole.md) | Done |
 | Frost Gas.shadergraph | [FrostGas.md](FrostGas.md) | Done |
 | Frost Rock.shadergraph | [FrostRock.md](FrostRock.md) | Done |

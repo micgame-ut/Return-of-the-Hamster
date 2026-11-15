@@ -110,6 +110,11 @@ feed into how fast the asteroid approaches.
   GameManager once instead of looking them up on each hit.
 - Creates `warnWait`, one `WaitForSeconds(warningTime)` that every warning reuses (see `WarnThenMove`).
   Only when there's a template, since that's where `warningTime` lives.
+- **Random body material:** if the template's `asteroidMaterials` list isn't empty, the asteroid picks one entry at
+  random and puts it in slot 0 of the renderer (`sharedMaterials` returns a copy, so it edits the copy and assigns it
+  back; the prefab asset isn't changed). It happens once, here, so a pooled asteroid keeps its material, like its
+  mesh. A `null` entry is skipped. Frost and Magnet (by `effectType`) and Bonus (by `kind`) keep their own. It runs
+  before the outline, depth tint and Phase look read the materials, so they all work on the new one.
 - **Destructible outline:** if the asteroid `BreaksBySpeed` (its `kind` is Destructible or BonusCarrier), it adds
   the template's `outlineMaterial` as an extra material slot on the renderer. A mesh with two materials gets
   drawn twice, and the outline shader draws the second copy slightly larger and inside out (an "inverted
@@ -185,9 +190,13 @@ easier to read. It runs every frame, including during the warning, so a new aste
 2. `template.GetDepthTint(distance)` turns that into a color between white (near the player) and
    `farColor` (far away). The distance is measured as a share of `OrbitSettings.SpawnDistance`, so it follows
    `spawnerPosition` and `playerZ` if they change.
-3. If that tint is the same as last frame's (`lastTint`), it stops. Otherwise it fills `tintBlock` for each body
-   slot with `_BaseColor` = that slot's saved color × the tint, plus `_Tint` = the tint (for the Asteroid
-   Phase graph), and applies it to just that slot with `SetPropertyBlock(tintBlock, i)`.
+3. While the **Jackpot gold look** is on the renderer (`gold = lookState == 2 && !showingPhased`, see `UpdateLook` below), body
+   slot 0 starts from `goldBaseColor` (the Gold material's own `_BaseColor`) instead of its saved color. The tint overwrites
+   `_BaseColor`, so without this the gold material would be repainted with the rock's old gray.
+4. If that tint and `gold` are both the same as last frame's (`lastTint`, `lastGold`), it stops. Otherwise it fills
+   `tintBlock` for each body slot with `_BaseColor` = (the slot's saved color, or `goldBaseColor` for slot 0 when gold) × the
+   tint, plus `_Tint` = the tint (for the Asteroid Phase graph), and applies it to just that slot with
+   `SetPropertyBlock(tintBlock, i)`. Comparing `gold` too is what makes the color switch on and off when nothing else changed.
 
 A property block replaces a value, it doesn't multiply it, which is why `baseColors` saves each slot's own
 base color in `Awake`. The **outline slot is never touched**, so the outline stays at full brightness.
@@ -392,7 +401,8 @@ rewarded even if physics missed the contact.
    touched: the player, a copy, or null. It uses `IsChildOf`, so it still works if a collider is on a child.
    A hit on the copy the player jumped onto in this same frame counts as the player. Without a PlayerTwins,
    it falls back to `other.transform.IsChildOf(player.transform)`. Anything else, or no player at all, is
-   ignored. Any touch sets `hitPlayer`, so this flight can't score a close call.
+   ignored. Any touch sets `hitPlayer`, so this flight can't score a close call. **While a Warp runs, and during the grace after it (`PlayerWarp.IsProtected`), every touch is ignored
+   first**, before `hitPlayer` is set: no hit, no smash, no knockback and no lost twin body (this comes before `FindBody` and `LoseBody`). `warp` is cached in `Awake` from `GameManager.PlayerWarp`.
 2. **Smash.** It explodes if `CanBreak` is true (see the `Active` list section below): the player is
    **invincible**, or it `BreaksBySpeed` and the player's `Speed` is at least `destroySpeed`.
 
@@ -445,8 +455,36 @@ scene for asteroids every frame. The public properties exist for it:
 | `IsPhased` | Whether a Phase asteroid is phased out right now (collider off). OrbitRing draws its arc blue then |
 
 `CanBreak` is the one rule for "would this break?": `!IsPhased && ((invincible) || (BreaksBySpeed && Speed >=
-destroySpeed))`. A phased asteroid can never be broken. `BreaksBySpeed` is a private property that's true for the
-Destructible and BonusCarrier kinds.
+DestroySpeed))`. A phased asteroid can never be broken. `BreaksBySpeed` is a private property that's true for the
+Destructible and BonusCarrier kinds, read through `Kind` (below).
+
+**Jackpot (`JackpotApplies`, `Kind`, `DestroySpeed`).** While the player's `PlayerJackpot` is active, **every asteroid
+counts as a BonusCarrier**, except Frost and Magnet comets:
+
+- `JackpotApplies` = a `PlayerJackpot` exists and `IsActive`, and `effectType` isn't Frost or Magnet. (`jackpot` is cached in
+  `Awake` from `GameManager.PlayerJackpot`.)
+- `Kind` = `BonusCarrier` while `JackpotApplies`, otherwise the saved `kind`. It's what `BreaksBySpeed`, `Explode` and the
+  `OnSmashed` event read, so a Hazard becomes smashable and pays the Bonus (`bonusPoints`, `bonusLabel`, `bonusExplosion`,
+  the bonus sound) for the duration. Rocks already on screen change at once.
+- `DestroySpeed` = `template.jackpotDestroySpeed` (50) while `JackpotApplies`, otherwise the rock's own `destroySpeed`. One
+  shared value, so it also replaces the 40/80 of the Destructible prefabs.
+- **The look: three prepared material lists (`UpdateLook`, `LookMaterials`, `lookState`).** In `Awake`, every rock except the
+  Frost and Magnet comets gets `solidMaterials` (its normal look, with an outline only if it's smashable by nature),
+  `outlinedMaterials` (the body plus the outline, so any rock can show one) and `goldMaterials` (the outlined list with body
+  slot 0 swapped for `template.jackpotMaterial`, the same `Gold` as the Bonus rock; `goldBaseColor` is read from it). They are
+  made once, so a switch allocates nothing. `UpdateLook` runs every frame before the outline and the depth tint, and puts one on the
+  renderer only when the choice changes: normal (0) when Jackpot doesn't apply; **gold (2)** while `jackpot.ColorShowing`;
+  **outlined (1)** during the flicker's "off" half (own body, outline kept, still smashable). Comets keep `outlinedMaterials = null`
+  and are skipped. While a Phase rock is phased the hologram stays and `UpdateLook` does nothing; `SetLook` restores
+  `LookMaterials()` when it comes back.
+- **The outline on a Hazard.** `outlineIndex` is still the outline slot in the *normal* list (-1 for Hazards); `outlineSlot` is
+  the slot in the outlined and gold lists. `UpdateOutline` colors it (green when `CanBreak`, red when too slow) unless the
+  rock is a comet, phased, or a Hazard with the normal look on. So a Hazard shows an outline exactly while it's smashable by
+  Jackpot (green at Speed 50 or more, red below), and loses it when Jackpot ends. (An earlier version let a rock made during a
+  Jackpot keep a permanent red outline; the outline slot is now a spare that is only on the renderer during Jackpot.)
+- The depth tint for the gold look is in `UpdateDepthTint` (above).
+- A currently phased Phase rock can't be broken (`!IsPhased`), and Invincible still breaks everything. Jackpot plus
+  Invincible pays the Bonus for the invincible smashes too.
 The outline color, OrbitRing's arc color and `OnTriggerEnter` all use it, so what the player sees always
 matches what happens. "Invincible" comes from the PlayerInvincibility reference each asteroid grabs from
 GameManager once in `Awake`, so checking it costs no searching. If there's no GameManager or no
@@ -463,8 +501,18 @@ come and go, so there's nothing stable to subscribe to). GameSFX uses them for s
 | `OnSplit` | in `Split`, when a Splitter bursts into pieces | nothing |
 | `OnCloseCall` | in `TrackCloseCall`, in the same `if` as `score.AddCloseCall`, so exactly when the close call scores | nothing |
 
+### `Blast` (the Bomb and Lance power-ups)
+
+`public bool Blast()` removes this asteroid for PlayerBomb (and PlayerLance) and returns whether it did. It returns `false` straight away if the asteroid
+is no longer in `Active` (it hit the player or left during the sweep), so nothing is removed twice. Otherwise it plays the template's
+normal explosion at its position, counts it in `RunStats.AddAsteroidDestroyed`, and calls `Finish` (a normal asteroid goes back to its
+pool; a Frost comet hides and waits for its patches to run out; a Splitter never splits). It does **not** add score, touch the combo,
+shake the camera or raise `OnSmashed`: the score and the shake belong to PlayerBomb, and `OnSmashed` would play the smash sound and count
+toward the tutorial.
+
 ## Talks to
 
+- **PlayerBomb** (and PlayerLance): calls `Blast()` on each target; reads `Active`.
 - **GameSFX**: subscribes to the three static events above.
 - **PlayerMovement**: reads the static `Speed`. On a hit, reads `OrbitTangent` and calls `TakeHit`. A Magnet calls
   `AddPull` each frame, and a Frost comet calls `ApplyFrost` each frame the player is inside a patch.
@@ -474,9 +522,13 @@ come and go, so there's nothing stable to subscribe to). GameSFX uses them for s
   [AsteroidPhase.md](AsteroidPhase.md)).
 - **CameraShake**: calls `Shake` on a smash, and on a hit that `TakeHit` accepted.
 - **PlayerHealth**: calls `LoseLife()` on a hit that `TakeHit` accepted.
+- **PlayerJackpot**: reads `IsActive` (Kind, DestroySpeed, CanBreak) and `ColorShowing` (the gold look). Found once in `Awake`
+  through `GameManager.PlayerJackpot`. Also reads `jackpotDestroySpeed` and `jackpotMaterial` from the template.
 - **PlayerInvincibility**: reads `IsInvincible` in `CanBreak`. While it's true, every asteroid's outline and
   arc are green and touching it explodes it.
 - **PlayerTwins**: `FindBody` on every contact; `LoseBody` on a hit during the twin; reads `IsTwinned`.
+- **PlayerWarp**: reads `IsProtected` (the Warp and the grace after it): contacts are ignored, and a rock that crosses the player's depth during
+  one is never a close-call threat (`closeCallThreat` is set false), so rocks flying past the empty orbit give no CLOSE CALL points.
 - **GameManager**: gets the gameplay camera, `Player`, `PlayerHealth`, `PlayerInvincibility`, `PlayerTwins` and `Score` in `Awake`, and `RunStats` when an
   asteroid is smashed.
 - **RunStats**: calls `AddAsteroidDestroyed()` on a smash.

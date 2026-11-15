@@ -42,6 +42,9 @@ has arrived (`Progress` 1) and continuing makes the level complete at once.
 `SetLevelTime(seconds)` is the one way to change `levelTime` from another script. `GameManager` calls it in
 `Awake` when the level has a `LevelConfig`, so the config's time replaces the Inspector value.
 
+`SpeedTimeFactor` is a public property (get and set) over `speedTimeFactor`. TuningOverlay reads it for the starting
+value and sets it live while tuning. The Inspector field, tooltip and saved value are unchanged.
+
 ### `RecordOrigin`: working out the earth's path
 
 The earth moves in a straight line from where it starts to a **stop point** just in front of the earth
@@ -116,6 +119,7 @@ LevelTimer doesn't decide the win itself. The earth arriving (`IsComplete`) is o
   to stop the player accelerating.
 - **ObjectSpawner**: reads `IsComplete` to stop spawning.
 - **Score**: reads `Progress` and `LevelTime` every frame for the time score.
+- **TuningOverlay**: reads and sets `SpeedTimeFactor` (see [TuningOverlay.md](TuningOverlay.md)).
 
 ## Gotchas
 

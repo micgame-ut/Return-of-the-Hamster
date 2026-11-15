@@ -25,6 +25,10 @@ Handles the ring on the player (and on each twin copy) for the boost. It has two
 | --- | --- | --- | --- |
 | `spinAxis` | (0, 0, 1) | (0, 0, −1) | The ring's local axis to roll around. Its sign sets which way the ring rolls for a given dodge |
 | `readyPulseTime` | 0.5 | 0.5 | Seconds the ring's flash takes to fade out after the boost becomes ready. 0 = no flash |
+| `lanceBaseColor` | (0.3, 0.05, 0.2) | same | The ring's base colour while Lance is active (normally a dark blue-gray) |
+| `lanceGlowColor` | (1, 0.1, 0.6) | same | The ring's glow colour while Lance is active. HDR |
+| `lanceRing1Color` | (3, 0.3, 1.6) | same | The first sharp line while Lance is active. HDR |
+| `lanceRing2Color` | (3, 0.8, 2.2) | same | The second sharp line while Lance is active. HDR |
 
 ## How it works
 
@@ -98,6 +102,11 @@ sent (`shownCharge`, `shownPulse`), it sends both to the shader: `GetPropertyBlo
 into `props`, `SetFloat(ChargeId, charge)` sets `_Charge`, `SetFloat(PulseId, pulse)` sets `_Ready_Pulse`, and
 `SetPropertyBlock` hands it back. `ChargeId` and `PulseId` are `Shader.PropertyToID(...)`, worked out once.
 
+**The pink (Lance).** It also reads `lance.IsActive` (the PlayerLance from `GameManager.PlayerLance`, found in `Awake`). A change in that
+(`shownLance`) forces a resend like a change in charge or flash does. While it is on, the block also gets the four `lance*Color` values
+(`WriteLanceColors`, which is public so FreeBoostPips can paint the small rings the same pink); when it ends, the block is rebuilt without
+them and the ring is blue again. Charge and flash still work, so the pink ring fills as the dash cooldown runs.
+
 **The flash.** If `charge` is below 1 the flash is cancelled (`pulseTimer = 0`), because it only belongs to a ready
 boost: boosting again mid-flash would otherwise make a dark ring flash. While `pulseTimer` is above 0 it counts
 down, and `pulse = t²` where `t = pulseTimer ÷ readyPulseTime`. Squaring makes it drop away fast after the first
@@ -123,7 +132,8 @@ property block isn't a Unity object, so there's nothing to clean up.
 - **PlayerMovement**: subscribes to `OnSideBoost` and `OnBoostReady`; reads `BoostDecay` (spin) and
   `BoostCharge01` (glow) every frame.
 - **GameManager**: gets `Player` in `Awake` on a twin copy's ring.
-- **Ring Glow shader**: sets `_Charge` and `_Ready_Pulse` through the property block.
+- **Ring Glow shader**: sets `_Charge` and `_Ready_Pulse` (and, with Lance, `_Base_Color`, `_Glow_Color`, `_Ring_1_Color`, `_Ring_2_Color`) through the property block.
+- **PlayerLance**: reads `IsActive`.
 
 ## Gotchas
 

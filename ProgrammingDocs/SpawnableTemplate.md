@@ -70,6 +70,12 @@ saves it; they're ignored.
 | `outlineTooSlow` | red | red | Outline color when the player is too slow to smash it |
 | `outlineCanBreak` | green | green | Outline color when the player is fast enough to smash it |
 
+### Asteroid Look
+
+| Field | Default | In the asset | What it changes |
+| --- | --- | --- | --- |
+| `asteroidMaterials` | empty | (fill in) | Materials ordinary asteroids pick from at random, once, when each is first created (and keep when pooled). Frost, Magnet and Bonus asteroids keep their own. Empty = every asteroid keeps its prefab's material |
+
 ### Phase
 
 | Field | Default | In the asset | What it changes |
@@ -121,17 +127,49 @@ These three are new, so the asset uses the defaults until they're changed.
 | `pickupShakeDuration` | 0 | Seconds the camera shakes on a pickup. 0 means no shake (PowerUp skips the call entirely, so it can't cut a running shake short) |
 | `pickupShakeMagnitude` | 0 | How far the camera shakes on a pickup, in world units |
 | `invincibleDuration` | 5 | Seconds of invincibility from an Invincible power-up. Passed to `PlayerInvincibility.Activate` |
+| `rechargeBoosts` | 2 | Free boosts a Boost Recharge power-up gives. They skip the cooldown and are used up one at a time. Picking another up refills to this number, it doesn't add to it |
+| `jackpotDuration` | 8 | Seconds a Jackpot power-up lasts. Every asteroid (except Frost and Magnet comets) can be smashed for its bonus points while it does. Passed to `PlayerJackpot.Activate` |
+| `jackpotDestroySpeed` | 50 (the asset has 50) | The player Speed needed to smash any asteroid during Jackpot. Replaces each asteroid's own `destroySpeed`, including the Destructible ones. Compare to `maxSpeed` (100) |
+| `jackpotMaterial` | none (the asset has `Gold`) | The material every asteroid's body swaps to during Jackpot, normally the same `Gold` as the Bonus asteroids. Empty = the asteroids keep their own look. The depth fade still darkens it |
+| `jackpotWarningTime` | 1 | Seconds before the end of Jackpot that the asteroids flicker between gold and their own color. Passed to `PlayerJackpot.Activate` |
+| `slimDuration` | 6 | Seconds a Slim power-up lasts in total, from pickup until the player is back to full size. Includes the slow grow-back at the end. Passed to `PlayerSlim.Activate` |
+| `slimScale` | 0.5 | How small the player and its twin copies get during Slim, as a multiple of normal size. The hit area, boost ring and exhaust shrink with it |
+| `slimShrinkTime` | 0.25 | Seconds the player takes to shrink at the start of Slim |
+| `slimGrowTime` | 1 | Seconds at the end of Slim during which the player grows slowly back to full size. Part of `slimDuration` (keep it below it) |
+| `bombPoints` | 50 | Points for each asteroid a Bomb removes. Flat: not multiplied by speed or power-ups, and it doesn't touch the combo |
+| `bombSweepTime` | 0.2 | Seconds a Bomb takes to go off across all the asteroids, nearest first, like a shockwave moving out. 0 = all at once. No asteroid goes off later than half the time it needs to reach the player |
+| `bombShakeDuration` | 0.4 | Seconds the camera shakes when a Bomb goes off |
+| `bombShakeMagnitude` | 0.5 | How far the camera shakes when a Bomb goes off, in world units |
+| `lanceShots` | 1 | Shots a Lance pickup gives. They don't expire until fired |
+| `lanceMaxShots` | 3 | The most shots you can hold. A Boost Recharge picked up while Lance is active adds `rechargeBoosts` shots up to this |
+| `lanceCooldown` | 0.6 | Seconds before the next shot after one is fired, while more are left. The last shot starts the normal dash cooldown instead |
+| `lanceWidth` | 1.4 | Width of the beam's lane, in world units, measured sideways. A rock is hit if it's within half of this plus its own radius |
+| `lanceRange` | 80 | How far ahead, in depth, the beam reaches |
+| `lancePoints` | 50 | Points for each asteroid a Lance shot removes. Flat, paid as one "N HIT" popup per shot |
+| `lanceBeamTime` | 0.2 | Seconds the beam stays on screen, thinning and fading |
+| `lanceBeamColor` | (3, 0.35, 1.6) | The glow's colour (HDR pink). The core is a lighter version |
+| `lanceBeamWidth` | 0.3 | Width of the beam's bright core. The glow is three times wider |
+| `warpSeconds` | 10 | Seconds of game time a Warp pickup skips ahead. The level, the rocks and the spawner run fast for this long while the player is gone |
+| `warpOutTime` | 0.5 | Seconds the player takes to pop out. The game runs at normal speed during it |
+| `warpHoldTime` | 1 | Real seconds the player stays gone. The game runs `warpSeconds ÷ warpHoldTime` times faster during it (10 in 1 = 10 times). Never below 0.1 in the code |
+| `warpInTime` | 0.5 | Seconds the player takes to pop back in. The game runs at normal speed during it |
+| `warpGraceTime` | 1.5 | Seconds after the pop-in during which rocks can't hurt the player, and the ship wears the phase look (`phasedMaterial`). The player has control back. 0 = no grace |
 
 ### Random Power-Up Chances
 
 | Field | Default | What it changes |
 | --- | --- | --- |
-| `invincibleChance` | 20 | How often a Random power-up gives Invincible |
+| `invincibleChance` | 20 | How often a Random power-up gives Invincible (the scene's asset uses 10, with Twin and Score at 25) |
 | `twinChance` | 20 | How often it gives Twin |
 | `scoreChance` | 20 | How often it gives Score Multiplier |
+| `rechargeChance` | 20 | How often it gives Boost Recharge |
+| `jackpotChance` | 20 | How often it gives Jackpot |
+| `slimChance` | 20 | How often it gives Slim |
+| `bombChance` | 20 | How often it gives Bomb |
+| `lanceChance` | 20 | How often it gives Lance |
+| `warpChance` | 20 | How often it gives Warp |
 
-These are **shares of the total**, not strict percentages: 20/20/20 is a third each, and 2/2/2 would mean the
-same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
+These are **shares of the total**, not strict percentages: 20 each is a ninth each, and 2 each would mean the same. 0 means that type never comes up. A type that would be wasted at pickup (Twin at the cap) is left out of
 that roll, and the rest share their chance. Only Random power-ups use these; the fixed prefabs ignore them. There
 is no Health chance: a Random power-up never gives Health, which is placed by hand with the fixed `Health
 PowerUp` prefab. See PowerUp's `RollType`.

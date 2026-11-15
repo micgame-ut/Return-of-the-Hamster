@@ -20,6 +20,12 @@ MonoBehaviour:
   outlineMaterial: {fileID: 2100000, guid: 4934b75270d22af4288831a4e76b43e3, type: 2}
   outlineTooSlow: {r: 1, g: 0, b: 0, a: 1}
   outlineCanBreak: {r: 0, g: 1, b: 0, a: 1}
+  asteroidMaterials:
+  - {fileID: 2100000, guid: 3ca5301964fdbd643a36439a9fc84478, type: 2}
+  - {fileID: 2100000, guid: 766d7e28fae10224d90774b2a16d6e45, type: 2}
+  - {fileID: 2100000, guid: 3fd08279c23c745409d59ca892c0cc64, type: 2}
+  - {fileID: 2100000, guid: 5d2016ffd620f7e4084cc3abeb13b2d3, type: 2}
+  - {fileID: 2100000, guid: 5d1260cd77a2eb049b454ffdd92a58bd, type: 2}
   phasedMaterial: {fileID: 2100000, guid: 442ceb179a8ed1349a4d4dd70342112e, type: 2}
   despawnBehindCamera: 5
   knockbackForce: 4
@@ -36,7 +42,38 @@ MonoBehaviour:
   pickupShakeDuration: 0
   pickupShakeMagnitude: 0
   invincibleDuration: 5
-  healthChance: 40
+  rechargeBoosts: 2
+  jackpotDuration: 8
+  jackpotDestroySpeed: 50
+  jackpotMaterial: {fileID: 2100000, guid: e1c7cb62686069b47be6cfc587126aaa, type: 2}
+  jackpotWarningTime: 1
+  slimDuration: 6
+  slimScale: 0.5
+  slimShrinkTime: 0.25
+  slimGrowTime: 1
+  bombPoints: 50
+  bombSweepTime: 0.2
+  bombShakeDuration: 0.4
+  bombShakeMagnitude: 0.5
+  lanceShots: 1
+  lanceMaxShots: 3
+  lanceCooldown: 0.6
+  lanceWidth: 1.4
+  lanceRange: 80
+  lancePoints: 50
+  lanceBeamTime: 0.2
+  lanceBeamColor: {r: 3, g: 0.35, b: 1.6, a: 1}
+  lanceBeamWidth: 0.3
+  warpSeconds: 10
+  warpOutTime: 0.5
+  warpHoldTime: 1
+  warpInTime: 0.5
   invincibleChance: 10
   twinChance: 25
   scoreChance: 25
+  rechargeChance: 20
+  jackpotChance: 20
+  slimChance: 20
+  bombChance: 20
+  lanceChance: 20
+  warpChance: 20

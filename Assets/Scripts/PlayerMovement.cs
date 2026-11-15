@@ -61,6 +61,16 @@ public class PlayerMovement : MonoBehaviour
 
     private const float SensitivityScale = 0.001f; // Mouse Sensitivity and Acceleration are entered in thousandths, so 5 means 0.005
 
+    // The values the tuning overlay edits and saves. A plain class, so JsonUtility can write it to the file.
+    [Serializable]
+    public class Tuning
+    {
+        public float mouseSensitivity, forwardThreshold, minInputForAngle;
+        public float acceleration, speedDecay, maxSpeed, overdriveFraction, topSpeedDegrade;
+        public float boostForce, boostDecay, speedBoost, boostCooldown, sideInputMemory;
+        public float invulnerableTime;
+    }
+
     // Speed
     // Readable anywhere, but only PlayerMovement changes it; other scripts go
     // through methods like TakeHit so clamping stays in one place.
@@ -105,10 +115,14 @@ public class PlayerMovement : MonoBehaviour
     private float boostVelocity;
     public event Action OnSpeedBoost;
     private float cooldownTimer; // seconds until the next boost; 0 or below = ready
+    private float cooldownLength;   // how long the running cooldown was, so BoostCharge01 is right for a lance shot's short one too
     public event Action<float> OnSideBoost; // direction: +1 counter-clockwise, -1 clockwise
     public event Action OnBoostReady; // the boost cooldown has just finished
-    public float BoostCharge01 => boostCooldown > 0f ? Mathf.Clamp01(1f - cooldownTimer / boostCooldown) : 1f; // 0 just after a boost, 1 when ready
+    public float BoostCharge01 => cooldownLength > 0f ? Mathf.Clamp01(1f - cooldownTimer / cooldownLength) : 1f; // 0 just after a boost, 1 when ready
     public float BoostDecay => boostDecay;
+    private int freeBoosts;   // boosts that skip the cooldown, from a Boost Recharge power-up
+    public int FreeBoosts => freeBoosts;
+    public event Action OnFreeBoostsChanged;   // the count went up or down, so the rings can update
     public event Action OnOrbitShifted;
     private float lastSideDirection;
     private float lastSideInputTime = float.NegativeInfinity; // no sideways input yet
@@ -122,6 +136,8 @@ public class PlayerMovement : MonoBehaviour
     // Level
     private LevelTimer levelTimer;
     private PlayerInvincibility invincibility;
+    private PlayerLance lance;
+    private PlayerWarp warp;
 
     // Once the earth has arrived the player can only lose speed, not gain it.
     private bool CanAccelerate => levelTimer == null || !levelTimer.IsComplete;
@@ -132,8 +148,30 @@ public class PlayerMovement : MonoBehaviour
 
     public void SetMinSpeed(float value) => minSpeed = Mathf.Clamp(value, 0f, maxSpeed);
 
+    public Tuning GetTuning() => new Tuning
+    {
+        mouseSensitivity = mouseSensitivity, forwardThreshold = forwardThreshold, minInputForAngle = minInputForAngle,
+        acceleration = acceleration, speedDecay = speedDecay, maxSpeed = maxSpeed,
+        overdriveFraction = overdriveFraction, topSpeedDegrade = topSpeedDegrade,
+        boostForce = boostForce, boostDecay = boostDecay, speedBoost = speedBoost,
+        boostCooldown = boostCooldown, sideInputMemory = sideInputMemory, invulnerableTime = invulnerableTime,
+    };
+
+    public void SetTuning(Tuning t)
+    {
+        mouseSensitivity = t.mouseSensitivity; forwardThreshold = t.forwardThreshold; minInputForAngle = t.minInputForAngle;
+        acceleration = t.acceleration; speedDecay = t.speedDecay; maxSpeed = t.maxSpeed;
+        overdriveFraction = t.overdriveFraction; topSpeedDegrade = t.topSpeedDegrade;
+        boostForce = t.boostForce; boostDecay = t.boostDecay; speedBoost = t.speedBoost;
+        boostCooldown = t.boostCooldown; sideInputMemory = t.sideInputMemory; invulnerableTime = t.invulnerableTime;
+
+        MaxSpeed = maxSpeed;
+        OverdriveFraction = overdriveFraction;
+        minSpeed = Mathf.Clamp(minSpeed, 0f, maxSpeed);
+    }
+
     // Before the game starts, and once it's over or won, all input is ignored.
-    private bool InputLocked => GameManager.Instance != null &&
+    private bool InputLocked => TuningOverlay.IsOpen || (warp != null && warp.IsWarping) || GameManager.Instance != null &&
                                 (!GameManager.Instance.IsFlying || GameManager.Instance.IsGameOver || GameManager.Instance.HasWon);
 
     // Fraction of max speed where overdrive starts, set from overdriveFraction. SkyboxSpeedController reads it too.
@@ -161,6 +199,8 @@ public class PlayerMovement : MonoBehaviour
             : GetComponentsInChildren<Renderer>();
 
         invincibility = GetComponent<PlayerInvincibility>();
+        lance = GetComponent<PlayerLance>();
+        warp = GetComponent<PlayerWarp>();
     }
 
     void Start()
@@ -252,6 +292,28 @@ public class PlayerMovement : MonoBehaviour
 
     // Magnet asteroids call this each frame to drag the player along the orbit. Pulls from several add up.
     public void AddPull(float radiansPerSecond) => pullRate += radiansPerSecond;
+
+    // Boost Recharge power-up: sets the free boosts to count (a refill, not an add) and makes the normal boost ready now.
+    public void GrantFreeBoosts(int count)
+    {
+        freeBoosts = Mathf.Max(count, 0);
+        OnFreeBoostsChanged?.Invoke();
+
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer = 0f;
+            OnBoostReady?.Invoke();
+        }
+    }
+
+    // Ends a running boost cooldown at once, so the ring shows ready. The Lance power-up starts from a ready ring.
+    public void ReadyBoost()
+    {
+        if (cooldownTimer <= 0f) return;
+
+        cooldownTimer = 0f;
+        OnBoostReady?.Invoke();
+    }
 
     // Frost patches call this each frame the player is inside one. Only the strongest request counts.
     public void ApplyFrost(float speedSlow, float orbitSlow)
@@ -351,22 +413,50 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnButton(InputValue value)
     {
-        if (!value.isPressed || InputLocked || cooldownTimer > 0f)
+        if (!value.isPressed || InputLocked) return;
+
+        // While Lance has shots, every click fires it, in place of any dodge or boost. A shot waits for the ring to be ready.
+        // After the last shot the dodge goes on its normal cooldown.
+        if (lance != null && lance.IsActive)
+        {
+            if (cooldownTimer <= 0f && lance.TryFire())
+                StartCooldown(lance.IsActive ? lance.ShotCooldown : boostCooldown);
             return;
+        }
+
+        bool free = freeBoosts > 0;   // a free boost ignores the cooldown
+        if (cooldownTimer > 0f && !free) return;
 
         if (Time.time - lastSideInputTime <= sideInputMemory)
         {
             // Boost around the circle in whichever direction the mouse was last moving horizontally
             boostVelocity = lastSideDirection * boostForce;
-            cooldownTimer = boostCooldown;
+            SpendBoost(free);
             OnSideBoost?.Invoke(lastSideDirection);
         }
         else if (CanAccelerate)
         {
             // No horizontal input: boost forward speed instead
             Speed = Mathf.Clamp(Speed + speedBoost, SpeedFloor, maxSpeed);
-            cooldownTimer = boostCooldown;
+            SpendBoost(free);
             OnSpeedBoost?.Invoke();
         }
+    }
+
+    // A free boost is used up instead of starting the cooldown.
+    private void SpendBoost(bool free)
+    {
+        if (free)
+        {
+            freeBoosts--;
+            OnFreeBoostsChanged?.Invoke();
+        }
+        else StartCooldown(boostCooldown);
+    }
+
+    private void StartCooldown(float seconds)
+    {
+        cooldownTimer = seconds;
+        cooldownLength = seconds;
     }
 }

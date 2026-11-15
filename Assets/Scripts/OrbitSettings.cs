@@ -23,7 +23,7 @@ public class OrbitSettings : ScriptableObject
     [Tooltip("Where the Asteroid Spawner sits. ObjectSpawner moves itself here when the game starts.")]
     [SerializeField] private Vector3 spawnerPosition = new Vector3(0f, 0f, 15f);
 
-    public float OrbitRadius => orbitRadius;
+    public float OrbitRadius { get => orbitRadius; set => orbitRadius = Mathf.Max(0.01f, value); }
     public Vector2 OrbitCenter => orbitCenter;
     public float PlayerZ => playerZ;
     public Vector3 SpawnerPosition => spawnerPosition;
