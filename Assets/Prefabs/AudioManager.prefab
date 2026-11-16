@@ -201,6 +201,35 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f765968131115a548ab755250a7ce494, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
+  boostRechargePickup:
+    clips:
+    - {fileID: 8300000, guid: 07c6993f308311b498237814b3aa6dd3, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  jackpotPickup:
+    clips:
+    - {fileID: 8300000, guid: f815440e47de3b048ba9e0ce7715b63a, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  slimPickup:
+    clips:
+    - {fileID: 8300000, guid: 569d24f5d334875419838a176d307884, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  bombPickup:
+    clips:
+    - {fileID: 8300000, guid: 3db46509192f04f498780f62e801e66c, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  lancePickup:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  warpPickup:
+    clips:
+    - {fileID: 8300000, guid: a6e2000c782edd8438871a0f10dd9b5a, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
   invincibleStart:
     clips:
     - {fileID: 8300000, guid: 4d7bcce8934c00d45b6b3b9a246ab87e, type: 3}
@@ -224,6 +253,39 @@ MonoBehaviour:
   twinBodyLost:
     clips:
     - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  jackpotStart:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  jackpotEnd:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  slimStart:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  slimEnd:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  lanceFire:
+    clips:
+    - {fileID: 8300000, guid: ac9a80343ab4dc348aefc91ff51ff0a2, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  bombBlast:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  warpOut:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  warpIn:
+    clips: []
     volume: 1
     pitchRange: {x: 1, y: 1}
   asteroidSmashed:
@@ -333,6 +395,39 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
     chance: 0.3
+  boostRechargeLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  jackpotLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  slimLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  bombLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  lanceLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  warpLine:
+    clips: []
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+    chance: 0.3
+  lowLifeClip: {fileID: 8300000, guid: c5e6f1992f2f6844a8db14705bd5c536, type: 3}
+  lowLifeVolume: 0.4
+  lowLifeFadeTime: 0.5
 --- !u!114 &8338023199434576182
 MonoBehaviour:
   m_ObjectHideFlags: 0
