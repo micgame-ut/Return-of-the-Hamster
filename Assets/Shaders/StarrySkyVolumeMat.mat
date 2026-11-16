@@ -197,36 +197,36 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _Alt_Color_Bright: {r: 0.8627451, g: 0.23529407, b: 0.27450976, a: 1}
+    - _Alt_Color_Bright: {r: 0.8627451, g: 0.2352939, b: 0.27450958, a: 1}
     - _Alt_Color_Core: {r: 1, g: 0.7843137, b: 0.8627451, a: 1}
-    - _Alt_Color_Deep: {r: 0.11764706, g: 0.11764706, b: 0.43137258, a: 1}
-    - _Alt_Color_Mid: {r: 0.43137258, g: 0.27450976, b: 0.7843137, a: 1}
+    - _Alt_Color_Deep: {r: 0.117646866, g: 0.117646866, b: 0.43137237, a: 1}
+    - _Alt_Color_Mid: {r: 0.43137237, g: 0.27450958, b: 0.7843137, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudTint: {r: 0.18611196, g: 0.13616943, b: 0.18867922, a: 1}
-    - _Cloud_Color_Bright: {r: 1, g: 0.50980395, b: 0.19607836, a: 1}
+    - _Cloud_Color_Bright: {r: 1, g: 0.50980353, b: 0.19607818, a: 1}
     - _Cloud_Color_Core: {r: 1, g: 0.8823529, b: 0.6666667, a: 1}
-    - _Cloud_Color_Deep: {r: 0.23529407, g: 0.078431346, b: 0.35294116, a: 1}
-    - _Cloud_Color_Mid: {r: 0.7843137, g: 0.23529407, b: 0.50980395, a: 1}
+    - _Cloud_Color_Deep: {r: 0.2352939, g: 0.07843115, b: 0.35294098, a: 1}
+    - _Cloud_Color_Mid: {r: 0.7843137, g: 0.2352939, b: 0.50980353, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Core_Glow_Color: {r: 0.766, g: 0.66086274, b: 0.48062745, a: 1}
+    - _Core_Glow_Color: {r: 0.766, g: 0.66086274, b: 0.48062742, a: 1}
     - _Darkness: {r: 0.023184411, g: 0.014462441, b: 0.047169805, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Hue_Offset: {r: 12.3, g: 45.6, b: 0, a: 0}
     - _NebulaColorA: {r: 0.17999998, g: 0.04, b: 0.21999997, a: 1}
     - _NebulaColorB: {r: 0.27999997, g: 0.059999965, b: 0.19999996, a: 1}
     - _Slot_Offset: {r: 2.3, g: 1.3, b: 0, a: 0}
-    - _SpaceColor: {r: 0.024688518, g: 0.013082952, b: 0.05660379, a: 1}
-    - _Sparkle_Color_1: {r: 0.21016872, g: 1, b: 0, a: 1}
-    - _Sparkle_Color_2: {r: 1, g: 0.08203967, b: 0, a: 1}
+    - _SpaceColor: {r: 0.024688518, g: 0.013082952, b: 0.056603648, a: 1}
+    - _Sparkle_Color_1: {r: 0.21016851, g: 1, b: 0, a: 1}
+    - _Sparkle_Color_2: {r: 1, g: 0.08203948, b: 0, a: 1}
     - _Sparkle_Color_3: {r: 0.02352941, g: 1, b: 0.8748555, a: 1}
-    - _Sparkle_Color_4: {r: 0.9077592, g: 0, b: 1, a: 1}
+    - _Sparkle_Color_4: {r: 0.90775925, g: 0, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _StreamColor: {r: 0.21698111, g: 0.06857421, b: 0.16397864, a: 1}
     - _Stream_Center: {r: 0, g: 0, b: -1, a: 0}
-    - _Stream_Color_1: {r: 0.6792453, g: 0.21388651, b: 0, a: 1}
-    - _Stream_Color_2: {r: 1, g: 0.48564133, b: 0.023584902, a: 1}
-    - _Stream_Color_3: {r: 0.08254716, g: 0.5, b: 0.47756568, a: 1}
-    - _Stream_Color_4: {r: 0.33333334, g: 0.121568635, b: 0.16078432, a: 1}
+    - _Stream_Color_1: {r: 0.6792453, g: 0.21388632, b: 0, a: 1}
+    - _Stream_Color_2: {r: 1, g: 0.4856413, b: 0.023584902, a: 1}
+    - _Stream_Color_3: {r: 0.082547, g: 0.5, b: 0.4775656, a: 1}
+    - _Stream_Color_4: {r: 0.33333316, g: 0.121568434, b: 0.16078413, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &2107863784759163791

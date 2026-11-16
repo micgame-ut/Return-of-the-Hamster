@@ -167,15 +167,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   sideBoost:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: d2feb3abc3f97ee4498fe31161dd5615, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   forwardBoost:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 60e6a78fcb976b443a9edf5c0d8c0621, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   boostReady:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: e1fdc8035f91a5b49a97280198a1c781, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   healthPickup:
@@ -199,7 +202,8 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleStart:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4d7bcce8934c00d45b6b3b9a246ab87e, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   invincibleEnd:
@@ -208,15 +212,18 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinStart:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8a9ab8572f9b7c64dbe89f9ff11db37b, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinEnd:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 95489c18925a38f45ad8654b503e9fbd, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   twinBodyLost:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4cb2d24a72d05704ca9d9af3fe8ca11c, type: 3}
     volume: 1
     pitchRange: {x: 1, y: 1}
   asteroidSmashed:
