@@ -34,7 +34,8 @@ open it and see "Health_Green's `_BaseColor` follows Health", and change a mappi
 | Phase rock (1) | `Asteroid Phase` `_Holo_Color` ← Phased |
 | Player ring (8) | `Ring Glow` and `Ring Glow Small`: `_Base_Color` ← Player × 0.3; `_Glow_Color` and `_Ring_1_Color` ← Player; `_Ring_2_Color` ← Player halfway to Ring2 |
 | Shields (2) | `RainbowOverlayMat` and `ShieldOverlayMat` `_Shield_Color` ← Phased |
-| Power-up bodies (11) | Health_Green and Health_Plus_Particle ← Health; Mystery_Gold, Mystery_Star_Particle, Jackpot Gold and Gold (× 0.75) ← Wild; Slim Violet ← Slim; Bomb Spark ← Ring2; Lance Pink ← Lance; Boost Recharge Orange ← NebBright; Warp Lime ← Warp. Those with a glow have `_EmissionColor` too |
+| Mystery star (6) | `Mystery Star` `_StarA` / `_StarB` / `_StarC` ← StarA / StarB / StarC. The explosion's three materials `Mystery_Star_Particle` / `_B` / `_C` `_BaseColor` ← StarA / StarB / StarC (they are glowing HDR, so they keep their strength and only take the palette's hue) |
+| Power-up bodies (11) | Health_Green and Health_Plus_Particle ← Health; Mystery_Gold (no longer on the Mystery prefab), Jackpot Gold and Gold (× 0.75) ← Wild; Slim Violet ← Slim; Bomb Spark ← Ring2; Lance Pink ← Lance; Boost Recharge Orange ← NebBright; Warp Lime ← Warp. Those with a glow have `_EmissionColor` too |
 | Pickup popups (10) | `_OutlineColor` of Popup Health / Jackpot / Lance / Slim / Warp / Bomb / Recharge / Twin / Invincible / Score ← Health / Wild / Lance / Slim / Warp / Ring2 / NebBright / Player / Phased / NebMid |
 
 ## How it works

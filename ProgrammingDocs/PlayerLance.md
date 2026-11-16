@@ -33,7 +33,8 @@ The numbers are the `lance*` fields on the SpawnableTemplate (see [SpawnableTemp
 - **`AddShots(count)`** (a Boost Recharge picked up while Lance is active): readies the click and adds `count` shots, up to `lanceMaxShots` (3).
   It gives no free boosts and doesn't reset the dash.
 - **`TryFire()`**: called by `PlayerMovement` on a click. Returns false with no shot. Otherwise fires from the player and from every twin
-  copy (`FireFrom`), shakes the camera once, pays `removed × lancePoints` as one popup ("N HIT"), and uses one shot.
+  copy (`FireFrom`), shakes the camera once, pays `removed × lancePoints` as one popup ("N HIT"), raises `OnFired` once (so the shot sound plays once,
+  however many copies fire; `OnShotsChanged` can't be used for this because it also fires when shots are added), and uses one shot.
 - **`FireFrom(origin)`**: draws a beam, then collects every revealed asteroid that is ahead of `origin` (no more than 0.5 behind, no
   further than `lanceRange`), isn't phased, and is within `lanceWidth / 2 + HitRadius` of `origin` sideways. Each one gets `Blast()`, and only the
   ones really removed are counted.
@@ -47,6 +48,7 @@ The numbers are the `lance*` fields on the SpawnableTemplate (see [SpawnableTemp
 - **PowerUp**: `Activate`, `AddShots`, and `IsActive` / `ShotsLeft` for the Random roll's wasted check.
 - **AsteroidBehavior**: reads `Active`, `HitRadius`, `IsPhased`; calls `Blast()`.
 - **BoostRing / FreeBoostPips**: read `IsActive`, `ShotsLeft` and `OnShotsChanged` to turn the rings pink and show the extra shots.
+- **GameSFX**: subscribes to `OnFired` for the `lanceFire` sound.
 - **Score**, **CameraShake**, **PlayerTwins**, **GameManager**.
 
 ## Gotchas

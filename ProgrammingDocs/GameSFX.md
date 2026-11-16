@@ -9,6 +9,9 @@ without touching any code.
 It only listens. Each event is raised by the script that owns it, and `GameSFX` turns it into a call to
 `SFXManager.PlayClip`.
 
+It also plays one **looping** sound, the **low-life loop**, which fades in while the player has one life left (see below). It's the only
+sound here that isn't a one-shot.
+
 It also plays the hamster's **dialogue**. Some events have a second, separate **dialogue slot** that plays
 *alongside* the normal sound, but only with a set **chance**, so the same line isn't said on every interaction.
 
@@ -39,6 +42,12 @@ variation). The sound sits on top of `SFXManager`'s own master volume.
 | | `invincibleStart`, `invincibleEnd` | invincibility starts / runs out (`PlayerInvincibility.OnInvincibilityChanged`) |
 | | `twinStart`, `twinEnd` | the first copy appears / the last copy is gone (`PlayerTwins.OnTwinChanged`) |
 | | `twinBodyLost` | a twin body is destroyed (`PlayerTwins.OnBodyLost`) |
+| | `boostRechargePickup`, `jackpotPickup`, `slimPickup`, `bombPickup`, `lancePickup`, `warpPickup` | that type of power-up is collected (`PowerUp.OnCollected`; a Random power-up plays the sound of the type it rolled) |
+| | `jackpotStart`, `jackpotEnd` | Jackpot starts / runs out (`PlayerJackpot.OnJackpotChanged`) |
+| | `slimStart`, `slimEnd` | Slim starts / runs out (`PlayerSlim.OnSlimChanged`) |
+| | `lanceFire` | a Lance shot is fired, once per click even with twin copies (`PlayerLance.OnFired`) |
+| | `bombBlast` | a Bomb goes off with at least one asteroid on screen (`PlayerBomb.OnDetonated`). A Bomb collected with nothing on screen is silent, apart from `bombPickup` |
+| | `warpOut`, `warpIn` | the Warp pops the ship out / back in (`PlayerWarp.OnWarpChanged`) |
 | Asteroids | `asteroidSmashed` | the player smashes an asteroid (`AsteroidBehavior.OnSmashed`) |
 | | `bonusSmashed` | the player smashes a BonusCarrier. Plays **instead of** `asteroidSmashed` |
 | | `splitterBurst` | a Splitter bursts (`AsteroidBehavior.OnSplit`) |
@@ -65,7 +74,15 @@ A **`DialogueSlot`** is a normal slot (clips, volume, pitch range) plus **Chance
 | `closeCallLine` | a close call is scored (frequent, so a low chance suits it) |
 | `winLine` | the level is won |
 | `gameOverLine` | the hamster reaches the screen during the death animation (`PlayerDeath.OnArrived`, about 1.25 s after the last hit), not at the instant of the last hit |
-| `healthLine`, `invincibleLine`, `twinLine`, `scoreLine` | that type of power-up is collected |
+| `healthLine`, `invincibleLine`, `twinLine`, `scoreLine`, `boostRechargeLine`, `jackpotLine`, `slimLine`, `bombLine`, `lanceLine`, `warpLine` | that type of power-up is collected |
+
+### Low life
+
+| Field | Default | What it changes |
+| --- | --- | --- |
+| `lowLifeClip` | none | The sound that loops while the player has one life left. Empty = no loop |
+| `lowLifeVolume` | 0.6 (0 to 1) | How loud the loop is. It is multiplied by `SFXManager`'s master volume |
+| `lowLifeFadeTime` | 0.5 | Seconds the loop takes to fade in or out. 0 = instant |
 
 ## How it works
 
@@ -95,7 +112,8 @@ Return straight away if this isn't the real instance (a duplicate still gets one
 
 `Bind` calls `Unbind` first, so it's safe to call twice. This happens on the first level, where it runs from
 `OnEnable` and again from the scene-loaded event. It then stores `GameManager.Instance` and the player's
-`PlayerHealth`, `PlayerMovement`, `PlayerInvincibility` and `PlayerTwins` (taken from `GameManager`, since this
+`PlayerHealth`, `PlayerMovement`, `PlayerInvincibility`, `PlayerTwins`, `PlayerJackpot`, `PlayerSlim`, `PlayerLance`,
+`PlayerBomb` and `PlayerWarp` (taken from `GameManager`, since this
 script isn't on the player), subscribes to their events, and resets `lastLives` to the current life count.
 Anything that's missing is skipped. `Unbind` removes the same subscriptions one for one. A destroyed object reads
 as `null`, so the previous level's objects are skipped. If you add an event to `Bind`, add the matching line to
@@ -125,6 +143,22 @@ it rolls `Random.value` against `chance`: a bigger roll means no line. Only when
 `nextLineTime` to now plus `minLineGap`. The gap starts only when a line actually plays, and it uses unscaled time
 so it still counts after game over. `chance <= 0` is checked first because `Random.value` can return exactly 0.
 
+### The low-life loop: `Awake` and `Update`
+
+`SFXManager`'s voices can't loop, so `GameSFX` makes its own `AudioSource` in `Awake` (after the duplicate check, so there is only one), set to
+loop, not play on awake, and 2D. It is a component on the `AudioManager`, so it goes away with it and needs no clean-up.
+
+`Update` runs every frame and works out whether the loop is **wanted**: there is a `lowLifeClip`, the `GameManager` says the game has started
+(so not in the menu), the player has **exactly 1 life** (0 after dying, so death stops it), `Time.timeScale > 0` (so the Tab overlay, game
+over and win stop it), and no warp is running (`PlayerWarp.IsWarping`, so the grace after a warp still counts as playing). It then moves a
+fade level `lowLifeLevel` toward 1 (wanted) or 0 (not) with `Mathf.MoveTowards`, by `unscaledDeltaTime ÷ lowLifeFadeTime` a frame. Unscaled
+time means the fade still finishes while the game is frozen. The source plays while the level is above 0 and stops at 0, and its volume is
+`lowLifeLevel × lowLifeVolume × SFXManager.MasterVolume`. A fade time of 0 gives a step of 1, so it jumps straight to the target.
+
+Example: fade time 0.5 at 60 fps. The step is 1/60 ÷ 0.5 ≈ 0.033 a frame, so the fade takes 30 frames.
+
+A level whose max lives is 1 plays the loop all the way through.
+
 ### The handlers
 
 Each plays a slot, apart from these. Handlers for events that have a dialogue slot also call `Say` straight
@@ -145,9 +179,12 @@ after their sound.
 ## Talks to
 
 - **SFXManager**: calls `PlayClip`, and reads `Instance`.
-- **GameManager**: reads `Instance`, `PlayerHealth`, `Player`, `PlayerInvincibility` and `PlayerTwins`; subscribes
+- **GameManager**: reads `Instance`, `PlayerHealth`, `Player`, `PlayerInvincibility`, `PlayerTwins`, `PlayerJackpot`,
+  `PlayerSlim`, `PlayerLance`, `PlayerBomb` and `PlayerWarp`, and `HasStarted` for the low-life loop; subscribes
   to `OnGameStarted`, `OnWin` and `OnGameOver`.
-- **PlayerHealth**: subscribes to `OnLifeLost` and `OnLivesChanged`; reads `CurrentLives`.
+- **PlayerJackpot**, **PlayerSlim**, **PlayerLance**, **PlayerBomb**, **PlayerWarp**: subscribe to `OnJackpotChanged`, `OnSlimChanged`,
+  `OnFired`, `OnDetonated` and `OnWarpChanged`. `PlayerWarp.IsWarping` is also read each frame for the loop.
+- **PlayerHealth**: subscribes to `OnLifeLost` and `OnLivesChanged`; reads `CurrentLives` (each frame, for the low-life loop).
 - **PlayerMovement**: subscribes to `OnSideBoost`, `OnSpeedBoost` and `OnBoostReady`.
 - **PlayerInvincibility**: subscribes to `OnInvincibilityChanged`.
 - **PlayerTwins**: subscribes to `OnTwinChanged` and `OnBodyLost`.
@@ -172,6 +209,13 @@ after their sound.
   `gameOver` and `playerExplosion` play normally.
 - **The shield (`PlayerShell`) has no sound yet.** Its one event doesn't say what changed.
 - **Slots start empty.** Until clips are dragged in, the script is silent. That's on purpose.
+- **The new pickups also play their start sound together with the pickup sound.** Collecting Jackpot or Slim plays `jackpotPickup` / `slimPickup`
+  and `jackpotStart` / `slimStart` at the same moment. Leave one empty if that's too much. A second pickup restarts the timer and plays no end sound.
+- **`lowLifeClip` should be a clip that loops cleanly,** since the source loops it as it is. It's read once in `Awake`, so changing the clip
+  while playing in the Editor takes a restart.
+- **The loop uses `GameSFX`'s own source, not `SFXManager`'s voices.** So `SFXManager.StopAll()` doesn't stop it, and only the volume
+  multiplier is shared. It stops by itself through the fade conditions.
+- **The loop is silent in the menu, in the tutorial and in a warp's out, hold and pop-in,** but plays again in the grace after the pop-in.
 - **`minLineGap` doesn't know how long a line is.** It's a fixed number of seconds from when a line starts. If a
   line is longer than the gap, the next line can start while it's still playing. Set the gap longer than your
   longest line.

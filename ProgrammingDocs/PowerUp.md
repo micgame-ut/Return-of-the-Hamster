@@ -42,7 +42,8 @@ There are eight types:
   anything up. After the pop-in there is a short grace (`warpGraceTime`, 1.5) where the player has control and can pick things up but still can't
   be hit, and wears the phase look. See PlayerWarp. It is also in the Random roll.
 
-A further type, **Random**, is the `Mystery PowerUp`: on pickup it rolls one of **nine** at random (Invincible,
+A further type, **Random**, is the `Mystery PowerUp` (a see-through rainbow star that spins, with a "?" inside that never spins and always faces the
+camera: see [MysteryStar.md](MysteryStar.md) and [QuestionMarkBillboard.md](QuestionMarkBillboard.md)): on pickup it rolls one of **nine** at random (Invincible,
 Twin, ScoreMultiplier, BoostRecharge, Jackpot, Slim, Bomb, Lance or Warp, never Health), using adjustable chances from the SpawnableTemplate, and skips any that
 would do nothing right now. Every pickup announces what it gave (`OnCollected`), and ScorePopups shows a label
 for it ("+1 LIFE", "INVINCIBLE", ...).
@@ -71,7 +72,7 @@ for it ("+1 LIFE", "INVINCIBLE", ...).
 | --- | --- | --- |
 | `type` | Health | Which effect this power-up has. A dropdown of `PowerUpType`. Random rolls Invincible, Twin, Score Multiplier, Boost Recharge, Jackpot, Slim, Bomb, Lance or Warp on pickup, never Health |
 | `template` | none | The SpawnableTemplate asset. Assign the same one the asteroids use |
-| `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` (tiny green plus signs) and the `Mystery PowerUp` uses `vfx_mystery_pop` (golden stars) here |
+| `pickupEffect` | none | This power-up's own pickup effect (a `ParticleSystem` prefab). Empty uses the template's `pickupEffectPrefab`. The `Health PowerUp` uses `vfx_health_pop` (tiny green plus signs) and the `Mystery PowerUp` uses `vfx_mystery_pop` (a burst of rainbow stars: three particle systems, one each in the star's three palette colours) here |
 
 ## How it works
 

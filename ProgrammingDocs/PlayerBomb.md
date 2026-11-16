@@ -21,8 +21,8 @@ None. Every value comes from `Detonate`.
 
 ### `Detonate(pointsPerRock, sweepTime, shakeDuration, shakeMagnitude)`
 
-Called by PowerUp. If no asteroid is revealed (`AsteroidBehavior.Active` is empty) it does nothing: no shake, no empty popup. Otherwise it
-shakes the camera once (skipped if the duration is 0, like the pickup shake, so a zero setting can't cut a running shake short), copies the
+Called by PowerUp. If no asteroid is revealed (`AsteroidBehavior.Active` is empty) it does nothing: no shake, no empty popup, no `OnDetonated`.
+Otherwise it raises `OnDetonated` (once, so the blast sound plays) and shakes the camera once (skipped if the duration is 0, like the pickup shake, so a zero setting can't cut a running shake short), copies the
 live `Active` list (`new List<AsteroidBehavior>(Active)`) and starts `Sweep` on that copy. A fixed copy means rocks revealed later aren't
 included, and rocks that leave while the sweep runs can't break it. Each detonation has its own copy and coroutine, so two overlapping
 bombs just run side by side.
@@ -52,6 +52,7 @@ four loops: the three rings went off at about 0, 0.1 and 0.2 s, and no lives wer
 - **PowerUp**: calls `Detonate`.
 - **AsteroidBehavior**: calls `Blast()` on each target; reads the static `Active` list.
 - **Score**: `AddBonusPoints` for the one summary popup.
+- **GameSFX**: subscribes to `OnDetonated` for the `bombBlast` sound.
 - **CameraShake**: `Shake` once.
 - **GameManager**: exposes it, and provides `Score`.
 

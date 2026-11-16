@@ -36,7 +36,8 @@ false when the phase is `None`.
 
 Called by PowerUp. It does nothing if a Warp is already running (`IsWarping`) or `seconds` is 0 or less. Otherwise it stores the values, works out the
 hold's time scale as `seconds ÷ max(holdRealTime, MinHoldTime)` (`MinHoldTime` is 0.1, so a hold time of 0 can't ask for an endless scale),
-takes the phase look off if a grace was still running (a second Warp picked up during the grace), and starts the `Out` phase.
+takes the phase look off if a grace was still running (a second Warp picked up during the grace), starts the `Out` phase and raises
+`OnWarpChanged(true)` (the ship is popping out).
 
 ### `Update`: the phases
 
@@ -45,7 +46,8 @@ phase's length, `StartPhase` moves to the next one: `Out` → `Hold` → `In` �
 frame can't make the skip shorter than `warpSeconds` (it can overshoot by up to one frame, about 1.7% at 60 fps).
 
 `StartPhase` is also where the time scale is set: `holdTimeScale` for the `Hold` phase, 1 for every other phase including the end. It also turns the
-phase look on while the phase is `Grace` and off otherwise.
+phase look on while the phase is `Grace` and off otherwise. When the next phase is `In` it raises `OnWarpChanged(false)` (the ship is coming back).
+`OnWarpChanged(bool)` is `true` for the pop out and `false` for the pop in; it is not raised for the other phases.
 
 ### `AddBody`, `SetLook`: the phase look
 
@@ -96,6 +98,7 @@ Subscribes to `GameManager.OnGameOver` and `OnWin`. If the level ends during a W
 - **PlayerMovement**: reads `IsWarping` in `InputLocked`.
 - **AsteroidBehavior**: reads `IsProtected` (contacts and close calls), including the grace after the Warp.
 - **GameManager**: holds the reference (`PlayerWarp` property); this script reads `OnWin` and `OnGameOver` from it.
+- **GameSFX**: subscribes to `OnWarpChanged` for the `warpOut` and `warpIn` sounds, and reads `IsWarping` to keep the low-life loop quiet during a warp.
 - **PlayerSlim**: reads `Scale` so Slim's size is kept.
 - **PlayerTwins**: reads `Copies` to scale each copy.
 - **ExhaustFlame**: reads `Pop` to shrink the flame with the ship (the flame's lines are world space, so scaling the ship alone leaves a dot).

@@ -47,6 +47,18 @@ public class GameSFX : MonoBehaviour
     [SerializeField] private Slot twinPickup;
     [Tooltip("A Score Multiplier power-up is collected.")]
     [SerializeField] private Slot scorePickup;
+    [Tooltip("A Boost Recharge power-up is collected.")]
+    [SerializeField] private Slot boostRechargePickup;
+    [Tooltip("A Jackpot power-up is collected.")]
+    [SerializeField] private Slot jackpotPickup;
+    [Tooltip("A Slim power-up is collected.")]
+    [SerializeField] private Slot slimPickup;
+    [Tooltip("A Bomb power-up is collected.")]
+    [SerializeField] private Slot bombPickup;
+    [Tooltip("A Lance power-up is collected.")]
+    [SerializeField] private Slot lancePickup;
+    [Tooltip("A Warp power-up is collected.")]
+    [SerializeField] private Slot warpPickup;
     [Tooltip("Invincibility starts.")]
     [SerializeField] private Slot invincibleStart;
     [Tooltip("Invincibility runs out.")]
@@ -57,6 +69,22 @@ public class GameSFX : MonoBehaviour
     [SerializeField] private Slot twinEnd;
     [Tooltip("A twin body is destroyed by a hit. Plays together with Twin End when the last copy goes.")]
     [SerializeField] private Slot twinBodyLost;
+    [Tooltip("Jackpot starts.")]
+    [SerializeField] private Slot jackpotStart;
+    [Tooltip("Jackpot runs out.")]
+    [SerializeField] private Slot jackpotEnd;
+    [Tooltip("Slim starts.")]
+    [SerializeField] private Slot slimStart;
+    [Tooltip("Slim runs out.")]
+    [SerializeField] private Slot slimEnd;
+    [Tooltip("A Lance shot is fired.")]
+    [SerializeField] private Slot lanceFire;
+    [Tooltip("A Bomb goes off with asteroids on screen.")]
+    [SerializeField] private Slot bombBlast;
+    [Tooltip("The Warp pops the ship out.")]
+    [SerializeField] private Slot warpOut;
+    [Tooltip("The Warp pops the ship back in.")]
+    [SerializeField] private Slot warpIn;
 
     [Header("Asteroids")]
     [Tooltip("The player smashes an asteroid.")]
@@ -103,11 +131,33 @@ public class GameSFX : MonoBehaviour
     [SerializeField] private DialogueSlot twinLine;
     [Tooltip("When a Score Multiplier power-up is collected.")]
     [SerializeField] private DialogueSlot scoreLine;
+    [Tooltip("When a Boost Recharge power-up is collected.")]
+    [SerializeField] private DialogueSlot boostRechargeLine;
+    [Tooltip("When a Jackpot power-up is collected.")]
+    [SerializeField] private DialogueSlot jackpotLine;
+    [Tooltip("When a Slim power-up is collected.")]
+    [SerializeField] private DialogueSlot slimLine;
+    [Tooltip("When a Bomb power-up is collected.")]
+    [SerializeField] private DialogueSlot bombLine;
+    [Tooltip("When a Lance power-up is collected.")]
+    [SerializeField] private DialogueSlot lanceLine;
+    [Tooltip("When a Warp power-up is collected.")]
+    [SerializeField] private DialogueSlot warpLine;
+
+    [Header("Low life")]
+    [Tooltip("A sound that loops while the player has one life left. Empty = no loop.")]
+    [SerializeField] private AudioClip lowLifeClip;
+    [Tooltip("How loud the loop is, from 0 (silent) to 1 (full).")]
+    [SerializeField, Range(0f, 1f)] private float lowLifeVolume = 0.6f;
+    [Tooltip("Seconds the loop takes to fade in or out, so it doesn't start or stop with a click. 0 = instant.")]
+    [SerializeField, Min(0f)] private float lowLifeFadeTime = 0.5f;
 
     private static GameSFX instance;
     private MusicSpeedDriver musicSpeed;
     private int lastLives; // the life count last time it changed, to tell gaining a life from losing one
     private float nextLineTime; // the time from which the next line may start; unscaled, so it still counts after game over
+    private AudioSource lowLifeSource; // the looping source, made once in Awake
+    private float lowLifeLevel;        // how far the loop has faded in: 0 = silent, 1 = full
 
     // This level's objects. Bind finds them again each time a level loads.
     private GameManager gameManager;
@@ -115,6 +165,11 @@ public class GameSFX : MonoBehaviour
     private PlayerMovement movement;
     private PlayerInvincibility invincibility;
     private PlayerTwins twins;
+    private PlayerJackpot jackpot;
+    private PlayerSlim slim;
+    private PlayerLance lance;
+    private PlayerBomb bomb;
+    private PlayerWarp warp;
 
     private void Awake()
     {
@@ -126,11 +181,36 @@ public class GameSFX : MonoBehaviour
         }
         instance = this;
         musicSpeed = GetComponent<MusicSpeedDriver>();
+
+        lowLifeSource = gameObject.AddComponent<AudioSource>();
+        lowLifeSource.clip = lowLifeClip;
+        lowLifeSource.loop = true;
+        lowLifeSource.playOnAwake = false;
+        lowLifeSource.spatialBlend = 0f;   // 2D
     }
 
     private void OnDestroy()
     {
         if (instance == this) instance = null;
+    }
+
+    // Fades the low-life loop in while the player has one life left and the game is running, and out otherwise.
+    private void Update()
+    {
+        if (instance != this || lowLifeSource == null) return;
+
+        bool wanted = lowLifeClip != null && gameManager != null && gameManager.HasStarted
+            && health != null && health.CurrentLives == 1
+            && Time.timeScale > 0f && (warp == null || !warp.IsWarping);
+
+        float step = lowLifeFadeTime > 0f ? Time.unscaledDeltaTime / lowLifeFadeTime : 1f;
+        lowLifeLevel = Mathf.MoveTowards(lowLifeLevel, wanted ? 1f : 0f, step);
+
+        if (lowLifeLevel > 0f && !lowLifeSource.isPlaying) lowLifeSource.Play();
+        else if (lowLifeLevel <= 0f && lowLifeSource.isPlaying) lowLifeSource.Stop();
+
+        float master = SFXManager.Instance != null ? SFXManager.Instance.MasterVolume : 1f;
+        lowLifeSource.volume = lowLifeLevel * lowLifeVolume * master;
     }
 
     private void OnEnable()
@@ -224,6 +304,12 @@ public class GameSFX : MonoBehaviour
             case PowerUp.PowerUpType.Invincible: Play(invinciblePickup); Say(invincibleLine); break;
             case PowerUp.PowerUpType.Twin: Play(twinPickup); Say(twinLine); break;
             case PowerUp.PowerUpType.ScoreMultiplier: Play(scorePickup); Say(scoreLine); break;
+            case PowerUp.PowerUpType.BoostRecharge: Play(boostRechargePickup); Say(boostRechargeLine); break;
+            case PowerUp.PowerUpType.Jackpot: Play(jackpotPickup); Say(jackpotLine); break;
+            case PowerUp.PowerUpType.Slim: Play(slimPickup); Say(slimLine); break;
+            case PowerUp.PowerUpType.Bomb: Play(bombPickup); Say(bombLine); break;
+            case PowerUp.PowerUpType.Lance: Play(lancePickup); Say(lanceLine); break;
+            case PowerUp.PowerUpType.Warp: Play(warpPickup); Say(warpLine); break;
         }
     }
 
@@ -231,6 +317,16 @@ public class GameSFX : MonoBehaviour
     private void HandleInvincibilityChanged(bool on) => Play(on ? invincibleStart : invincibleEnd);
 
     private void HandleTwinChanged(bool on) => Play(on ? twinStart : twinEnd);
+
+    private void HandleJackpotChanged(bool on) => Play(on ? jackpotStart : jackpotEnd);
+
+    private void HandleSlimChanged(bool on) => Play(on ? slimStart : slimEnd);
+
+    private void HandleLanceFired() => Play(lanceFire);
+
+    private void HandleBombDetonated() => Play(bombBlast);
+
+    private void HandleWarpChanged(bool poppedOut) => Play(poppedOut ? warpOut : warpIn);
 
     private void HandleBodyLost() => Play(twinBodyLost);
 
@@ -279,6 +375,11 @@ public class GameSFX : MonoBehaviour
         movement = gameManager.Player;
         invincibility = gameManager.PlayerInvincibility;
         twins = gameManager.PlayerTwins;
+        jackpot = gameManager.PlayerJackpot;
+        slim = gameManager.PlayerSlim;
+        lance = gameManager.PlayerLance;
+        bomb = gameManager.PlayerBomb;
+        warp = gameManager.PlayerWarp;
 
         gameManager.OnGameStarted += HandleGameStarted;
         gameManager.OnWin += HandleWin;
@@ -301,6 +402,11 @@ public class GameSFX : MonoBehaviour
             twins.OnTwinChanged += HandleTwinChanged;
             twins.OnBodyLost += HandleBodyLost;
         }
+        if (jackpot != null) jackpot.OnJackpotChanged += HandleJackpotChanged;
+        if (slim != null) slim.OnSlimChanged += HandleSlimChanged;
+        if (lance != null) lance.OnFired += HandleLanceFired;
+        if (bomb != null) bomb.OnDetonated += HandleBombDetonated;
+        if (warp != null) warp.OnWarpChanged += HandleWarpChanged;
     }
 
     // Drops every subscription to the previous level's objects. Destroyed objects read as null, so they're skipped.
@@ -329,5 +435,10 @@ public class GameSFX : MonoBehaviour
             twins.OnTwinChanged -= HandleTwinChanged;
             twins.OnBodyLost -= HandleBodyLost;
         }
+        if (jackpot != null) jackpot.OnJackpotChanged -= HandleJackpotChanged;
+        if (slim != null) slim.OnSlimChanged -= HandleSlimChanged;
+        if (lance != null) lance.OnFired -= HandleLanceFired;
+        if (bomb != null) bomb.OnDetonated -= HandleBombDetonated;
+        if (warp != null) warp.OnWarpChanged -= HandleWarpChanged;
     }
 }

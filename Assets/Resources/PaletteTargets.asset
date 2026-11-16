@@ -319,7 +319,7 @@ MonoBehaviour:
     emissionProperty: _EmissionColor
   - material: {fileID: 2100000, guid: 1acd7215d6f24c64da9e7677346379d1, type: 2}
     property: _BaseColor
-    role: 13
+    role: 19
     role2: 0
     blend: 0
     brightness: 1
@@ -456,6 +456,46 @@ MonoBehaviour:
   - material: {fileID: 2100000, guid: 97c345e55def9cd4089e0785e1f4b351, type: 2}
     property: _OutlineColor
     role: 3
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: bd504d80e97ed9d4a8dc02fe5a018daf, type: 2}
+    property: _BaseColor
+    role: 20
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 148c4e255db247249a9e66b1ffd9b333, type: 2}
+    property: _BaseColor
+    role: 21
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 36939a8166d58934d94b5dd9ea48027e, type: 2}
+    property: _StarA
+    role: 19
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 36939a8166d58934d94b5dd9ea48027e, type: 2}
+    property: _StarB
+    role: 20
+    role2: 0
+    blend: 0
+    brightness: 1
+    hueShift: 0
+    emissionProperty: 
+  - material: {fileID: 2100000, guid: 36939a8166d58934d94b5dd9ea48027e, type: 2}
+    property: _StarC
+    role: 21
     role2: 0
     blend: 0
     brightness: 1

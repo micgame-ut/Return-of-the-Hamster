@@ -16,6 +16,7 @@ public class PlayerLance : MonoBehaviour
     public float ShotCooldown => template != null ? template.lanceCooldown : 0f;   // seconds before the next shot, while there are more
 
     public event Action OnShotsChanged;   // the shot count went up or down, so the rings can update
+    public event Action OnFired;   // one shot was fired, whatever it hit
 
     private int shots;
     private PlayerMovement movement;
@@ -78,6 +79,7 @@ public class PlayerLance : MonoBehaviour
         if (removed > 0 && template.lancePoints > 0f && score != null)
             score.AddBonusPoints(removed * template.lancePoints, transform.position, removed + " HIT", Score.ScoreSource.Asteroids);
 
+        OnFired?.Invoke();
         SetShots(shots - 1);
         return true;
     }

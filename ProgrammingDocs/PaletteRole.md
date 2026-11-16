@@ -12,8 +12,11 @@ a dropdown choice, not a text string that a typo could break.
 ## Values
 
 `None`, `Space`, `NebDeep`, `NebMid`, `NebBright`, `NebCore`, `Danger`, `Breakable`, `Phased`, `Rock`, `Player`, `Ring2`,
-`Health`, `Wild`, `Lance`, `Warp`, `Slim`, `UiAccent`, `Text`. They match the fields of `ColorPalette` one to one (see
+`Health`, `Wild`, `Lance`, `Warp`, `Slim`, `UiAccent`, `Text`, `StarA`, `StarB`, `StarC`. They match the fields of `ColorPalette` one to one (see
 [ColorPalette.md](ColorPalette.md)).
+
+The three `Star` roles are at the **end** of the list on purpose. An enum is saved in assets as its number (`Wild` is 13 in `PaletteTargets`),
+so a role added in the middle would renumber everything after it and every saved entry would point at the wrong colour. Add new roles at the end.
 
 ## How it works
 

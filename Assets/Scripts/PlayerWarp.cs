@@ -9,6 +9,8 @@ public class PlayerWarp : MonoBehaviour
     public bool IsWarping => phase != Phase.None && phase != Phase.Grace;
     public bool IsProtected => phase != Phase.None;
 
+    public event System.Action<bool> OnWarpChanged;   // true as the ship pops out, false as it pops back in
+
     private Phase phase;
     private float phaseTime;    // game seconds spent in the current phase
     private float outTime;      // length of the pop out
@@ -43,6 +45,7 @@ public class PlayerWarp : MonoBehaviour
         SetLook(false);
         phase = Phase.Out;
         phaseTime = 0f;
+        OnWarpChanged?.Invoke(true);
     }
 
     private void Update()
@@ -76,6 +79,7 @@ public class PlayerWarp : MonoBehaviour
         phaseTime = 0f;
         SetLook(next == Phase.Grace);
         Time.timeScale = next == Phase.Hold ? holdTimeScale : 1f;
+        if (next == Phase.In) OnWarpChanged?.Invoke(false);
     }
 
     private readonly List<Renderer> lookRenderers = new List<Renderer>();     // every body renderer wearing the phase look
