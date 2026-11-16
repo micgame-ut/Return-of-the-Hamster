@@ -24,7 +24,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | ExhaustFlame.cs | [ExhaustFlame.md](ExhaustFlame.md) | Done |
 | FreeBoostPips.cs | [FreeBoostPips.md](FreeBoostPips.md) | Done |
 | GameManager.cs | [GameManager.md](GameManager.md) | Done |
-| Audio/GameSFX.cs | [GameSFX.md](GameSFX.md) | Done |
+| Audio/GameSFX.cs | [GameSFX.md](GameSFX.md) | Done (new power-up slots and low-life loop untested in Play mode) |
 | Audio/UISFX.cs | [UISFX.md](UISFX.md) | Done |
 | TutorialManager.cs | [TutorialManager.md](TutorialManager.md) | Done |
 | IntroPlayer.cs | [IntroPlayer.md](IntroPlayer.md) | Done |
@@ -68,6 +68,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | PostFXPulse.cs | [PostFXPulse.md](PostFXPulse.md) | Done |
 | PooledEffect.cs | [PooledEffect.md](PooledEffect.md) | Done |
 | PowerUp.cs | [PowerUp.md](PowerUp.md) | Done |
+| QuestionMarkBillboard.cs | [QuestionMarkBillboard.md](QuestionMarkBillboard.md) | Done (untested in Play mode) |
 | RunStats.cs | [RunStats.md](RunStats.md) | Done |
 | Score.cs | [Score.md](Score.md) | Done |
 | ScorePopups.cs | [ScorePopups.md](ScorePopups.md) | Done |
@@ -90,6 +91,7 @@ It lives outside `Assets/` so Unity does not import these files.
 | Frost Rock.shadergraph | [FrostRock.md](FrostRock.md) | Done |
 | Frost Trail.shadergraph | [FrostTrail.md](FrostTrail.md) | Done |
 | Heatwave.shadersubgraph | [Heatwave.md](Heatwave.md) | Done |
+| Mystery Star.shadergraph | [MysteryStar.md](MysteryStar.md) | Done |
 | Nebula Clouds.shadersubgraph | [NebulaClouds.md](NebulaClouds.md) | Done |
 | Nebula Volume.shadersubgraph | [NebulaVolume.md](NebulaVolume.md) | Done |
 | Radial Streams.shadersubgraph | [RadialStreams.md](RadialStreams.md) | Done |

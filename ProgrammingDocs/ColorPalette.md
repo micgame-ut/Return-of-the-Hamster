@@ -28,6 +28,7 @@ the game.
 | `player` | `#00E6FF` | The glow of the ship's boost ring |
 | `ring2` | `#FFD040` | The second, accent ring on the ship |
 | `health` / `wild` / `lance` / `warp` / `slim` | `#19FF40` / `#FFD919` / `#FF1999` / `#B2FF19` / `#994CFF` | The Health, Jackpot (and Mystery), Lance, Warp and Slim power-ups |
+| `starA` / `starB` / `starC` | `#FF59CC` / `#FFF259` / `#59E6FF` | The three colours the Mystery star and its explosion blend through (A → B → C → back to A). Pink, yellow and cyan blend through orange, green and purple, which reads as a rainbow. The other palettes pick their own three (for example Amber Terminal uses three ambers) |
 | `uiAccent` | `#DBD444` | The highlight colour on the UI: the selected end-screen button, the leaderboard highlight, the overdrive flash |
 | `text` | `#FFFFFF` | The main (white) text colour |
 

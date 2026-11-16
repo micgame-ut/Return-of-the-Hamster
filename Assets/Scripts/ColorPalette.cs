@@ -49,6 +49,12 @@ public class ColorPalette : ScriptableObject
     public Color warp = new Color32(0xB2, 0xFF, 0x19, 255);
     [Tooltip("The Slim power-up.")]
     public Color slim = new Color32(0x99, 0x4C, 0xFF, 255);
+    [Tooltip("The first of the three colours the Mystery star and its explosion blend through.")]
+    public Color starA = new Color32(0xFF, 0x59, 0xCC, 255);
+    [Tooltip("The second of the three colours the Mystery star and its explosion blend through.")]
+    public Color starB = new Color32(0xFF, 0xF2, 0x59, 255);
+    [Tooltip("The third of the three colours the Mystery star and its explosion blend through.")]
+    public Color starC = new Color32(0x59, 0xE6, 0xFF, 255);
 
     [Header("UI")]
     [Tooltip("The highlight colour on the UI: the selected button and the leaderboard highlight.")]
@@ -75,6 +81,9 @@ public class ColorPalette : ScriptableObject
         PaletteRole.Lance => lance,
         PaletteRole.Warp => warp,
         PaletteRole.Slim => slim,
+        PaletteRole.StarA => starA,
+        PaletteRole.StarB => starB,
+        PaletteRole.StarC => starC,
         PaletteRole.UiAccent => uiAccent,
         PaletteRole.Text => text,
         _ => Color.white,

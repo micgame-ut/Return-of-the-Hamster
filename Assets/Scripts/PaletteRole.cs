@@ -6,5 +6,6 @@ public enum PaletteRole
     Danger, Breakable, Phased, Rock,
     Player, Ring2,
     Health, Wild, Lance, Warp, Slim,
-    UiAccent, Text
+    UiAccent, Text,
+    StarA, StarB, StarC
 }

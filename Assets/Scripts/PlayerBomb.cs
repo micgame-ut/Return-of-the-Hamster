@@ -6,6 +6,8 @@ using UnityEngine;
 // the pickup is gone the moment it's collected, so it runs here on the player.
 public class PlayerBomb : MonoBehaviour
 {
+    public event System.Action OnDetonated;   // the bomb went off with at least one asteroid on screen
+
     private Score score;
 
     private void Awake()
@@ -65,6 +67,7 @@ public class PlayerBomb : MonoBehaviour
     {
         if (AsteroidBehavior.Active.Count == 0) return;
 
+        OnDetonated?.Invoke();
         if (shakeDuration > 0f) CameraShake.Shake(shakeDuration, shakeMagnitude);
         StartCoroutine(Sweep(new List<AsteroidBehavior>(AsteroidBehavior.Active), pointsPerRock, sweepTime));
     }
