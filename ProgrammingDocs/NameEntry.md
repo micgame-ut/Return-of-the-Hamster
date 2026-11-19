@@ -4,7 +4,7 @@
 
 The three-letter, arcade-style name page. It opens after a run whose score makes the leaderboard. With only a
 trackball and one button, rolling the ball down changes the current letter forward and rolling up changes it back,
-the button locks the letter and moves to the next slot, and rolling left steps back a slot to fix one. Locking the
+the button locks the letter and moves to the next slot, and rolling left, or pressing the Select button (Escape), steps back a slot to fix one. Locking the
 third letter submits the name.
 
 ## Where it lives
@@ -13,7 +13,7 @@ third letter submits the name.
   EndScreen switches it on. It also carries a `MenuNavigator` with no buttons.
 - **Requires:**
   - Three texts for the letters (`letterSlots`), left to right.
-  - The Move and Button actions.
+  - The Move, Button and Back actions.
   - The page's own `MenuNavigator` (empty). It makes this page the top page, so the trackball and button stop
     driving the end panel's buttons underneath while a name is being typed.
 
@@ -26,6 +26,7 @@ third letter submits the name.
 | `inactiveColor` | grey | The colour of the letters not being chosen |
 | `moveAction` | Player 1/Move | The Move action (the mouse delta, which the trackball sends) |
 | `selectAction` | Player 1/Button | The Button action (Space). Locks the current letter |
+| `backAction` | Player 1/Back | The Back action (Escape). Steps back to the previous letter slot |
 | `stepDistance` | 120 | Pixels of trackball movement that change a letter by one, or step back a slot. Lower = more sensitive |
 | `deadzone` | 2 | Movement smaller than this in one frame is ignored, so a drifting ball can't change anything |
 | `inputDelay` | 0.5 | Seconds after the page opens before it reacts to input, so the press that skipped the score count doesn't lock a letter |
@@ -61,6 +62,8 @@ Does nothing until `inputDelay` has passed (measured in unscaled time, because t
   the deadzone is ignored. Rolling the other way throws away what was built up. At `stepDistance` it calls
   `ChangeLetter(+1)` or `ChangeLetter(-1)` and resets.
 - **The button:** `WasPressedThisFrame` on the select action calls `LockLetter`.
+- **The back button:** `WasPressedThisFrame` on the back action calls `StepBack`. It fires once per press, so
+  holding it steps back one slot, and it does nothing on the first slot.
 
 Example (`stepDistance` 120): frames of `y` of -1, 50, 50, 50 give the -1 ignored (under the deadzone), then `forward`
 of 50, 100, 150, and at 150 the letter moves forward and `forward` resets to 0.
@@ -73,7 +76,7 @@ to A (adding 26 first keeps the remainder from going negative). Then it redraws 
 ### `StepBack`
 
 Moves to the previous slot, unless already on the first. Redraws and raises `OnLetterChanged`. The letters
-in later slots keep their values.
+in later slots keep their values. Called by rolling the trackball left and by the back action.
 
 ### `LockLetter`
 
@@ -102,7 +105,7 @@ palette or the original. `Draw` already colours each letter from those two field
 - **EndScreen**: switches this page on, and listens to `OnSubmitted`.
 - **MenuNavigator**: the page's own empty one takes the top spot in the page stack.
 - **UISFX**: subscribes to the three static events.
-- **Input System**: reads the Move and Button actions.
+- **Input System**: reads the Move, Button and Back actions.
 
 ## Gotchas
 

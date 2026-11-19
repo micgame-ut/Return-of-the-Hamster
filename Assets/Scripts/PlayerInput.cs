@@ -111,6 +111,16 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""Back"",
+                    ""type"": ""Button"",
+                    ""id"": ""61a1f377-4f1c-40a3-b11f-1c9c9d58fbc2"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -135,6 +145,50 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
                     ""action"": ""Button"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c9fd1656-852b-4e70-8419-b910ec059a04"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1fe15cf5-3d6c-4bde-9de1-2426a7cc5053"",
+                    ""path"": ""<Keyboard>/leftAlt"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""049bf913-d168-42f2-b3c6-e489c9f0c9df"",
+                    ""path"": ""<Keyboard>/enter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Button"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7ada9658-6ba0-476d-be1c-1c8cd67c681e"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Back"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -145,6 +199,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         m_Player1 = asset.FindActionMap("Player 1", throwIfNotFound: true);
         m_Player1_Move = m_Player1.FindAction("Move", throwIfNotFound: true);
         m_Player1_Button = m_Player1.FindAction("Button", throwIfNotFound: true);
+        m_Player1_Back = m_Player1.FindAction("Back", throwIfNotFound: true);
     }
 
     ~@PlayerInput()
@@ -227,6 +282,7 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
     private List<IPlayer1Actions> m_Player1ActionsCallbackInterfaces = new List<IPlayer1Actions>();
     private readonly InputAction m_Player1_Move;
     private readonly InputAction m_Player1_Button;
+    private readonly InputAction m_Player1_Back;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player 1".
     /// </summary>
@@ -246,6 +302,10 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player1/Button".
         /// </summary>
         public InputAction @Button => m_Wrapper.m_Player1_Button;
+        /// <summary>
+        /// Provides access to the underlying input action "Player1/Back".
+        /// </summary>
+        public InputAction @Back => m_Wrapper.m_Player1_Back;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -278,6 +338,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Button.started += instance.OnButton;
             @Button.performed += instance.OnButton;
             @Button.canceled += instance.OnButton;
+            @Back.started += instance.OnBack;
+            @Back.performed += instance.OnBack;
+            @Back.canceled += instance.OnBack;
         }
 
         /// <summary>
@@ -295,6 +358,9 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
             @Button.started -= instance.OnButton;
             @Button.performed -= instance.OnButton;
             @Button.canceled -= instance.OnButton;
+            @Back.started -= instance.OnBack;
+            @Back.performed -= instance.OnBack;
+            @Back.canceled -= instance.OnBack;
         }
 
         /// <summary>
@@ -349,5 +415,12 @@ public partial class @PlayerInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnButton(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Back" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBack(InputAction.CallbackContext context);
     }
 }

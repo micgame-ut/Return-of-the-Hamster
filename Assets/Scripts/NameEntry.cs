@@ -17,6 +17,9 @@ public class NameEntry : MonoBehaviour
     [SerializeField] private InputActionReference moveAction;
     [Tooltip("The Button action (Space). Locks the current letter.")]
     [SerializeField] private InputActionReference selectAction;
+    [Tooltip("The Back action (Escape). Steps back to the previous letter slot.")]  
+    [SerializeField] private InputActionReference backAction;
+
     [Tooltip("Pixels of trackball movement that change a letter by one, or step back a slot. Lower = more sensitive.")]
     [SerializeField] private float stepDistance = 120f;
     [Tooltip("Movement smaller than this in one frame is ignored, so a drifting ball can't change anything.")]
@@ -56,6 +59,7 @@ public class NameEntry : MonoBehaviour
         // Other scripts may have enabled these already; Enable() on an enabled action does nothing.
         if (moveAction != null) moveAction.action.Enable();
         if (selectAction != null) selectAction.action.Enable();
+        if (backAction != null) backAction.action.Enable();
 
         PaletteApplier.OnChanged += FollowPalette;
         FollowPalette(PaletteApplier.Current);
@@ -144,6 +148,8 @@ public class NameEntry : MonoBehaviour
         }
 
         if (selectAction != null && selectAction.action.WasPressedThisFrame()) LockLetter();
+        if (backAction != null && backAction.action.WasPressedThisFrame()) StepBack();
+
     }
 
     // Locks the current letter and moves to the next slot. Locking the last slot submits the name.
